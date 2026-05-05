@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nedeljni unos — Nekretnine</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, -apple-system, sans-serif; background: #f4f6f9; color: #1a1a1a; min-height: 100vh; }
+
+    /* ── Login ── */
+    #login-view { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; }
+    .login-card { background: white; border-radius: 14px; padding: 44px 40px; width: 100%; max-width: 400px; box-shadow: 0 4px 32px rgba(0,0,0,0.09); }
+    .login-card h1 { font-size: 1.5rem; margin-bottom: 6px; }
+    .login-card p { color: #666; margin-bottom: 28px; font-size: 0.95rem; }
+
+    /* ── Forms ── */
+    label { display: block; font-size: 0.82rem; font-weight: 600; color: #444; margin-bottom: 5px; letter-spacing: 0.02em; text-transform: uppercase; }
+    input[type="email"], input[type="password"], input[type="date"], input[type="number"] {
+      width: 100%; padding: 10px 13px; border: 1.5px solid #e2e6ea; border-radius: 8px;
+      font-size: 0.95rem; outline: none; transition: border-color 0.2s; background: #fafafa;
+    }
+    input:focus { border-color: #2563eb; background: white; }
+    .form-group { margin-bottom: 16px; }
+
+    /* ── Buttons ── */
+    .btn { width: 100%; padding: 12px; border: none; border-radius: 9px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+    .btn-primary { background: #2563eb; color: white; }
+    .btn-primary:hover { background: #1d4ed8; }
+    .btn-primary:disabled { background: #93c5fd; cursor: not-allowed; }
+    .btn-success { background: #16a34a; color: white; margin-top: 8px; }
+    .btn-success:hover { background: #15803d; }
+    .btn-success:disabled { background: #86efac; cursor: not-allowed; }
+
+    /* ── Dashboard ── */
+    #form-view { max-width: 740px; margin: 0 auto; padding: 28px 20px 60px; }
+
+    .page-header { background: white; border-radius: 12px; padding: 18px 24px; margin-bottom: 18px; box-shadow: 0 2px 10px rgba(0,0,0,0.06); display: flex; align-items: center; justify-content: space-between; }
+    .page-header h1 { font-size: 1.2rem; }
+    .page-header span { color: #666; font-size: 0.88rem; margin-top: 2px; display: block; }
+
+    .card { background: white; border-radius: 12px; padding: 26px; margin-bottom: 16px; box-shadow: 0 2px 10px rgba(0,0,0,0.06); }
+    .card h2 { font-size: 0.9rem; color: #2563eb; font-weight: 700; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid #eff6ff; text-transform: uppercase; letter-spacing: 0.05em; }
+
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+
+    /* ── Agent rows ── */
+    .agents-header { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 12px; margin-bottom: 8px; }
+    .agents-header span { font-size: 0.78rem; color: #999; font-weight: 600; text-transform: uppercase; }
+    .agent-row { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 12px; align-items: center; margin-bottom: 10px; }
+    .agent-name { font-size: 0.92rem; font-weight: 500; }
+
+    /* ── Messages ── */
+    .msg { padding: 13px 16px; border-radius: 9px; margin-bottom: 16px; font-size: 0.9rem; }
+    .msg-error   { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+    .msg-success { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
+
+    .logout-btn { background: none; border: 1px solid #e2e6ea; color: #555; cursor: pointer; font-size: 0.82rem; padding: 6px 12px; border-radius: 6px; transition: all 0.2s; }
+    .logout-btn:hover { background: #f4f6f9; }
+
+    @media (max-width: 520px) {
+      .grid-2, .grid-3 { grid-template-columns: 1fr; }
+      .agent-row, .agents-header { grid-template-columns: 2fr 1fr 1fr; }
+      .login-card { padding: 32px 24px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══ LOGIN ═══ -->
+<div id="login-view">
+  <div class="login-card">
+    <h1>Nedeljni izveštaj</h1>
+    <p>Prijavite se da unesete podatke za nedelju</p>
+    <div id="login-msg"></div>
+    <div class="form-group">
+      <label>Email</label>
+      <input type="email" id="email" placeholder="vas@email.com" autocomplete="email">
+    </div>
+    <div class="form-group">
+      <label>Lozinka</label>
+      <input type="password" id="password" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <button class="btn btn-primary" id="login-btn" onclick="doLogin()">Prijavi se</button>
+  </div>
+</div>
+
+<!-- ═══ FORMA ═══ -->
+<div id="form-view" hidden>
+  <div class="page-header">
+    <div>
+      <h1 id="agency-name-header">Unos podataka</h1>
+      <span>Nedeljni izveštaj</span>
+    </div>
+    <button class="logout-btn" onclick="doLogout()">Odjavi se</button>
+  </div>
+
+  <div id="form-msg"></div>
+
+  <form id="report-form" onsubmit="submitForm(event)">
+
+    <!-- KPI-evi -->
+    <div class="card">
+      <h2>Osnovi KPI-evi</h2>
+      <div class="form-group">
+        <label>Datum početka nedelje (ponedeljak)</label>
+        <input type="date" id="week_start" required>
+      </div>
+      <div class="grid-2">
+        <div class="form-group">
+          <label>Aktivni oglasi</label>
+          <input type="number" id="active_listings" min="0" placeholder="0" required>
+        </div>
+        <div class="form-group">
+          <label>Novi oglasi ove nedelje</label>
+          <input type="number" id="new_listings" min="0" placeholder="0" required>
+        </div>
+        <div class="form-group">
+          <label>Upiti ove nedelje</label>
+          <input type="number" id="inquiries" min="0" placeholder="0" required>
+        </div>
+        <div class="form-group">
+          <label>Ugovori — prodaja</label>
+          <input type="number" id="contracts_sale" min="0" placeholder="0" required>
+        </div>
+        <div class="form-group">
+          <label>Ugovori — zakup</label>
+          <input type="number" id="contracts_rent" min="0" placeholder="0" required>
+        </div>
+        <div class="form-group">
+          <label>Prihod (€)</label>
+          <input type="number" id="revenue" min="0" placeholder="0" required>
+        </div>
+      </div>
+    </div>
+
+    <!-- Upiti po izvoru -->
+    <div class="card">
+      <h2>Upiti po izvoru</h2>
+      <div class="grid-2">
+        <div class="form-group">
+          <label>Halo oglasi</label>
+          <input type="number" id="src_halo" min="0" value="0">
+        </div>
+        <div class="form-group">
+          <label>4zida</label>
+          <input type="number" id="src_4zida" min="0" value="0">
+        </div>
+        <div class="form-group">
+          <label>Sajt agencije</label>
+          <input type="number" id="src_sajt" min="0" value="0">
+        </div>
+        <div class="form-group">
+          <label>Instagram / ostalo</label>
+          <input type="number" id="src_insta" min="0" value="0">
+        </div>
+      </div>
+    </div>
+
+    <!-- Agenti -->
+    <div class="card">
+      <h2>Performanse agenata</h2>
+      <div id="agents-container">
+        <p style="color:#aaa; font-size:0.9rem;">Učitavanje agenata...</p>
+      </div>
+    </div>
+
+    <button type="submit" class="btn btn-success" id="submit-btn">
+      Sačuvaj nedeljni izveštaj
+    </button>
+  </form>
+</div>
+
+<script>
+  const { createClient } = supabase;
+  const sb = createClient(
+    'https://cesxmcbodcpfnpyusxhj.supabase.co',
+    'sb_publishable_uMe0x5mYYyTI707MbRLzag_6NIDIE_K'
+  );
+
+  let agencyId = null;
+  let agentsList = [];
+
+  // ── Helpers ────────────────────────────────────────────────────────────────
+
+  function showMsg(id, text, isError = false) {
+    document.getElementById(id).innerHTML =
+      `<div class="msg ${isError ? 'msg-error' : 'msg-success'}">${text}</div>`;
+  }
+
+  function getMonday() {
+    const d = new Date();
+    const day = d.getDay();
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+    d.setDate(diff);
+    return d.toISOString().split('T')[0];
+  }
+
+  // ── Auth ───────────────────────────────────────────────────────────────────
+
+  async function doLogin() {
+    const email    = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+    const btn      = document.getElementById('login-btn');
+    btn.disabled = true;
+    btn.textContent = 'Prijavljivanje...';
+
+    const { error } = await sb.auth.signInWithPassword({ email, password });
+    if (error) {
+      showMsg('login-msg', 'Pogrešan email ili lozinka.', true);
+      btn.disabled = false;
+      btn.textContent = 'Prijavi se';
+    } else {
+      await initDashboard();
+    }
+  }
+
+  async function doLogout() {
+    await sb.auth.signOut();
+    document.getElementById('form-view').hidden = true;
+    document.getElementById('login-view').style.display = 'flex';
+    document.getElementById('login-msg').innerHTML = '';
+  }
+
+  // ── Dashboard ──────────────────────────────────────────────────────────────
+
+  async function initDashboard() {
+    const { data: { user } } = await sb.auth.getUser();
+    if (!user) return;
+
+    const { data: agencies, error } = await sb
+      .from('agencies')
+      .select('id, name')
+      .eq('user_id', user.id)
+      .limit(1);
+
+    if (error || !agencies?.length) {
+      showMsg('login-msg', 'Nalog nije povezan sa agencijom. Kontaktirajte podršku.', true);
+      await sb.auth.signOut();
+      return;
+    }
+
+    agencyId = agencies[0].id;
+    document.getElementById('agency-name-header').textContent = agencies[0].name;
+
+    const { data: agents } = await sb
+      .from('agents')
+      .select('id, name')
+      .eq('agency_id', agencyId)
+      .eq('active', true)
+      .order('name');
+
+    agentsList = agents || [];
+    renderAgents();
+    document.getElementById('week_start').value = getMonday();
+
+    document.getElementById('login-view').style.display = 'none';
+    document.getElementById('form-view').hidden = false;
+  }
+
+  function renderAgents() {
+    const container = document.getElementById('agents-container');
+    if (!agentsList.length) {
+      container.innerHTML = '<p style="color:#aaa">Nema aktivnih agenata.</p>';
+      return;
+    }
+    container.innerHTML = `
+      <div class="agents-header">
+        <span>Agent</span><span>Upiti</span><span>Ugovori</span>
+      </div>
+      ${agentsList.map(a => `
+        <div class="agent-row">
+          <div class="agent-name">${a.name}</div>
+          <input type="number" id="agent_inq_${a.id}" min="0" value="0">
+          <input type="number" id="agent_con_${a.id}" min="0" value="0">
+        </div>
+      `).join('')}
+    `;
+  }
+
+  // ── Submit ─────────────────────────────────────────────────────────────────
+
+  async function submitForm(e) {
+    e.preventDefault();
+    const btn = document.getElementById('submit-btn');
+    btn.disabled = true;
+    btn.textContent = 'Čuvanje...';
+    document.getElementById('form-msg').innerHTML = '';
+
+    const weekStart = document.getElementById('week_start').value;
+
+    try {
+      // 1. weekly_kpis
+      const { error: e1 } = await sb.from('weekly_kpis').upsert({
+        agency_id:       agencyId,
+        week_start:      weekStart,
+        active_listings: +document.getElementById('active_listings').value,
+        new_listings:    +document.getElementById('new_listings').value,
+        inquiries:       +document.getElementById('inquiries').value,
+        contracts_sale:  +document.getElementById('contracts_sale').value,
+        contracts_rent:  +document.getElementById('contracts_rent').value,
+        revenue:         +document.getElementById('revenue').value,
+      }, { onConflict: 'agency_id,week_start' });
+      if (e1) throw e1;
+
+      // 2. inquiry_sources
+      const sources = [
+        { source: 'Halo oglasi',      count: +document.getElementById('src_halo').value },
+        { source: '4zida',            count: +document.getElementById('src_4zida').value },
+        { source: 'Sajt agencije',    count: +document.getElementById('src_sajt').value },
+        { source: 'Instagram/ostalo', count: +document.getElementById('src_insta').value },
+      ];
+      for (const s of sources) {
+        const { error: e2 } = await sb.from('inquiry_sources').upsert(
+          { agency_id: agencyId, week_start: weekStart, ...s },
+          { onConflict: 'agency_id,week_start,source' }
+        );
+        if (e2) throw e2;
+      }
+
+      // 3. agent_performance
+      for (const a of agentsList) {
+        const { error: e3 } = await sb.from('agent_performance').upsert({
+          agent_id:  a.id,
+          agency_id: agencyId,
+          week_start: weekStart,
+          inquiries:  +document.getElementById(`agent_inq_${a.id}`).value,
+          contracts:  +document.getElementById(`agent_con_${a.id}`).value,
+        }, { onConflict: 'agent_id,week_start' });
+        if (e3) throw e3;
+      }
+
+      showMsg('form-msg', `Podaci za nedelju ${weekStart} su sačuvani. Izvestaj ce biti poslat u ponedeljak ujutru.`);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    } catch (err) {
+      showMsg('form-msg', `Greska: ${err.message}`, true);
+    }
+
+    btn.disabled = false;
+    btn.textContent = 'Sacuvaj nedeljni izvestaj';
+  }
+
+  // ── Auto-session ───────────────────────────────────────────────────────────
+
+  sb.auth.getSession().then(({ data: { session } }) => {
+    if (session) initDashboard();
+  });
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && document.getElementById('login-view').style.display !== 'none'
+        && !document.getElementById('login-view').hidden) {
+      doLogin();
+    }
+  });
+</script>
+</body>
+</html>
