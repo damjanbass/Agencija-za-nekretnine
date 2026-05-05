@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir -p \"c:\\\\Users\\\\PC\\\\OneDrive\\\\Desktop\\\\Agencija za nekretnine\\\\scrapers\" \"c:\\\\Users\\\\PC\\\\OneDrive\\\\Desktop\\\\Agencija za nekretnine\\\\data\" \"c:\\\\Users\\\\PC\\\\OneDrive\\\\Desktop\\\\Agencija za nekretnine\\\\ai\" \"c:\\\\Users\\\\PC\\\\OneDrive\\\\Desktop\\\\Agencija za nekretnine\\\\templates\" \"c:\\\\Users\\\\PC\\\\OneDrive\\\\Desktop\\\\Agencija za nekretnine\\\\email\" && echo \"OK\")",
+      "Bash(python main.py --preview)",
+      "Bash(python -X utf8 main.py --preview)",
+      "Bash(start \"\" \"c:\\\\Users\\\\PC\\\\OneDrive\\\\Desktop\\\\Agencija za nekretnine\\\\izvestaj_prima.html\")",
+      "Bash(python -X utf8 main.py --mock --preview)",
+      "Bash(pip install *)"
+    ],
+    "additionalDirectories": [
+      "c:\\Users\\PC\\OneDrive\\Desktop\\Agencija za nekretnine"
+    ]
+  }
+}

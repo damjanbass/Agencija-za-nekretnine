@@ -1,0 +1,36 @@
+name: Nedeljni izveštaj
+
+on:
+  schedule:
+    # Svaki ponedeljak u 8:00 po Beogradu (UTC+2 = 06:00 UTC)
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+    # Omogućava ručno pokretanje iz GitHub UI (dugme "Run workflow")
+
+jobs:
+  send-report:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Python setup
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Instaliraj zavisnosti
+        run: pip install -r requirements.txt
+
+      - name: Pokreni izveštaj
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          SUPABASE_URL:       ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY:       ${{ secrets.SUPABASE_KEY }}
+          SMTP_HOST:          ${{ secrets.SMTP_HOST }}
+          SMTP_PORT:          ${{ secrets.SMTP_PORT }}
+          SMTP_USER:          ${{ secrets.SMTP_USER }}
+          SMTP_PASS:          ${{ secrets.SMTP_PASS }}
+        run: python main.py
