@@ -1,0 +1,30 @@
+name: Generisanje XML feedova
+
+on:
+  schedule:
+    # Svaki dan u 07:00 po Beogradu (UTC+2 = 05:00 UTC)
+    - cron: "0 5 * * *"
+  workflow_dispatch:
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4.2.2
+
+      - name: Python setup
+        uses: actions/setup-python@v5.4.0
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Instaliraj zavisnosti
+        run: pip install -r requirements.txt
+
+      - name: Generisi feedove
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: python -X utf8 feeds/generator.py
