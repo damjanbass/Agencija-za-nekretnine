@@ -118,6 +118,115 @@ def save_report(agency_id: str, week_start: date, html: str):
     }, on_conflict="agency_id,week_start").execute()
 
 
+def get_monthly_report_data(agency_id: str) -> dict:
+    """Agregira sve nedeljne KPI-eve za prošli mesec."""
+    sb = get_client()
+
+    today = date.today()
+    month_end   = today.replace(day=1) - timedelta(days=1)
+    month_start = month_end.replace(day=1)
+
+    agency = (
+        sb.table("agencies")
+        .select("name, email, revenue_goal, plan_id")
+        .eq("id", agency_id)
+        .single()
+        .execute()
+        .data
+    )
+
+    weeks_raw = (
+        sb.table("weekly_kpis")
+        .select("*")
+        .eq("agency_id", agency_id)
+        .gte("week_start", month_start.isoformat())
+        .lte("week_start", month_end.isoformat())
+        .order("week_start")
+        .execute()
+        .data
+    )
+
+    sources_raw = (
+        sb.table("inquiry_sources")
+        .select("source, count")
+        .eq("agency_id", agency_id)
+        .gte("week_start", month_start.isoformat())
+        .lte("week_start", month_end.isoformat())
+        .execute()
+        .data
+    )
+    sources: dict = {}
+    for row in sources_raw:
+        sources[row["source"]] = sources.get(row["source"], 0) + row["count"]
+
+    perf_raw = (
+        sb.table("agent_performance")
+        .select("inquiries, contracts, agents(name)")
+        .eq("agency_id", agency_id)
+        .gte("week_start", month_start.isoformat())
+        .lte("week_start", month_end.isoformat())
+        .execute()
+        .data
+    )
+    agents: dict = {}
+    for row in perf_raw:
+        name = row["agents"]["name"]
+        if name not in agents:
+            agents[name] = {"name": name, "inquiries": 0, "contracts": 0}
+        agents[name]["inquiries"] += row["inquiries"]
+        agents[name]["contracts"] += row["contracts"]
+    agents_list = sorted(agents.values(), key=lambda a: a["contracts"], reverse=True)
+
+    # Prethodni mesec prihod (za poređenje)
+    prev_end   = month_start - timedelta(days=1)
+    prev_start = prev_end.replace(day=1)
+    prev_weeks = (
+        sb.table("weekly_kpis")
+        .select("revenue")
+        .eq("agency_id", agency_id)
+        .gte("week_start", prev_start.isoformat())
+        .lte("week_start", prev_end.isoformat())
+        .execute()
+        .data
+    )
+    prev_revenue = sum(w["revenue"] for w in prev_weeks)
+
+    total_inquiries     = sum(w["inquiries"]      for w in weeks_raw)
+    total_contracts_sale = sum(w["contracts_sale"] for w in weeks_raw)
+    total_contracts_rent = sum(w["contracts_rent"] for w in weeks_raw)
+    total_revenue       = sum(w["revenue"]         for w in weeks_raw)
+    monthly_goal        = int(agency["revenue_goal"]) * len(weeks_raw) if weeks_raw else int(agency["revenue_goal"]) * 4
+
+    best_week = max(weeks_raw, key=lambda w: w["contracts_sale"] + w["contracts_rent"]) if weeks_raw else None
+
+    MONTHS_SR = ["", "januar", "februar", "mart", "april", "maj", "jun",
+                 "jul", "avgust", "septembar", "oktobar", "novembar", "decembar"]
+
+    return {
+        "agency_name":          agency["name"],
+        "agency_email":         agency["email"],
+        "plan_id":              agency.get("plan_id", "free"),
+        "month_name":           f"{MONTHS_SR[month_start.month]} {month_start.year}",
+        "month_start":          month_start.strftime("%d.%m.%Y"),
+        "month_end":            month_end.strftime("%d.%m.%Y"),
+        "generated_at":         today.strftime("%d.%m.%Y"),
+        "total_inquiries":      total_inquiries,
+        "total_contracts_sale": total_contracts_sale,
+        "total_contracts_rent": total_contracts_rent,
+        "total_contracts":      total_contracts_sale + total_contracts_rent,
+        "total_revenue":        int(total_revenue),
+        "monthly_goal":         monthly_goal,
+        "revenue_pct":          round((total_revenue / (monthly_goal or 1)) * 100),
+        "prev_revenue":         int(prev_revenue),
+        "revenue_change_pct":   round(((total_revenue - prev_revenue) / (prev_revenue or 1)) * 100),
+        "weeks_count":          len(weeks_raw),
+        "weekly_breakdown":     weeks_raw,
+        "best_week":            best_week,
+        "inquiries_by_source":  sources,
+        "agents":               agents_list,
+    }
+
+
 def get_all_active_clients() -> list[dict]:
     """Vraća sve aktivne agencije sa UUID-ovima i planovima."""
     sb = get_client()

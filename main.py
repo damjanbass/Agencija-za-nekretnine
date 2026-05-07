@@ -50,10 +50,10 @@ def prepare_template_vars(data: dict, analysis: dict | None,
     }
 
 
-def render_report(vars: dict) -> str:
+def render_report(vars: dict, template: str = "report.html") -> str:
     template_dir = Path(__file__).parent / "templates"
     env = Environment(loader=FileSystemLoader(str(template_dir)))
-    return env.get_template("report.html").render(**vars)
+    return env.get_template(template).render(**vars)
 
 
 def run(preview: bool = False, use_mock: bool = False, city: str = "beograd"):
@@ -140,10 +140,62 @@ def run(preview: bool = False, use_mock: bool = False, city: str = "beograd"):
     print("\n[✓] Gotovo.")
 
 
+def run_monthly(preview: bool = False, use_mock: bool = False):
+    if use_mock or not config.SUPABASE_KEY:
+        from data.mock_data import get_mock_monthly_data
+        clients_data = [("mock", get_mock_monthly_data())]
+    else:
+        from data.supabase_client import get_all_active_clients, get_monthly_report_data
+        clients_raw  = get_all_active_clients()
+        clients_data = [(c["id"], get_monthly_report_data(c["id"])) for c in clients_raw]
+
+    for agency_id, data in clients_data:
+        plan = get_plan(data.get("plan_id", "free"))
+        print(f"\n[→] {data['agency_name']}  [{plan.name}]  ({data['month_name']})")
+
+        analysis = None
+        if plan.allows_ai() and config.ANTHROPIC_API_KEY:
+            from ai.analyze import generate_monthly_analysis
+            print("    [AI] Pozivam Claude za mesečnu analizu...")
+            analysis = generate_monthly_analysis(data)
+            print(f"    [+] Dobro:   {analysis['dobro']}")
+            print(f"    [!] Pažnja:  {analysis['paznja']}")
+            print(f"    [→] Predlog: {analysis['predlog']}")
+
+        vars = {**data, "analysis": analysis, "plan": plan}
+        html = render_report(vars, template="monthly_report.html")
+
+        slug = data["agency_name"].lower().replace(" ", "_")
+        out  = Path(__file__).parent / f"mesecni_{slug}.html"
+        out.write_text(html, encoding="utf-8")
+        print(f"    [HTML] {out.name}")
+
+        if not preview:
+            if plan.allows_email():
+                from mailer.sender import send_report_email
+                subject = f"Mesečni izveštaj — {data['month_name']}"
+                send_report_email(
+                    to_email=data.get("agency_email", ""),
+                    to_name=data["agency_name"],
+                    subject=subject,
+                    html_body=html,
+                )
+            else:
+                print(f"    [EMAIL] Slanje nije dostupno na {plan.name} planu.")
+        else:
+            print("    [EMAIL] Preview mod — mejl nije poslat.")
+
+    print("\n[✓] Mesečni izveštaji gotovi.")
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--preview", action="store_true", help="Ne šalji mejl")
     parser.add_argument("--mock",    action="store_true", help="Koristi mock podatke")
+    parser.add_argument("--monthly", action="store_true", help="Mesečni izveštaj umesto nedeljnog")
     parser.add_argument("--city",    default="beograd",  help="Grad za tržišnu analizu")
     args = parser.parse_args()
-    run(preview=args.preview, use_mock=args.mock, city=args.city)
+    if args.monthly:
+        run_monthly(preview=args.preview, use_mock=args.mock)
+    else:
+        run(preview=args.preview, use_mock=args.mock, city=args.city)

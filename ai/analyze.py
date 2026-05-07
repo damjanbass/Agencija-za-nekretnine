@@ -53,6 +53,47 @@ Odgovori ISKLJUČIVO u JSON formatu, bez ikakvog dodatnog teksta:
     return json.loads(raw)
 
 
+def generate_monthly_analysis(data: dict) -> dict:
+    client = anthropic.Anthropic(api_key=config.ANTHROPIC_API_KEY)
+
+    agents_summary = "\n".join(
+        f"  - {a['name']}: {a['inquiries']} upita, {a['contracts']} ugovora"
+        for a in data["agents"]
+    )
+    rev_sign = "+" if data["revenue_change_pct"] >= 0 else ""
+
+    prompt = f"""Analiziraj mesečne podatke agencije za nekretnine i daj strateške uvide.
+
+Mesec: {data['month_name']}
+- Ukupni upiti: {data['total_inquiries']} ({data['weeks_count']} nedelje)
+- Ugovori: {data['total_contracts_sale']} prodaja + {data['total_contracts_rent']} zakupa = {data['total_contracts']} ukupno
+- Prihod: {data['total_revenue']}€ od cilja {data['monthly_goal']}€ ({data['revenue_pct']}%)
+- Promena prihoda vs prošli mesec: {rev_sign}{data['revenue_change_pct']}%
+- Agenti:
+{agents_summary}
+
+Odgovori ISKLJUČIVO u JSON formatu, bez ikakvog dodatnog teksta:
+{{
+    "dobro": "jedna rečenica o najjačem trendu u mesecu",
+    "paznja": "jedna rečenica o konkretnom problemu koji treba rešiti",
+    "predlog": "jedna konkretna strateška akcija za sledeći mesec sa merljivim ciljem"
+}}"""
+
+    message = client.messages.create(
+        model=config.CLAUDE_MODEL,
+        max_tokens=400,
+        system="Ti si analitičar za agencije za nekretnine. Uvek odgovaraš samo u validnom JSON formatu.",
+        messages=[{"role": "user", "content": prompt}],
+    )
+
+    raw = message.content[0].text.strip()
+    if raw.startswith("```"):
+        raw = raw.split("```")[1]
+        if raw.startswith("json"):
+            raw = raw[4:]
+    return json.loads(raw)
+
+
 def generate_analysis_fallback(data: dict, market: list[dict] | None = None) -> dict:
     inquiries_change = data["inquiries"] - data["prev_inquiries"]
     pct = round((inquiries_change / (data["prev_inquiries"] or 1)) * 100)

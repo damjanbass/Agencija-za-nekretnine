@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mesečni Izveštaj — {{ agency_name }}</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; color: #1a1a2e; }
+
+  .wrapper {
+    max-width: 680px; margin: 32px auto; background: #fff;
+    border-radius: 16px; overflow: hidden;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+  }
+
+  /* HEADER */
+  .header {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 60%, #0f3460 100%);
+    padding: 36px 40px 28px; color: #fff;
+  }
+  .header-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; }
+  .header h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.3px; }
+  .header .agency { font-size: 14px; opacity: 0.7; margin-top: 4px; }
+  .header .period {
+    font-size: 12px; background: rgba(255,255,255,0.12);
+    padding: 5px 12px; border-radius: 20px; white-space: nowrap;
+  }
+  .plan-badge {
+    display: inline-block; font-size: 10px; font-weight: 700;
+    letter-spacing: 0.8px; text-transform: uppercase;
+    padding: 3px 9px; border-radius: 10px; margin-top: 8px;
+  }
+  .plan-free    { background: rgba(255,255,255,0.10); color: rgba(255,255,255,0.6); }
+  .plan-basic   { background: #1d4ed8; color: #bfdbfe; }
+  .plan-pro     { background: #7c3aed; color: #ede9fe; }
+  .plan-premium { background: #b45309; color: #fde68a; }
+  .header-divider { height: 1px; background: rgba(255,255,255,0.12); margin: 16px 0 0; }
+  .monthly-badge {
+    display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: 0.8px;
+    text-transform: uppercase; padding: 3px 9px; border-radius: 10px;
+    background: rgba(255,180,0,0.2); color: #fbbf24; margin-left: 8px;
+  }
+
+  /* BODY */
+  .body { padding: 32px 40px; }
+
+  /* KPI KARTICE */
+  .kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 32px; }
+  .kpi-card { background: #f8f9fc; border-radius: 12px; padding: 18px 20px; border: 1px solid #eaedf3; }
+  .kpi-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.8px; color: #8892a4; margin-bottom: 8px; }
+  .kpi-value { font-size: 28px; font-weight: 700; color: #1a1a2e; line-height: 1; }
+  .kpi-sub { font-size: 12px; margin-top: 6px; }
+  .badge-up   { color: #16a34a; font-weight: 600; }
+  .badge-down { color: #dc2626; font-weight: 600; }
+  .badge-neu  { color: #6b7280; }
+
+  .section-title {
+    font-size: 13px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.8px; color: #8892a4; margin-bottom: 14px;
+  }
+
+  /* REVENUE PROGRESS */
+  .revenue-section { margin-bottom: 32px; }
+  .progress-bar-bg { background: #eaedf3; border-radius: 8px; height: 10px; margin: 10px 0 6px; }
+  .progress-bar-fill { height: 10px; border-radius: 8px; background: linear-gradient(90deg, #2563eb, #7c3aed); }
+  .progress-labels { display: flex; justify-content: space-between; font-size: 12px; color: #8892a4; }
+
+  /* NEDELJNI BREAKDOWN */
+  .breakdown-section { margin-bottom: 32px; }
+  .breakdown-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .breakdown-table th {
+    text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.6px;
+    color: #8892a4; padding: 0 10px 10px 10px; border-bottom: 2px solid #eaedf3;
+  }
+  .breakdown-table td { padding: 10px; border-bottom: 1px solid #f0f2f5; color: #1a1a2e; }
+  .breakdown-table tr:last-child td { border-bottom: none; }
+  .breakdown-table tr.best-week td { background: #f0fdf4; font-weight: 600; }
+  .best-week-tag {
+    font-size: 10px; background: #dcfce7; color: #16a34a;
+    padding: 2px 7px; border-radius: 8px; margin-left: 6px; font-weight: 700;
+  }
+  .breakdown-table td:not(:first-child) { text-align: right; }
+  .breakdown-table th:not(:first-child) { text-align: right; }
+
+  /* BAR CHART - upiti po izvoru */
+  .chart-section { margin-bottom: 32px; }
+  .bar-row { margin-bottom: 10px; }
+  .bar-label { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px; }
+  .bar-label span:last-child { color: #8892a4; font-size: 12px; }
+  .bar-bg { background: #eaedf3; border-radius: 4px; height: 8px; }
+  .bar-fill { height: 8px; border-radius: 4px; background: linear-gradient(90deg, #2563eb, #7c3aed); }
+
+  /* AGENTI */
+  .agents-section { margin-bottom: 32px; }
+  .agents-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .agents-table th {
+    text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.6px;
+    color: #8892a4; padding: 0 10px 10px 10px; border-bottom: 2px solid #eaedf3;
+  }
+  .agents-table td { padding: 10px; border-bottom: 1px solid #f0f2f5; }
+  .agents-table tr:last-child td { border-bottom: none; }
+  .agents-table td:not(:first-child) { text-align: right; }
+  .agents-table th:not(:first-child) { text-align: right; }
+  .top-agent { background: #fffbeb; }
+  .rank { color: #8892a4; font-size: 12px; margin-right: 6px; }
+
+  /* AI ANALIZA */
+  .ai-section { background: #f8f9fc; border-radius: 12px; padding: 24px; margin-bottom: 32px; border: 1px solid #eaedf3; }
+  .ai-title { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #8892a4; margin-bottom: 16px; }
+  .ai-item { display: flex; gap: 12px; margin-bottom: 14px; }
+  .ai-item:last-child { margin-bottom: 0; }
+  .ai-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+  .ai-text { font-size: 14px; line-height: 1.55; color: #374151; }
+  .ai-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 3px; }
+  .ai-label.green { color: #16a34a; }
+  .ai-label.amber { color: #d97706; }
+  .ai-label.blue  { color: #2563eb; }
+  .ai-locked { text-align: center; padding: 16px 0 4px; color: #8892a4; font-size: 14px; }
+
+  /* FOOTER */
+  .footer { background: #f8f9fc; padding: 20px 40px; border-top: 1px solid #eaedf3; text-align: center; font-size: 12px; color: #8892a4; }
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-top">
+      <div>
+        <h1>
+          Mesečni izveštaj
+          <span class="monthly-badge">Mesečni</span>
+        </h1>
+        <div class="agency">{{ agency_name }}</div>
+      </div>
+      <div class="period">{{ month_name | capitalize }}</div>
+    </div>
+    <span class="plan-badge plan-{{ plan.id }}">{{ plan.name }}</span>
+    <div class="header-divider"></div>
+  </div>
+
+  <div class="body">
+
+    <!-- KPI KARTICE -->
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-label">Ukupni upiti</div>
+        <div class="kpi-value">{{ total_inquiries }}</div>
+        <div class="kpi-sub badge-neu">{{ weeks_count }} nedelje</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Ukupni ugovori</div>
+        <div class="kpi-value">{{ total_contracts }}</div>
+        <div class="kpi-sub badge-neu">{{ total_contracts_sale }} prodaja · {{ total_contracts_rent }} zakupa</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Ukupni prihod</div>
+        <div class="kpi-value">{{ "{:,}".format(total_revenue) }}€</div>
+        <div class="kpi-sub">
+          {% if revenue_change_pct >= 0 %}
+            <span class="badge-up">+{{ revenue_change_pct }}%</span>
+          {% else %}
+            <span class="badge-down">{{ revenue_change_pct }}%</span>
+          {% endif %}
+          vs prošli mesec
+        </div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Ispunjenje cilja</div>
+        <div class="kpi-value">{{ revenue_pct }}%</div>
+        <div class="kpi-sub badge-neu">cilj: {{ "{:,}".format(monthly_goal) }}€</div>
+      </div>
+    </div>
+
+    <!-- PRIHOD PROGRESS -->
+    <div class="revenue-section">
+      <div class="section-title">Prihod vs cilj</div>
+      <div class="progress-bar-bg">
+        <div class="progress-bar-fill" style="width: {{ [revenue_pct, 100] | min }}%"></div>
+      </div>
+      <div class="progress-labels">
+        <span>{{ "{:,}".format(total_revenue) }}€ ostvareno</span>
+        <span>{{ "{:,}".format(monthly_goal) }}€ cilj</span>
+      </div>
+    </div>
+
+    <!-- NEDELJNI BREAKDOWN -->
+    <div class="breakdown-section">
+      <div class="section-title">Nedeljni pregled</div>
+      <table class="breakdown-table">
+        <thead>
+          <tr>
+            <th>Nedelja</th>
+            <th>Upiti</th>
+            <th>Ugovori</th>
+            <th>Prihod</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for w in weekly_breakdown %}
+          {% set is_best = best_week and w['week_start'] == best_week['week_start'] %}
+          <tr {% if is_best %}class="best-week"{% endif %}>
+            <td>
+              {{ w['week_start'] }}
+              {% if is_best %}<span class="best-week-tag">Najbolja</span>{% endif %}
+            </td>
+            <td>{{ w['inquiries'] }}</td>
+            <td>{{ w['contracts_sale'] + w['contracts_rent'] }}</td>
+            <td>{{ "{:,}".format(w['revenue'] | int) }}€</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- UPITI PO IZVORU -->
+    {% if inquiries_by_source %}
+    <div class="chart-section">
+      <div class="section-title">Upiti po izvoru</div>
+      {% set max_count = inquiries_by_source.values() | max %}
+      {% for source, count in inquiries_by_source.items() | sort(attribute='1', reverse=True) %}
+      <div class="bar-row">
+        <div class="bar-label">
+          <span>{{ source }}</span>
+          <span>{{ count }}</span>
+        </div>
+        <div class="bar-bg">
+          <div class="bar-fill" style="width: {{ (count / max_count * 100) | round }}%"></div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- AGENTI -->
+    <div class="agents-section">
+      <div class="section-title">Performanse agenata — mesečno</div>
+      <table class="agents-table">
+        <thead>
+          <tr>
+            <th>Agent</th>
+            <th>Upiti</th>
+            <th>Ugovori</th>
+            <th>Konverzija</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for agent in agents %}
+          <tr {% if loop.first %}class="top-agent"{% endif %}>
+            <td>
+              <span class="rank">#{{ loop.index }}</span>
+              {{ agent.name }}
+              {% if loop.first %}⭐{% endif %}
+            </td>
+            <td>{{ agent.inquiries }}</td>
+            <td>{{ agent.contracts }}</td>
+            <td>
+              {% if agent.inquiries > 0 %}
+                {{ ((agent.contracts / agent.inquiries) * 100) | round(1) }}%
+              {% else %}—{% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- AI ANALIZA -->
+    {% if analysis %}
+    <div class="ai-section">
+      <div class="ai-title">AI analiza meseca</div>
+      <div class="ai-item">
+        <div class="ai-icon">✅</div>
+        <div class="ai-text">
+          <div class="ai-label green">Najjači trend</div>
+          {{ analysis.dobro }}
+        </div>
+      </div>
+      <div class="ai-item">
+        <div class="ai-icon">⚠️</div>
+        <div class="ai-text">
+          <div class="ai-label amber">Pažnja</div>
+          {{ analysis.paznja }}
+        </div>
+      </div>
+      <div class="ai-item">
+        <div class="ai-icon">🎯</div>
+        <div class="ai-text">
+          <div class="ai-label blue">Strateški predlog za sledeći mesec</div>
+          {{ analysis.predlog }}
+        </div>
+      </div>
+    </div>
+    {% else %}
+    <div class="ai-section">
+      <div class="ai-locked">AI analiza nije dostupna na {{ plan.name }} planu.</div>
+    </div>
+    {% endif %}
+
+  </div><!-- /body -->
+
+  <div class="footer">
+    Mesečni izveštaj · {{ month_name | capitalize }} · generisan {{ generated_at }}
+  </div>
+
+</div>
+</body>
+</html>
