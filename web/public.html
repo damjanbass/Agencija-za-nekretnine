@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Javni dashboard — Agencija za nekretnine</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: #f0f2f5; color: #1a1a2e; min-height: 100vh; }
+
+    .wrapper { max-width: 680px; margin: 32px auto; padding: 0 16px 48px; }
+
+    /* Header */
+    .header {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 60%, #0f3460 100%);
+      border-radius: 16px; padding: 32px 36px 24px; color: #fff; margin-bottom: 20px;
+    }
+    .header-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.6; margin-bottom: 6px; }
+    .header-name  { font-size: 22px; font-weight: 700; }
+    .header-meta  { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+    .header-pill  { font-size: 12px; background: rgba(255,255,255,0.12); padding: 4px 12px; border-radius: 20px; }
+    .live-badge   { background: rgba(34,197,94,0.2); color: #4ade80; font-size: 10px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; padding: 3px 9px; border-radius: 10px; margin-top: 8px; display: inline-block; }
+
+    /* Cards */
+    .card { background: white; border-radius: 12px; padding: 24px; margin-bottom: 16px; box-shadow: 0 2px 10px rgba(0,0,0,0.06); }
+    .section-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #8892a4; margin-bottom: 14px; }
+
+    /* KPI grid */
+    .kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 20px; }
+    .kpi-card { background: #f8f9fc; border-radius: 12px; padding: 16px 18px; border: 1px solid #eaedf3; }
+    .kpi-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.8px; color: #8892a4; margin-bottom: 6px; }
+    .kpi-value { font-size: 28px; font-weight: 700; color: #1a1a2e; line-height: 1; }
+    .kpi-sub   { font-size: 12px; margin-top: 5px; }
+    .badge-up   { color: #16a34a; font-weight: 600; }
+    .badge-down { color: #dc2626; font-weight: 600; }
+    .badge-neu  { color: #6b7280; }
+
+    /* Revenue progress */
+    .progress-bg   { background: #eaedf3; border-radius: 8px; height: 10px; margin: 10px 0 6px; }
+    .progress-fill { height: 10px; border-radius: 8px; background: linear-gradient(90deg, #16a34a, #22c55e); }
+    .progress-labels { display: flex; justify-content: space-between; font-size: 12px; color: #6b7280; }
+
+    /* Benchmark */
+    .bench-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 14px; border-radius: 8px; margin-bottom: 8px;
+      background: #f8f9fc; border: 1px solid #eaedf3;
+    }
+    .bench-row:last-child { margin-bottom: 0; }
+    .bench-label  { font-size: 13px; color: #374151; }
+    .bench-vals   { display: flex; gap: 14px; font-size: 12px; font-weight: 600; }
+    .bench-better { color: #16a34a; }
+    .bench-worse  { color: #dc2626; }
+    .bench-avg    { color: #8892a4; font-weight: 400; }
+
+    /* State screens */
+    #loading, #error-screen { display: flex; align-items: center; justify-content: center; min-height: 60vh; }
+    .state-card { background: white; border-radius: 14px; padding: 48px 40px; text-align: center; max-width: 360px; box-shadow: 0 4px 24px rgba(0,0,0,0.08); }
+    .state-icon  { font-size: 36px; margin-bottom: 16px; }
+    .state-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 8px; }
+    .state-desc  { font-size: 0.9rem; color: #666; }
+    .spinner { width: 36px; height: 36px; border: 3px solid #eaedf3; border-top-color: #2563eb; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 16px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .footer { text-align: center; font-size: 11px; color: #9ca3af; margin-top: 24px; }
+
+    @media (max-width: 520px) {
+      .kpi-grid { grid-template-columns: 1fr 1fr; }
+      .wrapper  { padding: 0 12px 32px; }
+      .header   { padding: 24px 20px 18px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Loading -->
+<div id="loading">
+  <div class="state-card">
+    <div class="spinner"></div>
+    <div class="state-title">Učitavanje dashboarda...</div>
+  </div>
+</div>
+
+<!-- Error -->
+<div id="error-screen" hidden>
+  <div class="state-card">
+    <div class="state-icon">🔒</div>
+    <div class="state-title" id="error-title">Link nije ispravan</div>
+    <div class="state-desc" id="error-desc">Proverite link ili kontaktirajte vašeg menadžera.</div>
+  </div>
+</div>
+
+<!-- Dashboard -->
+<div id="dashboard" hidden>
+  <div class="wrapper">
+
+    <div class="header">
+      <div class="header-label">Javni dashboard</div>
+      <div class="header-name" id="h-name">—</div>
+      <div class="header-meta">
+        <span class="header-pill" id="h-period">—</span>
+      </div>
+      <div><span class="live-badge">live</span></div>
+    </div>
+
+    <!-- KPI -->
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-label">Aktivni oglasi</div>
+        <div class="kpi-value" id="k-listings">—</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Upiti</div>
+        <div class="kpi-value" id="k-inquiries">—</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Ugovori</div>
+        <div class="kpi-value" id="k-contracts">—</div>
+        <div class="kpi-sub badge-neu" id="k-contracts-sub">—</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Prihod</div>
+        <div class="kpi-value" id="k-revenue">—</div>
+        <div class="kpi-sub" id="k-revenue-sub">—</div>
+      </div>
+    </div>
+
+    <!-- Revenue progress -->
+    <div class="card">
+      <div class="section-title">Prihod prema cilju</div>
+      <div class="progress-bg">
+        <div class="progress-fill" id="rev-fill" style="width:0%"></div>
+      </div>
+      <div class="progress-labels">
+        <span id="rev-left">—</span>
+        <span id="rev-right">—</span>
+      </div>
+    </div>
+
+    <!-- Benchmark -->
+    <div class="card" id="bench-card" hidden>
+      <div class="section-title" id="bench-title">Poređenje sa platformom</div>
+      <div id="bench-rows"></div>
+    </div>
+
+    <div class="footer">
+      Javni dashboard · generisan automatski · podaci su iz poslednjeg nedeljnog unosa
+    </div>
+
+  </div>
+</div>
+
+<script>
+  const { createClient } = supabase;
+  const sb = createClient(
+    'https://cesxmcbodcpfnpyusxhj.supabase.co',
+    'sb_publishable_uMe0x5mYYyTI707MbRLzag_6NIDIE_K'
+  );
+
+  function fmtDate(iso) {
+    if (!iso) return '—';
+    const [y, m, d] = iso.split('-');
+    return `${d}.${m}.${y}`;
+  }
+
+  function showError(title, desc) {
+    document.getElementById('loading').hidden        = true;
+    document.getElementById('error-screen').hidden   = false;
+    document.getElementById('error-title').textContent = title;
+    document.getElementById('error-desc').textContent  = desc || '';
+  }
+
+  async function loadDashboard() {
+    const params = new URLSearchParams(window.location.search);
+    const token  = params.get('token');
+
+    if (!token) {
+      showError('Link nije ispravan', 'URL mora da sadrži ?token= parametar.');
+      return;
+    }
+
+    const { data, error } = await sb.rpc('get_public_dashboard', { p_token: token });
+    if (error || !data) {
+      showError('Agencija nije pronađena', 'Link je možda istekao ili agencija nije aktivna.');
+      return;
+    }
+
+    const d         = data;
+    const contracts = (d.contracts_sale || 0) + (d.contracts_rent || 0);
+    const revPct    = Math.round((d.revenue / (d.revenue_goal || 1)) * 100);
+    const myConv    = d.inquiries > 0 ? Math.round(contracts / d.inquiries * 100 * 10) / 10 : 0;
+
+    document.getElementById('h-name').textContent    = d.agency_name;
+    document.getElementById('h-period').textContent  = `Nedelja od ${fmtDate(d.week_start)}`;
+    document.getElementById('k-listings').textContent  = d.active_listings ?? '—';
+    document.getElementById('k-inquiries').textContent = d.inquiries;
+    document.getElementById('k-contracts').textContent = contracts;
+    document.getElementById('k-contracts-sub').textContent = `${d.contracts_sale} prodaja · ${d.contracts_rent} zakupa`;
+    document.getElementById('k-revenue').textContent    = `${(d.revenue || 0).toLocaleString('sr')}€`;
+
+    const revSubEl = document.getElementById('k-revenue-sub');
+    revSubEl.textContent = `${revPct}% od cilja ${(d.revenue_goal || 0).toLocaleString('sr')}€`;
+    revSubEl.className   = `kpi-sub ${revPct >= 100 ? 'badge-up' : revPct >= 70 ? 'badge-neu' : 'badge-down'}`;
+
+    document.getElementById('rev-fill').style.width = `${Math.min(revPct, 100)}%`;
+    document.getElementById('rev-left').innerHTML   = `<strong style="color:#16a34a">${(d.revenue || 0).toLocaleString('sr')}€</strong> ostvareno`;
+    document.getElementById('rev-right').textContent = `Cilj: ${(d.revenue_goal || 0).toLocaleString('sr')}€`;
+
+    document.getElementById('loading').hidden   = true;
+    document.getElementById('dashboard').hidden = false;
+
+    // Benchmark
+    const { data: bench } = await sb.rpc('get_benchmark', { in_week_start: d.week_start });
+    if (bench && bench.agency_count >= 2) {
+      document.getElementById('bench-title').textContent = `Poređenje sa platformom (${bench.agency_count} agencija)`;
+
+      const rows = [
+        {
+          label: 'Konverzija upiti → ugovori',
+          mine:  `${myConv}%`,
+          avg:   `${bench.avg_conversion}%`,
+          better: myConv >= bench.avg_conversion,
+        },
+        {
+          label: 'Upiti nedeljno',
+          mine:  `${d.inquiries}`,
+          avg:   `${bench.avg_inquiries}`,
+          better: d.inquiries >= bench.avg_inquiries,
+        },
+        {
+          label: 'Prihod nedeljno',
+          mine:  `${(d.revenue || 0).toLocaleString('sr')}€`,
+          avg:   `${(bench.avg_revenue || 0).toLocaleString('sr')}€`,
+          better: d.revenue >= bench.avg_revenue,
+        },
+      ];
+
+      document.getElementById('bench-rows').innerHTML = rows.map(r => `
+        <div class="bench-row">
+          <div class="bench-label">${r.label}</div>
+          <div class="bench-vals">
+            <span class="${r.better ? 'bench-better' : 'bench-worse'}">Vaša: ${r.mine}</span>
+            <span class="bench-avg">Prosek: ${r.avg}</span>
+          </div>
+        </div>
+      `).join('');
+
+      document.getElementById('bench-card').hidden = false;
+    }
+  }
+
+  loadDashboard();
+</script>
+</body>
+</html>

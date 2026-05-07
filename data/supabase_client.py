@@ -71,7 +71,7 @@ def get_report_data(agency_id: str) -> dict:
     # --- Agenti + performanse ---
     perf_raw = (
         sb.table("agent_performance")
-        .select("inquiries, contracts, agents(name)")
+        .select("inquiries, contracts, agents(name, email)")
         .eq("agency_id", agency_id)
         .eq("week_start", ws)
         .order("inquiries", desc=True)
@@ -81,6 +81,7 @@ def get_report_data(agency_id: str) -> dict:
     agents = [
         {
             "name":      row["agents"]["name"],
+            "email":     row["agents"].get("email") or "",
             "inquiries": row["inquiries"],
             "contracts": row["contracts"],
         }
@@ -226,6 +227,33 @@ def get_monthly_report_data(agency_id: str) -> dict:
         "inquiries_by_source":  sources,
         "agents":               agents_list,
     }
+
+
+def get_benchmark_data(week_start_iso: str) -> dict | None:
+    """Vraća agregirane proseke svih agencija za datu nedelju."""
+    sb = get_client()
+    try:
+        rows = (
+            sb.table("weekly_kpis")
+            .select("inquiries, contracts_sale, contracts_rent, revenue")
+            .eq("week_start", week_start_iso)
+            .execute()
+            .data
+        )
+        if not rows or len(rows) < 2:
+            return None
+        convs = [
+            (r["contracts_sale"] + r["contracts_rent"]) / max(r["inquiries"], 1) * 100
+            for r in rows
+        ]
+        return {
+            "avg_conversion": round(sum(convs) / len(convs), 1),
+            "avg_revenue":    round(sum(r["revenue"] for r in rows) / len(rows)),
+            "avg_inquiries":  round(sum(r["inquiries"] for r in rows) / len(rows)),
+            "agency_count":   len(rows),
+        }
+    except Exception:
+        return None
 
 
 def get_all_active_clients() -> list[dict]:

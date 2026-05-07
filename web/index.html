@@ -75,6 +75,23 @@
     .logout-btn { background: none; border: 1px solid #e2e6ea; color: #555; cursor: pointer; font-size: 0.82rem; padding: 6px 12px; border-radius: 6px; transition: all 0.2s; white-space: nowrap; }
     .logout-btn:hover { background: #f4f6f9; }
 
+    /* ── CSV import ── */
+    textarea { width: 100%; padding: 10px 13px; border: 1.5px solid #e2e6ea; border-radius: 8px; font-size: 0.82rem; font-family: monospace; resize: vertical; background: #fafafa; outline: none; transition: border-color 0.2s; }
+    textarea:focus { border-color: #2563eb; background: white; }
+    input[type="file"] { width: 100%; padding: 6px 0; font-size: 0.88rem; color: #555; cursor: pointer; }
+    .csv-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+    .csv-table th { background: #f4f6f9; padding: 8px 10px; text-align: left; font-size: 0.75rem; text-transform: uppercase; color: #666; border-bottom: 2px solid #e2e6ea; }
+    .csv-table td { padding: 8px 10px; border-bottom: 1px solid #f0f2f5; }
+    .csv-table tr:last-child td { border-bottom: none; }
+    .btn-outline { background: white; border: 1.5px solid #2563eb; color: #2563eb; padding: 10px 22px; border-radius: 9px; font-size: 0.92rem; font-weight: 600; cursor: pointer; transition: all 0.18s; display: inline-block; }
+    .btn-outline:hover { background: #2563eb; color: white; }
+
+    /* ── Javni link ── */
+    .public-link-box { display: flex; align-items: center; gap: 10px; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 12px 14px; margin-top: 10px; }
+    .public-link-text { font-size: 0.82rem; color: #1d4ed8; word-break: break-all; flex: 1; }
+    .btn-copy { background: #eff6ff; border: 1.5px solid #2563eb; color: #2563eb; padding: 7px 14px; border-radius: 6px; font-size: 0.82rem; font-weight: 600; cursor: pointer; white-space: nowrap; transition: all 0.18s; flex-shrink: 0; }
+    .btn-copy:hover { background: #2563eb; color: white; }
+
     /* ── Archive list ── */
     .archive-empty { color: #aaa; font-size: 0.9rem; padding: 8px 0; }
     .report-row {
@@ -164,8 +181,9 @@
     <h1 id="agency-name-header">Unos podataka</h1>
     <div class="header-right">
       <div class="tab-nav">
-        <button class="tab-btn active" id="tab-form-btn" onclick="switchTab('form')">Unos</button>
-        <button class="tab-btn" id="tab-archive-btn" onclick="switchTab('archive')">Arhiva</button>
+        <button class="tab-btn active" id="tab-form-btn"    onclick="switchTab('form')">Unos</button>
+        <button class="tab-btn"        id="tab-import-btn"  onclick="switchTab('import')">Uvoz</button>
+        <button class="tab-btn"        id="tab-archive-btn" onclick="switchTab('archive')">Arhiva</button>
       </div>
       <button class="logout-btn" onclick="doLogout()">Odjavi se</button>
     </div>
@@ -244,6 +262,45 @@
         Sačuvaj nedeljni izveštaj
       </button>
     </form>
+
+    <!-- Javni link -->
+    <div class="card" id="public-link-card" style="display:none">
+      <h2>Javni link</h2>
+      <p style="font-size:0.88rem;color:#666;margin-bottom:4px;">Podelite sa investitorima ili franšizodavcem — prikazuje KPI-eve bez logina.</p>
+      <div class="public-link-box">
+        <span class="public-link-text" id="public-link-text"></span>
+        <button class="btn-copy" onclick="copyPublicLink(this)">Kopiraj</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Uvoz tab ── -->
+  <div id="tab-import" hidden>
+    <div class="card">
+      <h2>CSV uvoz podataka</h2>
+      <p style="font-size:0.88rem;color:#666;margin-bottom:18px;">Uvezite istorijske podatke iz Excel/CSV fajla. Postojeći podaci za istu nedelju se prepisuju.</p>
+
+      <div class="form-group">
+        <label>Učitaj CSV fajl</label>
+        <input type="file" id="csv-file" accept=".csv,.txt" onchange="loadCsvFile(event)">
+      </div>
+
+      <div class="form-group">
+        <label>Ili nalepite CSV tekst</label>
+        <textarea id="csv-text" rows="7" placeholder="week_start,active_listings,new_listings,inquiries,contracts_sale,contracts_rent,revenue,halo_oglasi,4zida,sajt_agencije,instagram_ostalo&#10;2026-04-28,47,5,83,3,7,4200,38,21,14,10&#10;2026-05-05,52,6,91,4,8,4800,42,23,16,10"></textarea>
+      </div>
+
+      <button class="btn-outline" onclick="parseCsv()">Pregledaj uvoz</button>
+    </div>
+
+    <div class="card" id="csv-preview-card" style="display:none">
+      <h2>Pregled podataka</h2>
+      <div id="csv-preview-table" style="overflow-x:auto"></div>
+      <div id="import-msg" style="margin-top:12px"></div>
+      <button class="btn btn-success" id="import-btn" onclick="importCsv()" style="margin-top:14px;">
+        Uvezi u bazu
+      </button>
+    </div>
   </div>
 
   <!-- ── Arhiva tab ── -->
@@ -309,8 +366,10 @@
   function switchTab(tab) {
     activeTab = tab;
     document.getElementById('tab-form').hidden    = (tab !== 'form');
+    document.getElementById('tab-import').hidden  = (tab !== 'import');
     document.getElementById('tab-archive').hidden = (tab !== 'archive');
     document.getElementById('tab-form-btn').classList.toggle('active',    tab === 'form');
+    document.getElementById('tab-import-btn').classList.toggle('active',  tab === 'import');
     document.getElementById('tab-archive-btn').classList.toggle('active', tab === 'archive');
 
     if (tab === 'archive') loadArchive();
@@ -350,7 +409,7 @@
 
     const { data: agencies, error } = await sb
       .from('agencies')
-      .select('id, name')
+      .select('id, name, public_token')
       .eq('user_id', user.id)
       .limit(1);
 
@@ -362,6 +421,13 @@
 
     agencyId = agencies[0].id;
     document.getElementById('agency-name-header').textContent = agencies[0].name;
+
+    const token = agencies[0].public_token;
+    if (token) {
+      const link = `${window.location.origin}/public.html?token=${token}`;
+      document.getElementById('public-link-text').textContent = link;
+      document.getElementById('public-link-card').style.display = 'block';
+    }
 
     const { data: agents } = await sb
       .from('agents')
@@ -538,6 +604,155 @@
 
     btn.disabled    = false;
     btn.textContent = 'Sačuvaj nedeljni izveštaj';
+  }
+
+  // ── Javni link ─────────────────────────────────────────────────────────────
+
+  function copyPublicLink(btn) {
+    const link = document.getElementById('public-link-text').textContent;
+    navigator.clipboard.writeText(link).then(() => {
+      btn.textContent = 'Kopirano!';
+      setTimeout(() => btn.textContent = 'Kopiraj', 1600);
+    });
+  }
+
+  // ── CSV uvoz ────────────────────────────────────────────────────────────────
+
+  let parsedCsvRows = [];
+
+  function loadCsvFile(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => { document.getElementById('csv-text').value = e.target.result.trim(); };
+    reader.readAsText(file, 'UTF-8');
+  }
+
+  function parseCsv() {
+    const text = document.getElementById('csv-text').value.trim();
+    if (!text) { alert('Nema podataka za uvoz.'); return; }
+
+    const lines    = text.split('\n').map(l => l.trim()).filter(Boolean);
+    if (lines.length < 2) { alert('CSV mora imati zaglavlje i bar jedan red podataka.'); return; }
+
+    const expected = ['week_start','active_listings','new_listings','inquiries',
+                      'contracts_sale','contracts_rent','revenue',
+                      'halo_oglasi','4zida','sajt_agencije','instagram_ostalo'];
+    const headers  = lines[0].split(',').map(h => h.trim());
+
+    if (!expected.every((h, i) => headers[i] === h)) {
+      alert('Zaglavlje CSV-a nije ispravno.\n\nOčekivano:\n' + expected.join(','));
+      return;
+    }
+
+    parsedCsvRows = [];
+    const errors  = [];
+
+    for (let i = 1; i < lines.length; i++) {
+      const vals = lines[i].split(',');
+      if (vals.length !== expected.length) { errors.push(`Red ${i + 1}: pogrešan broj kolona (${vals.length})`); continue; }
+
+      const row = {
+        week_start:       vals[0].trim(),
+        active_listings:  parseInt(vals[1]),
+        new_listings:     parseInt(vals[2]),
+        inquiries:        parseInt(vals[3]),
+        contracts_sale:   parseInt(vals[4]),
+        contracts_rent:   parseInt(vals[5]),
+        revenue:          parseFloat(vals[6]),
+        halo_oglasi:      parseInt(vals[7]),
+        '4zida':          parseInt(vals[8]),
+        sajt_agencije:    parseInt(vals[9]),
+        instagram_ostalo: parseInt(vals[10]),
+      };
+
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(row.week_start)) {
+        errors.push(`Red ${i + 1}: datum mora biti YYYY-MM-DD (npr. 2026-04-28)`); continue;
+      }
+      if (Object.values(row).some(v => typeof v === 'number' && isNaN(v))) {
+        errors.push(`Red ${i + 1}: neispravan broj`); continue;
+      }
+
+      parsedCsvRows.push(row);
+    }
+
+    if (errors.length) { alert('Greške u CSV-u:\n' + errors.join('\n')); return; }
+    if (!parsedCsvRows.length) { alert('Nema ispravnih redova za uvoz.'); return; }
+
+    let html = `<table class="csv-table"><thead><tr>
+      <th>Nedelja</th><th>Oglasi</th><th>Upiti</th><th>Ugovori</th><th>Prihod</th>
+    </tr></thead><tbody>`;
+    for (const r of parsedCsvRows) {
+      html += `<tr>
+        <td>${r.week_start}</td>
+        <td>${r.active_listings}</td>
+        <td>${r.inquiries}</td>
+        <td>${r.contracts_sale + r.contracts_rent}</td>
+        <td>${r.revenue.toLocaleString('sr')}€</td>
+      </tr>`;
+    }
+    html += `</tbody></table><p style="font-size:0.82rem;color:#888;margin-top:8px;">${parsedCsvRows.length} ${parsedCsvRows.length === 1 ? 'nedelja' : 'nedelja'} spreman/o za uvoz.</p>`;
+
+    document.getElementById('csv-preview-table').innerHTML = html;
+    document.getElementById('csv-preview-card').style.display = 'block';
+    document.getElementById('import-msg').innerHTML = '';
+    document.getElementById('import-btn').disabled  = false;
+    document.getElementById('import-btn').textContent = 'Uvezi u bazu';
+  }
+
+  async function importCsv() {
+    if (!parsedCsvRows.length) return;
+    const btn = document.getElementById('import-btn');
+    btn.disabled    = true;
+    btn.textContent = 'Uvoz u toku...';
+    document.getElementById('import-msg').innerHTML = '';
+
+    let ok = 0, fail = 0;
+
+    for (const row of parsedCsvRows) {
+      try {
+        const { error: e1 } = await sb.from('weekly_kpis').upsert({
+          agency_id:       agencyId,
+          week_start:      row.week_start,
+          active_listings: row.active_listings,
+          new_listings:    row.new_listings,
+          inquiries:       row.inquiries,
+          contracts_sale:  row.contracts_sale,
+          contracts_rent:  row.contracts_rent,
+          revenue:         row.revenue,
+        }, { onConflict: 'agency_id,week_start' });
+        if (e1) throw e1;
+
+        const sources = [
+          { source: 'Halo oglasi',      count: row.halo_oglasi },
+          { source: '4zida',            count: row['4zida'] },
+          { source: 'Sajt agencije',    count: row.sajt_agencije },
+          { source: 'Instagram/ostalo', count: row.instagram_ostalo },
+        ];
+        for (const s of sources) {
+          const { error: e2 } = await sb.from('inquiry_sources').upsert(
+            { agency_id: agencyId, week_start: row.week_start, ...s },
+            { onConflict: 'agency_id,week_start,source' }
+          );
+          if (e2) throw e2;
+        }
+        ok++;
+      } catch (err) {
+        fail++;
+        console.error('Import error for', row.week_start, err);
+      }
+    }
+
+    btn.disabled    = false;
+    btn.textContent = 'Uvezi u bazu';
+
+    const msg     = fail
+      ? `Uvezeno ${ok} nedelja. Greška: ${fail} nedelja (pogledajte konzolu).`
+      : `Uspešno uvezeno ${ok} ${ok === 1 ? 'nedelja' : 'nedelja'}.`;
+    document.getElementById('import-msg').innerHTML =
+      `<div class="msg ${fail ? 'msg-error' : 'msg-success'}">${msg}</div>`;
+
+    if (!fail) parsedCsvRows = [];
   }
 
   // ── Auto-session ───────────────────────────────────────────────────────────

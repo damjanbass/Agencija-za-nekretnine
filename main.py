@@ -23,7 +23,8 @@ if sys.platform == "win32":
 
 
 def prepare_template_vars(data: dict, analysis: dict | None,
-                           snapshots: list[dict], city: str) -> dict:
+                           snapshots: list[dict], city: str,
+                           benchmark: dict | None = None) -> dict:
     inquiries_change = data["inquiries"] - data["prev_inquiries"]
     safe_prev        = data["prev_inquiries"] or 1
     inquiries_pct    = round((inquiries_change / safe_prev) * 100)
@@ -47,6 +48,7 @@ def prepare_template_vars(data: dict, analysis: dict | None,
         "contracts_total":      data["contracts_sale"] + data["contracts_rent"],
         "revenue_pct":          revenue_pct,
         "max_source_count":     max_source,
+        "benchmark":            benchmark,
     }
 
 
@@ -90,6 +92,22 @@ def run(preview: bool = False, use_mock: bool = False, city: str = "beograd"):
         else:
             print(f"    [Tržište] Nije dostupno na {plan.name} planu.")
 
+        # Benchmark
+        benchmark = None
+        if plan.allows_benchmark():
+            if not use_mock and config.SUPABASE_KEY:
+                from datetime import datetime as _dt
+                from data.supabase_client import get_benchmark_data
+                _ws_iso = _dt.strptime(data["week_start"], "%d.%m.%Y").strftime("%Y-%m-%d")
+                benchmark = get_benchmark_data(_ws_iso)
+            else:
+                from data.mock_data import get_mock_benchmark
+                benchmark = get_mock_benchmark()
+            if benchmark:
+                print(f"    [Benchmark] {benchmark['agency_count']} agencija — prosek konverzija {benchmark['avg_conversion']}%, prihod {benchmark['avg_revenue']:,}€")
+            else:
+                print("    [Benchmark] Nema dovoljno podataka za poređenje.")
+
         # AI analiza
         market_for_ai = snapshots if snapshots else None
         if plan.allows_ai() and config.ANTHROPIC_API_KEY:
@@ -109,7 +127,7 @@ def run(preview: bool = False, use_mock: bool = False, city: str = "beograd"):
             print(f"    [~] Prognoza: {analysis.get('prognoza', '—')}")
 
         # Render
-        html = render_report(prepare_template_vars(data, analysis, snapshots, city))
+        html = render_report(prepare_template_vars(data, analysis, snapshots, city, benchmark))
 
         slug = data["agency_name"].lower().replace(" ", "_")
         out  = Path(__file__).parent / f"izvestaj_{slug}.html"
@@ -243,14 +261,77 @@ def run_monthly(preview: bool = False, use_mock: bool = False):
     print("\n[✓] Mesečni izveštaji gotovi.")
 
 
+def run_agent_reports(preview: bool = False, use_mock: bool = False):
+    if use_mock or not config.SUPABASE_KEY:
+        from data.mock_data import get_mock_report_data
+        clients_data = [("mock", get_mock_report_data())]
+    else:
+        from data.supabase_client import get_all_active_clients, get_report_data
+        clients_raw  = get_all_active_clients()
+        clients_data = [(c["id"], get_report_data(c["id"])) for c in clients_raw]
+
+    for agency_id, data in clients_data:
+        plan = get_plan(data.get("plan_id", "free"))
+        if not plan.allows_agent_reports():
+            print(f"\n[skip] {data['agency_name']} — agent izveštaji nisu dostupni na {plan.name} planu.")
+            continue
+
+        agents = data["agents"]
+        agents_sorted = sorted(agents, key=lambda a: a["contracts"] / max(a["inquiries"], 1), reverse=True)
+        team_inquiries = sum(a["inquiries"] for a in agents)
+        team_contracts = sum(a["contracts"] for a in agents)
+        team_conv      = round(team_contracts / max(team_inquiries, 1) * 100, 1)
+
+        print(f"\n[→] Agent izveštaji: {data['agency_name']}  ({data['week_start']} – {data['week_end']})")
+
+        for rank, agent in enumerate(agents_sorted, start=1):
+            if not agent.get("email"):
+                print(f"    [skip] {agent['name']} — nema email adrese")
+                continue
+
+            agent_conv = round(agent["contracts"] / max(agent["inquiries"], 1) * 100, 1)
+            vars = {
+                **data,
+                "agent_name":       agent["name"],
+                "agent_conversion": agent_conv,
+                "agent_inquiries":  agent["inquiries"],
+                "agent_contracts":  agent["contracts"],
+                "agent_rank":       rank,
+                "team_size":        len(agents_sorted),
+                "team_conversion":  team_conv,
+            }
+
+            html = render_report(vars, template="agent_report.html")
+
+            if preview:
+                slug = agent["name"].lower().replace(" ", "_")
+                out  = Path(__file__).parent / f"agent_{slug}.html"
+                out.write_text(html, encoding="utf-8")
+                print(f"    [preview] {agent['name']} → {out.name}")
+            else:
+                subject = f"Vaš nedeljni izveštaj — {data['week_start']}"
+                send_report_email(
+                    to_email=agent["email"],
+                    to_name=agent["name"],
+                    subject=subject,
+                    html_body=html,
+                )
+                print(f"    [✓] {agent['name']} ({agent['email']})")
+
+    print("\n[✓] Agent izveštaji gotovi.")
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--preview", action="store_true", help="Ne šalji mejl")
-    parser.add_argument("--mock",    action="store_true", help="Koristi mock podatke")
-    parser.add_argument("--monthly", action="store_true", help="Mesečni izveštaj umesto nedeljnog")
-    parser.add_argument("--city",    default="beograd",  help="Grad za tržišnu analizu")
+    parser.add_argument("--preview",       action="store_true", help="Ne šalji mejl")
+    parser.add_argument("--mock",          action="store_true", help="Koristi mock podatke")
+    parser.add_argument("--monthly",       action="store_true", help="Mesečni izveštaj umesto nedeljnog")
+    parser.add_argument("--agent-reports", action="store_true", help="Pošalji personalne izveštaje agentima")
+    parser.add_argument("--city",          default="beograd",   help="Grad za tržišnu analizu")
     args = parser.parse_args()
     if args.monthly:
         run_monthly(preview=args.preview, use_mock=args.mock)
+    elif args.agent_reports:
+        run_agent_reports(preview=args.preview, use_mock=args.mock)
     else:
         run(preview=args.preview, use_mock=args.mock, city=args.city)

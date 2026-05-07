@@ -39,10 +39,10 @@ def get_mock_monthly_data(agency_id: str = "prima") -> dict:
             "Instagram/ostalo": 29,
         },
         "agents": [
-            {"name": "Marko Petrović",    "inquiries": 112, "contracts": 14},
-            {"name": "Ana Nikolić",       "inquiries": 98,  "contracts": 11},
-            {"name": "Jovan Đorđević",    "inquiries": 67,  "contracts": 7},
-            {"name": "Milica Stojanović", "inquiries": 35,  "contracts": 3},
+            {"name": "Marko Petrović",    "email": "marko@primakretnine.rs",   "inquiries": 112, "contracts": 14},
+            {"name": "Ana Nikolić",       "email": "ana@primakretnine.rs",     "inquiries": 98,  "contracts": 11},
+            {"name": "Jovan Đorđević",    "email": "jovan@primakretnine.rs",   "inquiries": 67,  "contracts": 7},
+            {"name": "Milica Stojanović", "email": "milica@primakretnine.rs",  "inquiries": 35,  "contracts": 3},
         ],
     }
 
@@ -80,9 +80,18 @@ def get_mock_report_data(agency_id: str = "prima") -> dict:
 
         # Agenti
         "agents": [
-            {"name": "Marko Petrović", "inquiries": 31, "contracts": 4},
-            {"name": "Ana Nikolić",    "inquiries": 27, "contracts": 3},
-            {"name": "Jovan Đorđević", "inquiries": 18, "contracts": 2},
-            {"name": "Milica Stojanović", "inquiries": 7, "contracts": 0},
+            {"name": "Marko Petrović",    "email": "marko@primakretnine.rs",   "inquiries": 31, "contracts": 4},
+            {"name": "Ana Nikolić",       "email": "ana@primakretnine.rs",     "inquiries": 27, "contracts": 3},
+            {"name": "Jovan Đorđević",    "email": "jovan@primakretnine.rs",   "inquiries": 18, "contracts": 2},
+            {"name": "Milica Stojanović", "email": "milica@primakretnine.rs",  "inquiries": 7,  "contracts": 0},
         ],
+    }
+
+
+def get_mock_benchmark() -> dict:
+    return {
+        "avg_conversion": 8.4,
+        "avg_revenue":    3200,
+        "avg_inquiries":  61,
+        "agency_count":   7,
     }

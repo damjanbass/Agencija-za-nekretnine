@@ -336,6 +336,19 @@
   .market-summary-val  { font-size: 18px; font-weight: 700; color: #0f3460; }
   .market-summary-lbl  { font-size: 10px; color: #8892a4; text-transform: uppercase; letter-spacing: 0.6px; margin-top: 2px; }
 
+  /* BENCHMARK */
+  .benchmark-section { margin-bottom: 32px; }
+  .bench-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 14px; border-radius: 8px; margin-bottom: 8px;
+    background: #f8f9fc; border: 1px solid #eaedf3;
+  }
+  .bench-label { font-size: 13px; color: #374151; }
+  .bench-vals  { display: flex; gap: 14px; font-size: 12px; font-weight: 600; }
+  .bench-better { color: #16a34a; }
+  .bench-worse  { color: #dc2626; }
+  .bench-avg    { color: #8892a4; font-weight: 400; }
+
   /* FOOTER */
   .footer {
     background: #f8f9fc;
@@ -426,6 +439,35 @@
         <span>Cilj: {{ revenue_goal }}€</span>
       </div>
     </div>
+
+    <!-- BENCHMARK -->
+    {% if benchmark and benchmark.agency_count >= 2 %}
+    {% set my_conv = ((contracts_total / (inquiries or 1)) * 100) | round(1) %}
+    <div class="benchmark-section">
+      <div class="section-title">Poređenje sa platformom ({{ benchmark.agency_count }} agencija)</div>
+      <div class="bench-row">
+        <div class="bench-label">Konverzija upiti → ugovori</div>
+        <div class="bench-vals">
+          <span class="bench-better {% if my_conv < benchmark.avg_conversion %}bench-worse{% endif %}">Vaša: {{ my_conv }}%</span>
+          <span class="bench-avg">Prosek: {{ benchmark.avg_conversion }}%</span>
+        </div>
+      </div>
+      <div class="bench-row">
+        <div class="bench-label">Upiti nedeljno</div>
+        <div class="bench-vals">
+          <span class="bench-better {% if inquiries < benchmark.avg_inquiries %}bench-worse{% endif %}">Vaši: {{ inquiries }}</span>
+          <span class="bench-avg">Prosek: {{ benchmark.avg_inquiries }}</span>
+        </div>
+      </div>
+      <div class="bench-row">
+        <div class="bench-label">Prihod nedeljno</div>
+        <div class="bench-vals">
+          <span class="bench-better {% if revenue < benchmark.avg_revenue %}bench-worse{% endif %}">Vaš: {{ revenue }}€</span>
+          <span class="bench-avg">Prosek: {{ benchmark.avg_revenue }}€</span>
+        </div>
+      </div>
+    </div>
+    {% endif %}
 
     <!-- AGENTI -->
     <div class="agents-section">
