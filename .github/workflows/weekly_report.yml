@@ -24,6 +24,9 @@ jobs:
           python-version: "3.11"
           cache: pip
 
+      - name: Instaliraj sistem pakete (PDF)
+        run: sudo apt-get install -y -q libpango-1.0-0 libpangocairo-1.0-0 libharfbuzz0b libpangoft2-1.0-0 libgdk-pixbuf2.0-0
+
       - name: Instaliraj zavisnosti
         run: pip install -r requirements.txt
 

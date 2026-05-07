@@ -122,6 +122,12 @@
       color: #888; line-height: 1; padding: 2px 6px; border-radius: 4px;
     }
     .modal-close:hover { background: #f4f6f9; color: #333; }
+    .btn-print {
+      padding: 6px 14px; border: 1.5px solid #16a34a; border-radius: 7px;
+      background: white; color: #16a34a; font-size: 0.82rem; font-weight: 600;
+      cursor: pointer; transition: all 0.18s;
+    }
+    .btn-print:hover { background: #16a34a; color: white; }
     #report-iframe { flex: 1; width: 100%; border: none; }
 
     @media (max-width: 520px) {
@@ -257,7 +263,10 @@
   <div class="modal-wrapper">
     <div class="modal-header">
       <span class="modal-title" id="modal-title">Izveštaj</span>
-      <button class="modal-close" onclick="closeModal()">&#x2715;</button>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button class="btn-print" onclick="printReport()">&#128438; Preuzmi PDF</button>
+        <button class="modal-close" onclick="closeModal()">&#x2715;</button>
+      </div>
     </div>
     <iframe id="report-iframe" srcdoc=""></iframe>
   </div>
@@ -457,6 +466,12 @@
     document.getElementById('report-iframe').srcdoc    = data.html;
     document.getElementById('report-modal').style.display = 'flex';
     document.body.style.overflow = 'hidden';
+  }
+
+  function printReport() {
+    const iframe = document.getElementById('report-iframe');
+    iframe.contentWindow.focus();
+    iframe.contentWindow.print();
   }
 
   function closeModal() {

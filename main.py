@@ -122,6 +122,18 @@ def run(preview: bool = False, use_mock: bool = False, city: str = "beograd"):
             save_report(agency_id, week_start, html, report_type="weekly")
             print("    [DB] Arhivirano u Supabase.")
 
+        # PDF export
+        pdf_bytes = None
+        if plan.allows_pdf():
+            from pdf.generator import generate_pdf
+            print("    [PDF] Generišem PDF...")
+            pdf_bytes = generate_pdf(html)
+            pdf_out = Path(__file__).parent / f"izvestaj_{slug}.pdf"
+            pdf_out.write_bytes(pdf_bytes)
+            print(f"    [PDF] {pdf_out.name}")
+        else:
+            print(f"    [PDF] Nije dostupno na {plan.name} planu.")
+
         # Slanje mejla
         if not preview:
             if not plan.allows_email():
@@ -133,6 +145,8 @@ def run(preview: bool = False, use_mock: bool = False, city: str = "beograd"):
                     to_name=data["agency_name"],
                     subject=subject,
                     html_body=html,
+                    pdf_bytes=pdf_bytes,
+                    pdf_filename=f"izvestaj_{slug}_{data['week_start'].replace('.', '-')}.pdf",
                 )
         else:
             print("    [EMAIL] Preview mod — mejl nije poslat.")
@@ -179,6 +193,18 @@ def run_monthly(preview: bool = False, use_mock: bool = False):
             save_report(agency_id, month_start, html, report_type="monthly")
             print("    [DB] Arhivirano u Supabase.")
 
+        # PDF export
+        pdf_bytes = None
+        if plan.allows_pdf():
+            from pdf.generator import generate_pdf
+            print("    [PDF] Generišem PDF...")
+            pdf_bytes = generate_pdf(html)
+            pdf_out = Path(__file__).parent / f"mesecni_{slug}.pdf"
+            pdf_out.write_bytes(pdf_bytes)
+            print(f"    [PDF] {pdf_out.name}")
+        else:
+            print(f"    [PDF] Nije dostupno na {plan.name} planu.")
+
         if not preview:
             if plan.allows_email():
                 from mailer.sender import send_report_email
@@ -188,6 +214,8 @@ def run_monthly(preview: bool = False, use_mock: bool = False):
                     to_name=data["agency_name"],
                     subject=subject,
                     html_body=html,
+                    pdf_bytes=pdf_bytes,
+                    pdf_filename=f"mesecni_{slug}_{data['month_name'].replace(' ', '_')}.pdf",
                 )
             else:
                 print(f"    [EMAIL] Slanje nije dostupno na {plan.name} planu.")

@@ -120,6 +120,13 @@
 
   /* FOOTER */
   .footer { background: #f8f9fc; padding: 20px 40px; border-top: 1px solid #eaedf3; text-align: center; font-size: 12px; color: #8892a4; }
+
+  @media print {
+    @page { margin: 0; size: A4; }
+    body { background: white; }
+    .wrapper { box-shadow: none; border-radius: 0; margin: 0; max-width: 100%; }
+    * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  }
 </style>
 </head>
 <body>
