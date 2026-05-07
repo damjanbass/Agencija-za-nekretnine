@@ -103,9 +103,10 @@ def run(preview: bool = False, use_mock: bool = False, city: str = "beograd"):
             analysis = None
 
         if analysis:
-            print(f"    [+] Dobro:   {analysis['dobro']}")
-            print(f"    [!] Pažnja:  {analysis['paznja']}")
-            print(f"    [→] Predlog: {analysis['predlog']}")
+            print(f"    [+] Dobro:    {analysis['dobro']}")
+            print(f"    [!] Pažnja:   {analysis['paznja']}")
+            print(f"    [→] Predlog:  {analysis['predlog']}")
+            print(f"    [~] Prognoza: {analysis.get('prognoza', '—')}")
 
         # Render
         html = render_report(prepare_template_vars(data, analysis, snapshots, city))
@@ -167,14 +168,31 @@ def run_monthly(preview: bool = False, use_mock: bool = False):
         plan = get_plan(data.get("plan_id", "free"))
         print(f"\n[→] {data['agency_name']}  [{plan.name}]  ({data['month_name']})")
 
+        # Tržišna analiza (za mesečni kontekst)
+        snapshots = []
+        if plan.allows_market():
+            print(f"    [Scraping] Preuzimam podatke sa: {', '.join(plan.market_sites)}")
+            snapshots = fetch_market(plan.market_sites, city="beograd")
+            mock_count = sum(1 for s in snapshots if s["is_mock"])
+            print(f"    [Scraping] {len(snapshots) - mock_count} live, {mock_count} mock snapshot-a")
+
         analysis = None
         if plan.allows_ai() and config.ANTHROPIC_API_KEY:
             from ai.analyze import generate_monthly_analysis
             print("    [AI] Pozivam Claude za mesečnu analizu...")
-            analysis = generate_monthly_analysis(data)
-            print(f"    [+] Dobro:   {analysis['dobro']}")
-            print(f"    [!] Pažnja:  {analysis['paznja']}")
-            print(f"    [→] Predlog: {analysis['predlog']}")
+            analysis = generate_monthly_analysis(data, market=snapshots or None)
+        elif plan.allows_ai():
+            from ai.analyze import generate_monthly_analysis_fallback
+            print("    [AI] Nema ANTHROPIC_API_KEY — fallback mesečna analiza.")
+            analysis = generate_monthly_analysis_fallback(data)
+        else:
+            print(f"    [AI] Nije dostupno na {plan.name} planu.")
+
+        if analysis:
+            print(f"    [+] Dobro:    {analysis['dobro']}")
+            print(f"    [!] Pažnja:   {analysis['paznja']}")
+            print(f"    [→] Predlog:  {analysis['predlog']}")
+            print(f"    [~] Prognoza: {analysis.get('prognoza', '—')}")
 
         vars = {**data, "analysis": analysis, "plan": plan}
         html = render_report(vars, template="monthly_report.html")

@@ -113,9 +113,10 @@
   .ai-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
   .ai-text { font-size: 14px; line-height: 1.55; color: #374151; }
   .ai-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 3px; }
-  .ai-label.green { color: #16a34a; }
-  .ai-label.amber { color: #d97706; }
-  .ai-label.blue  { color: #2563eb; }
+  .ai-label.green  { color: #16a34a; }
+  .ai-label.amber  { color: #d97706; }
+  .ai-label.blue   { color: #2563eb; }
+  .ai-label.purple { color: #7c3aed; }
   .ai-locked { text-align: center; padding: 16px 0 4px; color: #8892a4; font-size: 14px; }
 
   /* FOOTER */
@@ -299,6 +300,15 @@
           {{ analysis.predlog }}
         </div>
       </div>
+      {% if analysis.prognoza %}
+      <div class="ai-item">
+        <div class="ai-icon">📈</div>
+        <div class="ai-text">
+          <div class="ai-label purple">Prognoza za sledeći mesec</div>
+          {{ analysis.prognoza }}
+        </div>
+      </div>
+      {% endif %}
     </div>
     {% else %}
     <div class="ai-section">
