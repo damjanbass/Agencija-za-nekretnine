@@ -119,7 +119,7 @@ def run(preview: bool = False, use_mock: bool = False, city: str = "beograd"):
         if not use_mock and config.SUPABASE_KEY:
             today      = date.today()
             week_start = today - timedelta(days=today.weekday() + 7)
-            save_report(agency_id, week_start, html)
+            save_report(agency_id, week_start, html, report_type="weekly")
             print("    [DB] Arhivirano u Supabase.")
 
         # Slanje mejla
@@ -169,6 +169,15 @@ def run_monthly(preview: bool = False, use_mock: bool = False):
         out  = Path(__file__).parent / f"mesecni_{slug}.html"
         out.write_text(html, encoding="utf-8")
         print(f"    [HTML] {out.name}")
+
+        # Arhiviranje u Supabase
+        if not use_mock and config.SUPABASE_KEY:
+            today       = date.today()
+            month_end   = today.replace(day=1) - timedelta(days=1)
+            month_start = month_end.replace(day=1)
+            from data.supabase_client import save_report
+            save_report(agency_id, month_start, html, report_type="monthly")
+            print("    [DB] Arhivirano u Supabase.")
 
         if not preview:
             if plan.allows_email():

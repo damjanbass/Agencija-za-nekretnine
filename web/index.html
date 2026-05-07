@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Nedeljni unos — Nekretnine</title>
+  <title>Panel — Nekretnine</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -33,18 +33,33 @@
     .btn-success:hover { background: #15803d; }
     .btn-success:disabled { background: #86efac; cursor: not-allowed; }
 
-    /* ── Dashboard ── */
-    #form-view { max-width: 740px; margin: 0 auto; padding: 28px 20px 60px; }
+    /* ── Dashboard wrapper ── */
+    #dashboard { max-width: 740px; margin: 0 auto; padding: 28px 20px 60px; }
 
-    .page-header { background: white; border-radius: 12px; padding: 18px 24px; margin-bottom: 18px; box-shadow: 0 2px 10px rgba(0,0,0,0.06); display: flex; align-items: center; justify-content: space-between; }
+    /* ── Page header ── */
+    .page-header {
+      background: white; border-radius: 12px; padding: 18px 24px;
+      margin-bottom: 18px; box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    }
     .page-header h1 { font-size: 1.2rem; }
-    .page-header span { color: #666; font-size: 0.88rem; margin-top: 2px; display: block; }
+    .header-right { display: flex; align-items: center; gap: 10px; }
 
+    /* ── Tabs ── */
+    .tab-nav { display: flex; gap: 4px; background: #f4f6f9; border-radius: 8px; padding: 3px; }
+    .tab-btn {
+      padding: 6px 16px; border: none; border-radius: 6px; font-size: 0.85rem;
+      font-weight: 600; cursor: pointer; background: transparent; color: #666;
+      transition: all 0.18s;
+    }
+    .tab-btn.active { background: white; color: #2563eb; box-shadow: 0 1px 4px rgba(0,0,0,0.10); }
+    .tab-btn:hover:not(.active) { background: #eaecef; }
+
+    /* ── Cards ── */
     .card { background: white; border-radius: 12px; padding: 26px; margin-bottom: 16px; box-shadow: 0 2px 10px rgba(0,0,0,0.06); }
     .card h2 { font-size: 0.9rem; color: #2563eb; font-weight: 700; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid #eff6ff; text-transform: uppercase; letter-spacing: 0.05em; }
 
     .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
 
     /* ── Agent rows ── */
     .agents-header { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 12px; margin-bottom: 8px; }
@@ -57,13 +72,63 @@
     .msg-error   { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
     .msg-success { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
 
-    .logout-btn { background: none; border: 1px solid #e2e6ea; color: #555; cursor: pointer; font-size: 0.82rem; padding: 6px 12px; border-radius: 6px; transition: all 0.2s; }
+    .logout-btn { background: none; border: 1px solid #e2e6ea; color: #555; cursor: pointer; font-size: 0.82rem; padding: 6px 12px; border-radius: 6px; transition: all 0.2s; white-space: nowrap; }
     .logout-btn:hover { background: #f4f6f9; }
 
+    /* ── Archive list ── */
+    .archive-empty { color: #aaa; font-size: 0.9rem; padding: 8px 0; }
+    .report-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 13px 0; border-bottom: 1px solid #f0f2f5;
+    }
+    .report-row:last-child { border-bottom: none; }
+    .report-date { font-size: 0.95rem; font-weight: 600; }
+    .report-meta { font-size: 0.82rem; color: #888; margin-top: 2px; }
+    .report-type-badge {
+      display: inline-block; font-size: 0.75rem; font-weight: 700;
+      padding: 2px 8px; border-radius: 10px; margin-left: 8px;
+    }
+    .badge-weekly  { background: #eff6ff; color: #2563eb; }
+    .badge-monthly { background: #fef9c3; color: #ca8a04; }
+    .btn-view {
+      padding: 7px 16px; border: 1.5px solid #2563eb; border-radius: 7px;
+      background: white; color: #2563eb; font-size: 0.85rem; font-weight: 600;
+      cursor: pointer; transition: all 0.18s; white-space: nowrap;
+    }
+    .btn-view:hover { background: #2563eb; color: white; }
+    .btn-view:disabled { border-color: #bfdbfe; color: #93c5fd; cursor: not-allowed; }
+
+    /* ── Report modal ── */
+    #report-modal {
+      display: none; position: fixed; inset: 0; z-index: 1000;
+      align-items: center; justify-content: center;
+    }
+    .modal-backdrop {
+      position: absolute; inset: 0; background: rgba(0,0,0,0.55);
+    }
+    .modal-wrapper {
+      position: relative; z-index: 1; width: 94vw; max-width: 720px;
+      height: 88vh; background: white; border-radius: 14px;
+      display: flex; flex-direction: column; overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    .modal-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 20px; border-bottom: 1px solid #eaedf3; flex-shrink: 0;
+    }
+    .modal-title { font-size: 0.95rem; font-weight: 700; color: #1a1a2e; }
+    .modal-close {
+      background: none; border: none; font-size: 1.4rem; cursor: pointer;
+      color: #888; line-height: 1; padding: 2px 6px; border-radius: 4px;
+    }
+    .modal-close:hover { background: #f4f6f9; color: #333; }
+    #report-iframe { flex: 1; width: 100%; border: none; }
+
     @media (max-width: 520px) {
-      .grid-2, .grid-3 { grid-template-columns: 1fr; }
+      .grid-2 { grid-template-columns: 1fr; }
       .agent-row, .agents-header { grid-template-columns: 2fr 1fr 1fr; }
       .login-card { padding: 32px 24px; }
+      .modal-wrapper { width: 100vw; height: 100vh; border-radius: 0; }
     }
   </style>
 </head>
@@ -87,90 +152,115 @@
   </div>
 </div>
 
-<!-- ═══ FORMA ═══ -->
-<div id="form-view" hidden>
+<!-- ═══ DASHBOARD ═══ -->
+<div id="dashboard" hidden>
   <div class="page-header">
-    <div>
-      <h1 id="agency-name-header">Unos podataka</h1>
-      <span>Nedeljni izveštaj</span>
+    <h1 id="agency-name-header">Unos podataka</h1>
+    <div class="header-right">
+      <div class="tab-nav">
+        <button class="tab-btn active" id="tab-form-btn" onclick="switchTab('form')">Unos</button>
+        <button class="tab-btn" id="tab-archive-btn" onclick="switchTab('archive')">Arhiva</button>
+      </div>
+      <button class="logout-btn" onclick="doLogout()">Odjavi se</button>
     </div>
-    <button class="logout-btn" onclick="doLogout()">Odjavi se</button>
   </div>
 
   <div id="form-msg"></div>
 
-  <form id="report-form" onsubmit="submitForm(event)">
+  <!-- ── Unos tab ── -->
+  <div id="tab-form">
+    <form id="report-form" onsubmit="submitForm(event)">
 
-    <!-- KPI-evi -->
-    <div class="card">
-      <h2>Osnovi KPI-evi</h2>
-      <div class="form-group">
-        <label>Datum početka nedelje (ponedeljak)</label>
-        <input type="date" id="week_start" required>
+      <div class="card">
+        <h2>Osnovi KPI-evi</h2>
+        <div class="form-group">
+          <label>Datum početka nedelje (ponedeljak)</label>
+          <input type="date" id="week_start" required>
+        </div>
+        <div class="grid-2">
+          <div class="form-group">
+            <label>Aktivni oglasi</label>
+            <input type="number" id="active_listings" min="0" placeholder="0" required>
+          </div>
+          <div class="form-group">
+            <label>Novi oglasi ove nedelje</label>
+            <input type="number" id="new_listings" min="0" placeholder="0" required>
+          </div>
+          <div class="form-group">
+            <label>Upiti ove nedelje</label>
+            <input type="number" id="inquiries" min="0" placeholder="0" required>
+          </div>
+          <div class="form-group">
+            <label>Ugovori — prodaja</label>
+            <input type="number" id="contracts_sale" min="0" placeholder="0" required>
+          </div>
+          <div class="form-group">
+            <label>Ugovori — zakup</label>
+            <input type="number" id="contracts_rent" min="0" placeholder="0" required>
+          </div>
+          <div class="form-group">
+            <label>Prihod (€)</label>
+            <input type="number" id="revenue" min="0" placeholder="0" required>
+          </div>
+        </div>
       </div>
-      <div class="grid-2">
-        <div class="form-group">
-          <label>Aktivni oglasi</label>
-          <input type="number" id="active_listings" min="0" placeholder="0" required>
+
+      <div class="card">
+        <h2>Upiti po izvoru</h2>
+        <div class="grid-2">
+          <div class="form-group">
+            <label>Halo oglasi</label>
+            <input type="number" id="src_halo" min="0" value="0">
+          </div>
+          <div class="form-group">
+            <label>4zida</label>
+            <input type="number" id="src_4zida" min="0" value="0">
+          </div>
+          <div class="form-group">
+            <label>Sajt agencije</label>
+            <input type="number" id="src_sajt" min="0" value="0">
+          </div>
+          <div class="form-group">
+            <label>Instagram / ostalo</label>
+            <input type="number" id="src_insta" min="0" value="0">
+          </div>
         </div>
-        <div class="form-group">
-          <label>Novi oglasi ove nedelje</label>
-          <input type="number" id="new_listings" min="0" placeholder="0" required>
+      </div>
+
+      <div class="card">
+        <h2>Performanse agenata</h2>
+        <div id="agents-container">
+          <p style="color:#aaa; font-size:0.9rem;">Učitavanje agenata...</p>
         </div>
-        <div class="form-group">
-          <label>Upiti ove nedelje</label>
-          <input type="number" id="inquiries" min="0" placeholder="0" required>
-        </div>
-        <div class="form-group">
-          <label>Ugovori — prodaja</label>
-          <input type="number" id="contracts_sale" min="0" placeholder="0" required>
-        </div>
-        <div class="form-group">
-          <label>Ugovori — zakup</label>
-          <input type="number" id="contracts_rent" min="0" placeholder="0" required>
-        </div>
-        <div class="form-group">
-          <label>Prihod (€)</label>
-          <input type="number" id="revenue" min="0" placeholder="0" required>
-        </div>
+      </div>
+
+      <button type="submit" class="btn btn-success" id="submit-btn">
+        Sačuvaj nedeljni izveštaj
+      </button>
+    </form>
+  </div>
+
+  <!-- ── Arhiva tab ── -->
+  <div id="tab-archive" hidden>
+    <div class="card">
+      <h2>Arhiva izveštaja</h2>
+      <div id="archive-list">
+        <p class="archive-empty">Učitavanje...</p>
       </div>
     </div>
+  </div>
+</div>
 
-    <!-- Upiti po izvoru -->
-    <div class="card">
-      <h2>Upiti po izvoru</h2>
-      <div class="grid-2">
-        <div class="form-group">
-          <label>Halo oglasi</label>
-          <input type="number" id="src_halo" min="0" value="0">
-        </div>
-        <div class="form-group">
-          <label>4zida</label>
-          <input type="number" id="src_4zida" min="0" value="0">
-        </div>
-        <div class="form-group">
-          <label>Sajt agencije</label>
-          <input type="number" id="src_sajt" min="0" value="0">
-        </div>
-        <div class="form-group">
-          <label>Instagram / ostalo</label>
-          <input type="number" id="src_insta" min="0" value="0">
-        </div>
-      </div>
+<!-- ═══ MODAL ZA PREGLED IZVEŠTAJA ═══ -->
+<div id="report-modal">
+  <div class="modal-backdrop" onclick="closeModal()"></div>
+  <div class="modal-wrapper">
+    <div class="modal-header">
+      <span class="modal-title" id="modal-title">Izveštaj</span>
+      <button class="modal-close" onclick="closeModal()">&#x2715;</button>
     </div>
-
-    <!-- Agenti -->
-    <div class="card">
-      <h2>Performanse agenata</h2>
-      <div id="agents-container">
-        <p style="color:#aaa; font-size:0.9rem;">Učitavanje agenata...</p>
-      </div>
-    </div>
-
-    <button type="submit" class="btn btn-success" id="submit-btn">
-      Sačuvaj nedeljni izveštaj
-    </button>
-  </form>
+    <iframe id="report-iframe" srcdoc=""></iframe>
+  </div>
 </div>
 
 <script>
@@ -180,8 +270,9 @@
     'sb_publishable_uMe0x5mYYyTI707MbRLzag_6NIDIE_K'
   );
 
-  let agencyId = null;
+  let agencyId   = null;
   let agentsList = [];
+  let activeTab  = 'form';
 
   // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -191,11 +282,29 @@
   }
 
   function getMonday() {
-    const d = new Date();
+    const d   = new Date();
     const day = d.getDay();
     const diff = d.getDate() - day + (day === 0 ? -6 : 1);
     d.setDate(diff);
     return d.toISOString().split('T')[0];
+  }
+
+  function fmtDate(iso) {
+    if (!iso) return '—';
+    const [y, m, d] = iso.split('-');
+    return `${d}.${m}.${y}`;
+  }
+
+  // ── Tabs ───────────────────────────────────────────────────────────────────
+
+  function switchTab(tab) {
+    activeTab = tab;
+    document.getElementById('tab-form').hidden    = (tab !== 'form');
+    document.getElementById('tab-archive').hidden = (tab !== 'archive');
+    document.getElementById('tab-form-btn').classList.toggle('active',    tab === 'form');
+    document.getElementById('tab-archive-btn').classList.toggle('active', tab === 'archive');
+
+    if (tab === 'archive') loadArchive();
   }
 
   // ── Auth ───────────────────────────────────────────────────────────────────
@@ -204,13 +313,13 @@
     const email    = document.getElementById('email').value.trim();
     const password = document.getElementById('password').value;
     const btn      = document.getElementById('login-btn');
-    btn.disabled = true;
+    btn.disabled    = true;
     btn.textContent = 'Prijavljivanje...';
 
     const { error } = await sb.auth.signInWithPassword({ email, password });
     if (error) {
       showMsg('login-msg', 'Pogrešan email ili lozinka.', true);
-      btn.disabled = false;
+      btn.disabled    = false;
       btn.textContent = 'Prijavi se';
     } else {
       await initDashboard();
@@ -219,9 +328,9 @@
 
   async function doLogout() {
     await sb.auth.signOut();
-    document.getElementById('form-view').hidden = true;
+    document.getElementById('dashboard').hidden         = true;
     document.getElementById('login-view').style.display = 'flex';
-    document.getElementById('login-msg').innerHTML = '';
+    document.getElementById('login-msg').innerHTML      = '';
   }
 
   // ── Dashboard ──────────────────────────────────────────────────────────────
@@ -257,7 +366,7 @@
     document.getElementById('week_start').value = getMonday();
 
     document.getElementById('login-view').style.display = 'none';
-    document.getElementById('form-view').hidden = false;
+    document.getElementById('dashboard').hidden          = false;
   }
 
   function renderAgents() {
@@ -280,19 +389,94 @@
     `;
   }
 
+  // ── Archive ─────────────────────────────────────────────────────────────────
+
+  async function loadArchive() {
+    const list = document.getElementById('archive-list');
+    list.innerHTML = '<p class="archive-empty">Učitavanje...</p>';
+
+    const { data: reports, error } = await sb
+      .from('reports')
+      .select('week_start, sent_at, report_type')
+      .eq('agency_id', agencyId)
+      .order('week_start', { ascending: false })
+      .limit(52);
+
+    if (error) {
+      list.innerHTML = `<p class="archive-empty" style="color:#dc2626">Greška: ${error.message}</p>`;
+      return;
+    }
+
+    if (!reports?.length) {
+      list.innerHTML = '<p class="archive-empty">Nema sačuvanih izveštaja.</p>';
+      return;
+    }
+
+    list.innerHTML = reports.map(r => {
+      const type    = r.report_type === 'monthly' ? 'monthly' : 'weekly';
+      const label   = type === 'monthly' ? 'Mesečni' : 'Nedeljni';
+      const cls     = type === 'monthly' ? 'badge-monthly' : 'badge-weekly';
+      const sentTxt = r.sent_at ? `Poslat ${fmtDate(r.sent_at)}` : '';
+      return `
+        <div class="report-row">
+          <div>
+            <div class="report-date">
+              ${fmtDate(r.week_start)}
+              <span class="report-type-badge ${cls}">${label}</span>
+            </div>
+            ${sentTxt ? `<div class="report-meta">${sentTxt}</div>` : ''}
+          </div>
+          <button class="btn-view" onclick="viewReport('${r.week_start}', '${label}', this)">
+            Pregledaj
+          </button>
+        </div>
+      `;
+    }).join('');
+  }
+
+  async function viewReport(weekStart, label, btn) {
+    btn.disabled    = true;
+    btn.textContent = 'Učitavanje...';
+
+    const { data, error } = await sb
+      .from('reports')
+      .select('html')
+      .eq('agency_id', agencyId)
+      .eq('week_start', weekStart)
+      .single();
+
+    btn.disabled    = false;
+    btn.textContent = 'Pregledaj';
+
+    if (error || !data?.html) {
+      alert('Izveštaj nije pronađen.');
+      return;
+    }
+
+    document.getElementById('modal-title').textContent = `${label} izveštaj — ${fmtDate(weekStart)}`;
+    document.getElementById('report-iframe').srcdoc    = data.html;
+    document.getElementById('report-modal').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeModal() {
+    document.getElementById('report-modal').style.display = 'none';
+    document.getElementById('report-iframe').srcdoc       = '';
+    document.body.style.overflow = '';
+  }
+
   // ── Submit ─────────────────────────────────────────────────────────────────
 
   async function submitForm(e) {
     e.preventDefault();
     const btn = document.getElementById('submit-btn');
-    btn.disabled = true;
+    btn.disabled    = true;
     btn.textContent = 'Čuvanje...';
     document.getElementById('form-msg').innerHTML = '';
 
     const weekStart = document.getElementById('week_start').value;
 
     try {
-      // 1. weekly_kpis
       const { error: e1 } = await sb.from('weekly_kpis').upsert({
         agency_id:       agencyId,
         week_start:      weekStart,
@@ -305,7 +489,6 @@
       }, { onConflict: 'agency_id,week_start' });
       if (e1) throw e1;
 
-      // 2. inquiry_sources
       const sources = [
         { source: 'Halo oglasi',      count: +document.getElementById('src_halo').value },
         { source: '4zida',            count: +document.getElementById('src_4zida').value },
@@ -320,11 +503,10 @@
         if (e2) throw e2;
       }
 
-      // 3. agent_performance
       for (const a of agentsList) {
         const { error: e3 } = await sb.from('agent_performance').upsert({
-          agent_id:  a.id,
-          agency_id: agencyId,
+          agent_id:   a.id,
+          agency_id:  agencyId,
           week_start: weekStart,
           inquiries:  +document.getElementById(`agent_inq_${a.id}`).value,
           contracts:  +document.getElementById(`agent_con_${a.id}`).value,
@@ -332,15 +514,15 @@
         if (e3) throw e3;
       }
 
-      showMsg('form-msg', `Podaci za nedelju ${weekStart} su sačuvani. Izvestaj ce biti poslat u ponedeljak ujutru.`);
+      showMsg('form-msg', `Podaci za nedelju ${weekStart} su sačuvani. Izveštaj će biti poslat u ponedeljak ujutru.`);
       window.scrollTo({ top: 0, behavior: 'smooth' });
 
     } catch (err) {
-      showMsg('form-msg', `Greska: ${err.message}`, true);
+      showMsg('form-msg', `Greška: ${err.message}`, true);
     }
 
-    btn.disabled = false;
-    btn.textContent = 'Sacuvaj nedeljni izvestaj';
+    btn.disabled    = false;
+    btn.textContent = 'Sačuvaj nedeljni izveštaj';
   }
 
   // ── Auto-session ───────────────────────────────────────────────────────────

@@ -107,14 +107,15 @@ def get_report_data(agency_id: str) -> dict:
     }
 
 
-def save_report(agency_id: str, week_start: date, html: str):
+def save_report(agency_id: str, week_start: date, html: str, report_type: str = "weekly"):
     """Arhivira HTML izveštaj u bazu."""
     sb = get_client()
     sb.table("reports").upsert({
-        "agency_id": agency_id,
-        "week_start": week_start.isoformat(),
-        "html":       html,
-        "sent_at":    date.today().isoformat(),
+        "agency_id":   agency_id,
+        "week_start":  week_start.isoformat(),
+        "html":        html,
+        "sent_at":     date.today().isoformat(),
+        "report_type": report_type,
     }, on_conflict="agency_id,week_start").execute()
 
 
