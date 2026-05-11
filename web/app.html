@@ -17,7 +17,7 @@
 
     /* ── Forms ── */
     label { display: block; font-size: 0.82rem; font-weight: 600; color: #444; margin-bottom: 5px; letter-spacing: 0.02em; text-transform: uppercase; }
-    input[type="email"], input[type="password"], input[type="date"], input[type="number"] {
+    input[type="email"], input[type="password"], input[type="date"], input[type="number"], input[type="text"] {
       width: 100%; padding: 10px 13px; border: 1.5px solid #e2e6ea; border-radius: 8px;
       font-size: 0.95rem; outline: none; transition: border-color 0.2s; background: #fafafa;
     }
@@ -115,6 +115,15 @@
     .btn-view:hover { background: #2563eb; color: white; }
     .btn-view:disabled { border-color: #bfdbfe; color: #93c5fd; cursor: not-allowed; }
 
+    /* ── Remove agent button ── */
+    .btn-remove {
+      padding: 7px 16px; border: 1.5px solid #dc2626; border-radius: 7px;
+      background: white; color: #dc2626; font-size: 0.85rem; font-weight: 600;
+      cursor: pointer; transition: all 0.18s; white-space: nowrap;
+    }
+    .btn-remove:hover { background: #dc2626; color: white; }
+    .btn-remove:disabled { border-color: #fecaca; color: #fca5a5; cursor: not-allowed; }
+
     /* ── Report modal ── */
     #report-modal {
       display: none; position: fixed; inset: 0; z-index: 1000;
@@ -182,6 +191,7 @@
     <div class="header-right">
       <div class="tab-nav">
         <button class="tab-btn active" id="tab-form-btn"    onclick="switchTab('form')">Unos</button>
+        <button class="tab-btn"        id="tab-agents-btn"  onclick="switchTab('agents')">Agenti</button>
         <button class="tab-btn"        id="tab-import-btn"  onclick="switchTab('import')">Uvoz</button>
         <button class="tab-btn"        id="tab-archive-btn" onclick="switchTab('archive')">Arhiva</button>
       </div>
@@ -270,6 +280,28 @@
       <div class="public-link-box">
         <span class="public-link-text" id="public-link-text"></span>
         <button class="btn-copy" onclick="copyPublicLink(this)">Kopiraj</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Agenti tab ── -->
+  <div id="tab-agents" hidden>
+    <div class="card">
+      <h2>Dodaj agenta</h2>
+      <div id="agents-msg"></div>
+      <div class="form-group">
+        <label>Ime i prezime</label>
+        <input type="text" id="new-agent-name" placeholder="npr. Marko Petrović" autocomplete="off">
+      </div>
+      <button class="btn btn-success" id="add-agent-btn" onclick="addAgent()" style="margin-top:0;">
+        Dodaj agenta
+      </button>
+    </div>
+
+    <div class="card">
+      <h2>Aktivni agenti</h2>
+      <div id="agents-manage-list">
+        <p class="archive-empty">Učitavanje...</p>
       </div>
     </div>
   </div>
@@ -366,13 +398,16 @@
   function switchTab(tab) {
     activeTab = tab;
     document.getElementById('tab-form').hidden    = (tab !== 'form');
+    document.getElementById('tab-agents').hidden  = (tab !== 'agents');
     document.getElementById('tab-import').hidden  = (tab !== 'import');
     document.getElementById('tab-archive').hidden = (tab !== 'archive');
     document.getElementById('tab-form-btn').classList.toggle('active',    tab === 'form');
+    document.getElementById('tab-agents-btn').classList.toggle('active',  tab === 'agents');
     document.getElementById('tab-import-btn').classList.toggle('active',  tab === 'import');
     document.getElementById('tab-archive-btn').classList.toggle('active', tab === 'archive');
 
     if (tab === 'archive') loadArchive();
+    if (tab === 'agents')  renderAgentsManage();
   }
 
   // ── Auth ───────────────────────────────────────────────────────────────────
@@ -447,7 +482,7 @@
   function renderAgents() {
     const container = document.getElementById('agents-container');
     if (!agentsList.length) {
-      container.innerHTML = '<p style="color:#aaa">Nema aktivnih agenata.</p>';
+      container.innerHTML = '<p style="color:#aaa">Nema aktivnih agenata. Dodajte agente u tabu „Agenti“.</p>';
       return;
     }
     container.innerHTML = `
@@ -456,12 +491,102 @@
       </div>
       ${agentsList.map(a => `
         <div class="agent-row">
-          <div class="agent-name">${a.name}</div>
+          <div class="agent-name">${escapeHtml(a.name)}</div>
           <input type="number" id="agent_inq_${a.id}" min="0" value="0">
           <input type="number" id="agent_con_${a.id}" min="0" value="0">
         </div>
       `).join('')}
     `;
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({
+      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+    }[c]));
+  }
+
+  // ── Agenti: dodavanje / uklanjanje ─────────────────────────────────────────
+
+  function renderAgentsManage() {
+    const list = document.getElementById('agents-manage-list');
+    if (!agentsList.length) {
+      list.innerHTML = '<p class="archive-empty">Nema aktivnih agenata.</p>';
+      return;
+    }
+    list.innerHTML = agentsList.map(a => `
+      <div class="report-row">
+        <div class="report-date">${escapeHtml(a.name)}</div>
+        <button class="btn-remove" onclick="removeAgent('${a.id}', this)">Ukloni</button>
+      </div>
+    `).join('');
+  }
+
+  async function reloadAgents() {
+    const { data: agents } = await sb
+      .from('agents')
+      .select('id, name')
+      .eq('agency_id', agencyId)
+      .eq('active', true)
+      .order('name');
+    agentsList = agents || [];
+    renderAgents();
+    renderAgentsManage();
+  }
+
+  async function addAgent() {
+    const input = document.getElementById('new-agent-name');
+    const name  = input.value.trim();
+    const btn   = document.getElementById('add-agent-btn');
+    document.getElementById('agents-msg').innerHTML = '';
+
+    if (!name) {
+      showMsg('agents-msg', 'Unesite ime agenta.', true);
+      return;
+    }
+
+    btn.disabled    = true;
+    btn.textContent = 'Dodavanje...';
+
+    const { error } = await sb
+      .from('agents')
+      .insert({ agency_id: agencyId, name });
+
+    btn.disabled    = false;
+    btn.textContent = 'Dodaj agenta';
+
+    if (error) {
+      showMsg('agents-msg', `Greška: ${error.message}`, true);
+      return;
+    }
+
+    input.value = '';
+    await reloadAgents();
+    showMsg('agents-msg', `Agent „${name}“ je dodat.`);
+  }
+
+  async function removeAgent(id, btn) {
+    const agent = agentsList.find(a => a.id === id);
+    if (!agent) return;
+    if (!confirm(`Ukloniti agenta „${agent.name}“?\n\nIstorijski podaci ostaju sačuvani, ali agent više neće biti prikazan u unosu.`)) return;
+
+    btn.disabled    = true;
+    btn.textContent = 'Uklanjanje...';
+    document.getElementById('agents-msg').innerHTML = '';
+
+    const { error } = await sb
+      .from('agents')
+      .update({ active: false })
+      .eq('id', id);
+
+    if (error) {
+      btn.disabled    = false;
+      btn.textContent = 'Ukloni';
+      showMsg('agents-msg', `Greška: ${error.message}`, true);
+      return;
+    }
+
+    await reloadAgents();
+    showMsg('agents-msg', `Agent „${agent.name}“ je uklonjen.`);
   }
 
   // ── Archive ─────────────────────────────────────────────────────────────────
