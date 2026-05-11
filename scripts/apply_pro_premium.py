@@ -5,7 +5,7 @@ Pokretanje:
 
 Šta radi:
   1. UPDATE plans (Pro: 1 agencija / 10 agenata / 6 meseci, cena 49€)
-  2. UPSERT Premium plan (100€, neograničeno agenata, 12 meseci, custom_branding)
+  2. UPSERT Premium plan (79€, neograničeno agenata, 12 meseci, custom_branding)
   3. Kreira Storage bucket "agency-logos" (public read)
 
 ALTER TABLE agencies ADD COLUMN logo_url i Storage policy ne mogu preko klijenta —
@@ -57,7 +57,7 @@ def main():
             .upsert({
                 "id":              "premium",
                 "name":            "Premium",
-                "price_eur":       100,
+                "price_eur":       79,
                 "max_agencies":    1,
                 "max_agents":      -1,
                 "history_months":  12,

@@ -4,7 +4,7 @@
 --
 -- Šta radi:
 --   1. Pro plan: 1 agencija, 10 agenata, 6 meseci istorije.
---   2. Premium plan (100€): 1 agencija, neograničeno agenata,
+--   2. Premium plan (79€): 1 agencija, neograničeno agenata,
 --      12 meseci istorije, custom branding (logo na izveštajima).
 --   3. Dodaje agencies.logo_url za upload logoa.
 --
@@ -22,7 +22,7 @@ SET max_agencies   = 1,
     price_eur      = 49
 WHERE id = 'pro';
 
--- 2. Premium plan (100€)
+-- 2. Premium plan (79€)
 INSERT INTO plans (
   id, name, price_eur,
   max_agencies, max_agents, history_months,
@@ -30,7 +30,7 @@ INSERT INTO plans (
   weekly_report, monthly_report, daily_report,
   pdf_export, custom_branding
 ) VALUES (
-  'premium', 'Premium', 100,
+  'premium', 'Premium', 79,
   1, -1, 12,
   true, true,
   true, true, false,
