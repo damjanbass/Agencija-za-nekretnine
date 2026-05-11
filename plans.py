@@ -38,6 +38,15 @@ class Plan:
 
 
 PLANS: dict[str, Plan] = {
+    "free": Plan(
+        id="free", name="Free", price_eur=0,
+        max_agencies=1, max_agents=3, history_months=1,
+        ai_analysis=True, email_send=True,
+        weekly_report=True, monthly_report=False, daily_report=False,
+        pdf_export=False, custom_branding=False,
+        benchmark=False, agent_reports=False,
+        market_sites=["Halo oglasi"],
+    ),
     "basic": Plan(
         id="basic", name="Basic", price_eur=69,
         max_agencies=1, max_agents=5, history_months=3,
@@ -69,4 +78,4 @@ PLANS: dict[str, Plan] = {
 
 
 def get_plan(plan_id: str) -> Plan:
-    return PLANS.get(plan_id, PLANS["basic"])
+    return PLANS.get(plan_id, PLANS["free"])
