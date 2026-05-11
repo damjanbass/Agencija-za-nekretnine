@@ -27,7 +27,7 @@ def get_report_data(agency_id: str) -> dict:
     # --- Agencija ---
     agency = (
         sb.table("agencies")
-        .select("name, email, revenue_goal, plan_id")
+        .select("name, email, revenue_goal, plan_id, logo_url")
         .eq("id", agency_id)
         .single()
         .execute()
@@ -92,6 +92,7 @@ def get_report_data(agency_id: str) -> dict:
         "agency_name":            agency["name"],
         "agency_email":           agency["email"],
         "plan_id":                agency.get("plan_id", "basic"),
+        "logo_url":               agency.get("logo_url"),
         "week_start":             week_start.strftime("%d.%m.%Y"),
         "week_end":               week_end.strftime("%d.%m.%Y"),
         "generated_at":           today.strftime("%d.%m.%Y"),
@@ -130,7 +131,7 @@ def get_monthly_report_data(agency_id: str) -> dict:
 
     agency = (
         sb.table("agencies")
-        .select("name, email, revenue_goal, plan_id")
+        .select("name, email, revenue_goal, plan_id, logo_url")
         .eq("id", agency_id)
         .single()
         .execute()
@@ -208,6 +209,7 @@ def get_monthly_report_data(agency_id: str) -> dict:
         "agency_name":          agency["name"],
         "agency_email":         agency["email"],
         "plan_id":              agency.get("plan_id", "basic"),
+        "logo_url":             agency.get("logo_url"),
         "month_name":           f"{MONTHS_SR[month_start.month]} {month_start.year}",
         "month_start":          month_start.strftime("%d.%m.%Y"),
         "month_end":            month_end.strftime("%d.%m.%Y"),

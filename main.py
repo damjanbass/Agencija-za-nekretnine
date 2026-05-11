@@ -41,6 +41,7 @@ def prepare_template_vars(data: dict, analysis: dict | None,
         **data,
         "analysis":             analysis,
         "plan":                 plan,
+        "agency_logo":          data.get("logo_url") if plan.allows_branding() else None,
         "market_snapshots":     snapshots,
         "market_summary":       market_summary(snapshots) if snapshots else None,
         "market_city":          city,
@@ -216,7 +217,12 @@ def run_monthly(preview: bool = False, use_mock: bool = False):
             print(f"    [→] Predlog:  {analysis['predlog']}")
             print(f"    [~] Prognoza: {analysis.get('prognoza', '—')}")
 
-        vars = {**data, "analysis": analysis, "plan": plan}
+        vars = {
+            **data,
+            "analysis":    analysis,
+            "plan":        plan,
+            "agency_logo": data.get("logo_url") if plan.allows_branding() else None,
+        }
         html = render_report(vars, template="monthly_report.html")
 
         slug = re.sub(r"[^\w]", "_", data["agency_name"].lower()).strip("_")
@@ -305,6 +311,7 @@ def run_agent_reports(preview: bool = False, use_mock: bool = False):
                 "agent_rank":       rank,
                 "team_size":        len(agents_sorted),
                 "team_conversion":  team_conv,
+                "agency_logo":      data.get("logo_url") if plan.allows_branding() else None,
             }
 
             html = render_report(vars, template="agent_report.html")

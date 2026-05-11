@@ -79,6 +79,7 @@
 <div class="wrapper">
 
   <div class="header">
+    {% if agency_logo %}<img src="{{ agency_logo }}" alt="{{ agency_name }}" style="max-height:40px;max-width:180px;margin-bottom:14px;display:block;">{% endif %}
     <div class="header-label">Nedeljni izveštaj</div>
     <div class="header-name">{{ agent_name }}</div>
     <div class="header-meta">

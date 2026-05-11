@@ -190,10 +190,11 @@
     <h1 id="agency-name-header">Unos podataka</h1>
     <div class="header-right">
       <div class="tab-nav">
-        <button class="tab-btn active" id="tab-form-btn"    onclick="switchTab('form')">Unos</button>
-        <button class="tab-btn"        id="tab-agents-btn"  onclick="switchTab('agents')">Agenti</button>
-        <button class="tab-btn"        id="tab-import-btn"  onclick="switchTab('import')">Uvoz</button>
-        <button class="tab-btn"        id="tab-archive-btn" onclick="switchTab('archive')">Arhiva</button>
+        <button class="tab-btn active" id="tab-form-btn"     onclick="switchTab('form')">Unos</button>
+        <button class="tab-btn"        id="tab-agents-btn"   onclick="switchTab('agents')">Agenti</button>
+        <button class="tab-btn"        id="tab-import-btn"   onclick="switchTab('import')">Uvoz</button>
+        <button class="tab-btn"        id="tab-archive-btn"  onclick="switchTab('archive')">Arhiva</button>
+        <button class="tab-btn"        id="tab-branding-btn" onclick="switchTab('branding')" hidden>Brending</button>
       </div>
       <button class="logout-btn" onclick="doLogout()">Odjavi se</button>
     </div>
@@ -299,7 +300,7 @@
     </div>
 
     <div class="card">
-      <h2>Aktivni agenti</h2>
+      <h2>Aktivni agenti <span id="agents-count" style="font-size:0.85rem;color:#8892a4;font-weight:500;"></span></h2>
       <div id="agents-manage-list">
         <p class="archive-empty">Učitavanje...</p>
       </div>
@@ -344,6 +345,21 @@
       </div>
     </div>
   </div>
+
+  <!-- ── Brending tab (Premium only) ── -->
+  <div id="tab-branding" hidden>
+    <div class="card">
+      <h2>Logo agencije</h2>
+      <p style="font-size:0.9rem;color:#666;margin-bottom:16px;">Logo se prikazuje u zaglavlju nedeljnih, mesečnih i agent izveštaja (HTML i PDF). Preporučeno: PNG sa providnom pozadinom, visina 80–120 px.</p>
+      <div id="branding-msg"></div>
+      <div id="logo-preview" style="margin-bottom:16px;"></div>
+      <div class="form-group">
+        <label>Otpremi novi logo</label>
+        <input type="file" id="logo-file" accept="image/png,image/jpeg,image/svg+xml" onchange="uploadLogo(event)">
+      </div>
+      <button class="btn-outline" id="logo-remove-btn" onclick="removeLogo()" style="display:none;">Ukloni logo</button>
+    </div>
+  </div>
 </div>
 
 <!-- ═══ MODAL ZA PREGLED IZVEŠTAJA ═══ -->
@@ -368,9 +384,11 @@
     'sb_publishable_uMe0x5mYYyTI707MbRLzag_6NIDIE_K'
   );
 
-  let agencyId   = null;
-  let agentsList = [];
-  let activeTab  = 'form';
+  let agencyId    = null;
+  let agencyPlan  = null;   // { id, name, max_agents, history_months, custom_branding }
+  let agencyLogo  = null;
+  let agentsList  = [];
+  let activeTab   = 'form';
 
   // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -397,17 +415,20 @@
 
   function switchTab(tab) {
     activeTab = tab;
-    document.getElementById('tab-form').hidden    = (tab !== 'form');
-    document.getElementById('tab-agents').hidden  = (tab !== 'agents');
-    document.getElementById('tab-import').hidden  = (tab !== 'import');
-    document.getElementById('tab-archive').hidden = (tab !== 'archive');
-    document.getElementById('tab-form-btn').classList.toggle('active',    tab === 'form');
-    document.getElementById('tab-agents-btn').classList.toggle('active',  tab === 'agents');
-    document.getElementById('tab-import-btn').classList.toggle('active',  tab === 'import');
-    document.getElementById('tab-archive-btn').classList.toggle('active', tab === 'archive');
+    document.getElementById('tab-form').hidden     = (tab !== 'form');
+    document.getElementById('tab-agents').hidden   = (tab !== 'agents');
+    document.getElementById('tab-import').hidden   = (tab !== 'import');
+    document.getElementById('tab-archive').hidden  = (tab !== 'archive');
+    document.getElementById('tab-branding').hidden = (tab !== 'branding');
+    document.getElementById('tab-form-btn').classList.toggle('active',     tab === 'form');
+    document.getElementById('tab-agents-btn').classList.toggle('active',   tab === 'agents');
+    document.getElementById('tab-import-btn').classList.toggle('active',   tab === 'import');
+    document.getElementById('tab-archive-btn').classList.toggle('active',  tab === 'archive');
+    document.getElementById('tab-branding-btn').classList.toggle('active', tab === 'branding');
 
-    if (tab === 'archive') loadArchive();
-    if (tab === 'agents')  renderAgentsManage();
+    if (tab === 'archive')  loadArchive();
+    if (tab === 'agents')   renderAgentsManage();
+    if (tab === 'branding') renderBranding();
   }
 
   // ── Auth ───────────────────────────────────────────────────────────────────
@@ -444,7 +465,7 @@
 
     const { data: agencies, error } = await sb
       .from('agencies')
-      .select('id, name, public_token')
+      .select('id, name, public_token, plan_id, logo_url, plans(id, name, max_agents, history_months, custom_branding)')
       .eq('user_id', user.id)
       .limit(1);
 
@@ -454,8 +475,14 @@
       return;
     }
 
-    agencyId = agencies[0].id;
+    agencyId   = agencies[0].id;
+    agencyPlan = agencies[0].plans || { id: 'free', name: 'Free', max_agents: 3, history_months: 1, custom_branding: false };
+    agencyLogo = agencies[0].logo_url || null;
     document.getElementById('agency-name-header').textContent = agencies[0].name;
+
+    if (agencyPlan.custom_branding) {
+      document.getElementById('tab-branding-btn').hidden = false;
+    }
 
     const token = agencies[0].public_token;
     if (token) {
@@ -508,7 +535,12 @@
   // ── Agenti: dodavanje / uklanjanje ─────────────────────────────────────────
 
   function renderAgentsManage() {
-    const list = document.getElementById('agents-manage-list');
+    const list  = document.getElementById('agents-manage-list');
+    const count = document.getElementById('agents-count');
+    const max   = agencyPlan?.max_agents ?? 0;
+    if (count) {
+      count.textContent = max === -1 ? `(${agentsList.length})` : `(${agentsList.length}/${max})`;
+    }
     if (!agentsList.length) {
       list.innerHTML = '<p class="archive-empty">Nema aktivnih agenata.</p>';
       return;
@@ -541,6 +573,17 @@
 
     if (!name) {
       showMsg('agents-msg', 'Unesite ime agenta.', true);
+      return;
+    }
+
+    const max = agencyPlan?.max_agents ?? 0;
+    if (max !== -1 && agentsList.length >= max) {
+      const planName = agencyPlan?.name || 'Trenutni';
+      showMsg(
+        'agents-msg',
+        `${planName} plan dozvoljava do ${max} agenata. Za neograničen broj agenata, pređite na <a href="pricing.html" style="color:#2563eb;text-decoration:underline;">Premium</a>.`,
+        true
+      );
       return;
     }
 
@@ -595,12 +638,21 @@
     const list = document.getElementById('archive-list');
     list.innerHTML = '<p class="archive-empty">Učitavanje...</p>';
 
-    const { data: reports, error } = await sb
+    let q = sb
       .from('reports')
       .select('week_start, sent_at, report_type')
       .eq('agency_id', agencyId)
       .order('week_start', { ascending: false })
       .limit(52);
+
+    const months = agencyPlan?.history_months ?? 1;
+    if (months !== -1) {
+      const cutoff = new Date();
+      cutoff.setMonth(cutoff.getMonth() - months);
+      q = q.gte('week_start', cutoff.toISOString().slice(0, 10));
+    }
+
+    const { data: reports, error } = await q;
 
     if (error) {
       list.innerHTML = `<p class="archive-empty" style="color:#dc2626">Greška: ${error.message}</p>`;
@@ -878,6 +930,84 @@
       `<div class="msg ${fail ? 'msg-error' : 'msg-success'}">${msg}</div>`;
 
     if (!fail) parsedCsvRows = [];
+  }
+
+  // ── Brending: logo upload (Premium only) ───────────────────────────────────
+
+  function renderBranding() {
+    const preview = document.getElementById('logo-preview');
+    const removeBtn = document.getElementById('logo-remove-btn');
+    document.getElementById('branding-msg').innerHTML = '';
+    if (agencyLogo) {
+      preview.innerHTML = `<img src="${agencyLogo}" alt="Trenutni logo" style="max-height:80px;max-width:240px;border:1px solid #eaedf3;border-radius:8px;padding:10px;background:#fff;">`;
+      removeBtn.style.display = 'inline-block';
+    } else {
+      preview.innerHTML = '<p style="color:#8892a4;font-size:0.88rem;">Trenutno nema postavljenog logoa.</p>';
+      removeBtn.style.display = 'none';
+    }
+  }
+
+  async function uploadLogo(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    document.getElementById('branding-msg').innerHTML = '';
+
+    if (file.size > 2 * 1024 * 1024) {
+      showMsg('branding-msg', 'Fajl je veći od 2 MB. Smanjite veličinu i pokušajte ponovo.', true);
+      event.target.value = '';
+      return;
+    }
+
+    const ext  = (file.name.split('.').pop() || 'png').toLowerCase();
+    const path = `${agencyId}.${ext}`;
+
+    const { error: upErr } = await sb.storage
+      .from('agency-logos')
+      .upload(path, file, { upsert: true, contentType: file.type });
+
+    if (upErr) {
+      showMsg('branding-msg', `Greška pri otpremanju: ${upErr.message}`, true);
+      event.target.value = '';
+      return;
+    }
+
+    const { data: pub } = sb.storage.from('agency-logos').getPublicUrl(path);
+    const url = `${pub.publicUrl}?v=${Date.now()}`;
+
+    const { error: dbErr } = await sb
+      .from('agencies')
+      .update({ logo_url: url })
+      .eq('id', agencyId);
+
+    if (dbErr) {
+      showMsg('branding-msg', `Logo otpremljen, ali nije sačuvan u nalogu: ${dbErr.message}`, true);
+      return;
+    }
+
+    agencyLogo = url;
+    event.target.value = '';
+    renderBranding();
+    showMsg('branding-msg', 'Logo je sačuvan i biće prikazan u sledećim izveštajima.');
+  }
+
+  async function removeLogo() {
+    if (!agencyLogo) return;
+    if (!confirm('Ukloniti logo agencije?')) return;
+    document.getElementById('branding-msg').innerHTML = '';
+
+    const { error } = await sb
+      .from('agencies')
+      .update({ logo_url: null })
+      .eq('id', agencyId);
+
+    if (error) {
+      showMsg('branding-msg', `Greška: ${error.message}`, true);
+      return;
+    }
+
+    agencyLogo = null;
+    renderBranding();
+    showMsg('branding-msg', 'Logo je uklonjen.');
   }
 
   // ── Auto-session ───────────────────────────────────────────────────────────
