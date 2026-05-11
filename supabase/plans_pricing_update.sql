@@ -13,7 +13,7 @@ delete from plans where id = 'free';
 
 -- 3. Ažuriraj cene preostalih planova
 update plans set price_eur = 69  where id = 'basic';
-update plans set price_eur = 139 where id = 'pro';
+update plans set price_eur = 49 where id = 'pro';
 update plans set price_eur = 199 where id = 'premium';
 
 -- 4. Promeni default vrednost agencies.plan_id sa 'free' na 'basic'

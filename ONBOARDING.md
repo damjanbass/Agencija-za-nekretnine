@@ -22,7 +22,7 @@ python -X utf8 admin/onboard.py create-agency \
 
 Plan opcije:
 - `basic` — 69€/mes, AI analiza, mejl slanje, 5 agenata, 1 tržišni izvor
-- `pro` — 139€/mes, sve iz basic-a + mesečni izveštaj, PDF, benchmark, 3 tržišna izvora, do 15 agenata
+- `pro` — 49€/mes, sve iz basic-a + mesečni izveštaj, PDF, benchmark, 3 tržišna izvora, do 15 agenata
 - `premium` — 199€/mes, neograničeno + custom branding
 
 Skripta ispiše:

@@ -48,7 +48,7 @@ PLANS: dict[str, Plan] = {
         market_sites=["Halo oglasi"],
     ),
     "pro": Plan(
-        id="pro", name="Pro", price_eur=139,
+        id="pro", name="Pro", price_eur=49,
         max_agencies=3, max_agents=15, history_months=12,
         ai_analysis=True, email_send=True,
         weekly_report=True, monthly_report=True, daily_report=False,
