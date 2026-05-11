@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel — Nekretnine</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, -apple-system, sans-serif; background: #f4f6f9; color: #1a1a1a; min-height: 100vh; }
+
+    /* ── Login ── */
+    #login-view { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; }
+    .login-card { background: white; border-radius: 14px; padding: 44px 40px; width: 100%; max-width: 400px; box-shadow: 0 4px 32px rgba(0,0,0,0.09); }
+    .login-card h1 { font-size: 1.5rem; margin-bottom: 6px; }
+    .login-card p { color: #666; margin-bottom: 28px; font-size: 0.95rem; }
+
+    /* ── Forms ── */
+    label { display: block; font-size: 0.82rem; font-weight: 600; color: #444; margin-bottom: 5px; letter-spacing: 0.02em; text-transform: uppercase; }
+    input[type="email"], input[type="password"], input[type="date"], input[type="number"] {
+      width: 100%; padding: 10px 13px; border: 1.5px solid #e2e6ea; border-radius: 8px;
+      font-size: 0.95rem; outline: none; transition: border-color 0.2s; background: #fafafa;
+    }
+    input:focus { border-color: #2563eb; background: white; }
+    .form-group { margin-bottom: 16px; }
+
+    /* ── Buttons ── */
+    .btn { width: 100%; padding: 12px; border: none; border-radius: 9px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+    .btn-primary { background: #2563eb; color: white; }
+    .btn-primary:hover { background: #1d4ed8; }
+    .btn-primary:disabled { background: #93c5fd; cursor: not-allowed; }
+    .btn-success { background: #16a34a; color: white; margin-top: 8px; }
+    .btn-success:hover { background: #15803d; }
+    .btn-success:disabled { background: #86efac; cursor: not-allowed; }
+
+    /* ── Dashboard wrapper ── */
+    #dashboard { max-width: 740px; margin: 0 auto; padding: 28px 20px 60px; }
+
+    /* ── Page header ── */
+    .page-header {
+      background: white; border-radius: 12px; padding: 18px 24px;
+      margin-bottom: 18px; box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    }
+    .page-header h1 { font-size: 1.2rem; }
+    .header-right { display: flex; align-items: center; gap: 10px; }
+
+    /* ── Tabs ── */
+    .tab-nav { display: flex; gap: 4px; background: #f4f6f9; border-radius: 8px; padding: 3px; }
+    .tab-btn {
+      padding: 6px 16px; border: none; border-radius: 6px; font-size: 0.85rem;
+      font-weight: 600; cursor: pointer; background: transparent; color: #666;
+      transition: all 0.18s;
+    }
+    .tab-btn.active { background: white; color: #2563eb; box-shadow: 0 1px 4px rgba(0,0,0,0.10); }
+    .tab-btn:hover:not(.active) { background: #eaecef; }
+
+    /* ── Cards ── */
+    .card { background: white; border-radius: 12px; padding: 26px; margin-bottom: 16px; box-shadow: 0 2px 10px rgba(0,0,0,0.06); }
+    .card h2 { font-size: 0.9rem; color: #2563eb; font-weight: 700; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid #eff6ff; text-transform: uppercase; letter-spacing: 0.05em; }
+
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+    /* ── Agent rows ── */
+    .agents-header { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 12px; margin-bottom: 8px; }
+    .agents-header span { font-size: 0.78rem; color: #999; font-weight: 600; text-transform: uppercase; }
+    .agent-row { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 12px; align-items: center; margin-bottom: 10px; }
+    .agent-name { font-size: 0.92rem; font-weight: 500; }
+
+    /* ── Messages ── */
+    .msg { padding: 13px 16px; border-radius: 9px; margin-bottom: 16px; font-size: 0.9rem; }
+    .msg-error   { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+    .msg-success { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
+
+    .logout-btn { background: none; border: 1px solid #e2e6ea; color: #555; cursor: pointer; font-size: 0.82rem; padding: 6px 12px; border-radius: 6px; transition: all 0.2s; white-space: nowrap; }
+    .logout-btn:hover { background: #f4f6f9; }
+
+    /* ── CSV import ── */
+    textarea { width: 100%; padding: 10px 13px; border: 1.5px solid #e2e6ea; border-radius: 8px; font-size: 0.82rem; font-family: monospace; resize: vertical; background: #fafafa; outline: none; transition: border-color 0.2s; }
+    textarea:focus { border-color: #2563eb; background: white; }
+    input[type="file"] { width: 100%; padding: 6px 0; font-size: 0.88rem; color: #555; cursor: pointer; }
+    .csv-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+    .csv-table th { background: #f4f6f9; padding: 8px 10px; text-align: left; font-size: 0.75rem; text-transform: uppercase; color: #666; border-bottom: 2px solid #e2e6ea; }
+    .csv-table td { padding: 8px 10px; border-bottom: 1px solid #f0f2f5; }
+    .csv-table tr:last-child td { border-bottom: none; }
+    .btn-outline { background: white; border: 1.5px solid #2563eb; color: #2563eb; padding: 10px 22px; border-radius: 9px; font-size: 0.92rem; font-weight: 600; cursor: pointer; transition: all 0.18s; display: inline-block; }
+    .btn-outline:hover { background: #2563eb; color: white; }
+
+    /* ── Javni link ── */
+    .public-link-box { display: flex; align-items: center; gap: 10px; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 12px 14px; margin-top: 10px; }
+    .public-link-text { font-size: 0.82rem; color: #1d4ed8; word-break: break-all; flex: 1; }
+    .btn-copy { background: #eff6ff; border: 1.5px solid #2563eb; color: #2563eb; padding: 7px 14px; border-radius: 6px; font-size: 0.82rem; font-weight: 600; cursor: pointer; white-space: nowrap; transition: all 0.18s; flex-shrink: 0; }
+    .btn-copy:hover { background: #2563eb; color: white; }
+
+    /* ── Archive list ── */
+    .archive-empty { color: #aaa; font-size: 0.9rem; padding: 8px 0; }
+    .report-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 13px 0; border-bottom: 1px solid #f0f2f5;
+    }
+    .report-row:last-child { border-bottom: none; }
+    .report-date { font-size: 0.95rem; font-weight: 600; }
+    .report-meta { font-size: 0.82rem; color: #888; margin-top: 2px; }
+    .report-type-badge {
+      display: inline-block; font-size: 0.75rem; font-weight: 700;
+      padding: 2px 8px; border-radius: 10px; margin-left: 8px;
+    }
+    .badge-weekly  { background: #eff6ff; color: #2563eb; }
+    .badge-monthly { background: #fef9c3; color: #ca8a04; }
+    .btn-view {
+      padding: 7px 16px; border: 1.5px solid #2563eb; border-radius: 7px;
+      background: white; color: #2563eb; font-size: 0.85rem; font-weight: 600;
+      cursor: pointer; transition: all 0.18s; white-space: nowrap;
+    }
+    .btn-view:hover { background: #2563eb; color: white; }
+    .btn-view:disabled { border-color: #bfdbfe; color: #93c5fd; cursor: not-allowed; }
+
+    /* ── Report modal ── */
+    #report-modal {
+      display: none; position: fixed; inset: 0; z-index: 1000;
+      align-items: center; justify-content: center;
+    }
+    .modal-backdrop {
+      position: absolute; inset: 0; background: rgba(0,0,0,0.55);
+    }
+    .modal-wrapper {
+      position: relative; z-index: 1; width: 94vw; max-width: 720px;
+      height: 88vh; background: white; border-radius: 14px;
+      display: flex; flex-direction: column; overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    .modal-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 20px; border-bottom: 1px solid #eaedf3; flex-shrink: 0;
+    }
+    .modal-title { font-size: 0.95rem; font-weight: 700; color: #1a1a2e; }
+    .modal-close {
+      background: none; border: none; font-size: 1.4rem; cursor: pointer;
+      color: #888; line-height: 1; padding: 2px 6px; border-radius: 4px;
+    }
+    .modal-close:hover { background: #f4f6f9; color: #333; }
+    .btn-print {
+      padding: 6px 14px; border: 1.5px solid #16a34a; border-radius: 7px;
+      background: white; color: #16a34a; font-size: 0.82rem; font-weight: 600;
+      cursor: pointer; transition: all 0.18s;
+    }
+    .btn-print:hover { background: #16a34a; color: white; }
+    #report-iframe { flex: 1; width: 100%; border: none; }
+
+    @media (max-width: 520px) {
+      .grid-2 { grid-template-columns: 1fr; }
+      .agent-row, .agents-header { grid-template-columns: 2fr 1fr 1fr; }
+      .login-card { padding: 32px 24px; }
+      .modal-wrapper { width: 100vw; height: 100vh; border-radius: 0; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══ LOGIN ═══ -->
+<div id="login-view">
+  <div class="login-card">
+    <h1>Nedeljni izveštaj</h1>
+    <p>Prijavite se da unesete podatke za nedelju</p>
+    <div id="login-msg"></div>
+    <div class="form-group">
+      <label>Email</label>
+      <input type="email" id="email" placeholder="vas@email.com" autocomplete="email">
+    </div>
+    <div class="form-group">
+      <label>Lozinka</label>
+      <input type="password" id="password" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <button class="btn btn-primary" id="login-btn" onclick="doLogin()">Prijavi se</button>
+  </div>
+</div>
+
+<!-- ═══ DASHBOARD ═══ -->
+<div id="dashboard" hidden>
+  <div class="page-header">
+    <h1 id="agency-name-header">Unos podataka</h1>
+    <div class="header-right">
+      <div class="tab-nav">
+        <button class="tab-btn active" id="tab-form-btn"    onclick="switchTab('form')">Unos</button>
+        <button class="tab-btn"        id="tab-import-btn"  onclick="switchTab('import')">Uvoz</button>
+        <button class="tab-btn"        id="tab-archive-btn" onclick="switchTab('archive')">Arhiva</button>
+      </div>
+      <button class="logout-btn" onclick="doLogout()">Odjavi se</button>
+    </div>
+  </div>
+
+  <div id="form-msg"></div>
+
+  <!-- ── Unos tab ── -->
+  <div id="tab-form">
+    <form id="report-form" onsubmit="submitForm(event)">
+
+      <div class="card">
+        <h2>Osnovi KPI-evi</h2>
+        <div class="form-group">
+          <label>Datum početka nedelje (ponedeljak)</label>
+          <input type="date" id="week_start" required>
+        </div>
+        <div class="grid-2">
+          <div class="form-group">
+            <label>Aktivni oglasi</label>
+            <input type="number" id="active_listings" min="0" placeholder="0" required>
+          </div>
+          <div class="form-group">
+            <label>Novi oglasi ove nedelje</label>
+            <input type="number" id="new_listings" min="0" placeholder="0" required>
+          </div>
+          <div class="form-group">
+            <label>Upiti ove nedelje</label>
+            <input type="number" id="inquiries" min="0" placeholder="0" required>
+          </div>
+          <div class="form-group">
+            <label>Ugovori — prodaja</label>
+            <input type="number" id="contracts_sale" min="0" placeholder="0" required>
+          </div>
+          <div class="form-group">
+            <label>Ugovori — zakup</label>
+            <input type="number" id="contracts_rent" min="0" placeholder="0" required>
+          </div>
+          <div class="form-group">
+            <label>Prihod (€)</label>
+            <input type="number" id="revenue" min="0" placeholder="0" required>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Upiti po izvoru</h2>
+        <div class="grid-2">
+          <div class="form-group">
+            <label>Halo oglasi</label>
+            <input type="number" id="src_halo" min="0" value="0">
+          </div>
+          <div class="form-group">
+            <label>4zida</label>
+            <input type="number" id="src_4zida" min="0" value="0">
+          </div>
+          <div class="form-group">
+            <label>Sajt agencije</label>
+            <input type="number" id="src_sajt" min="0" value="0">
+          </div>
+          <div class="form-group">
+            <label>Instagram / ostalo</label>
+            <input type="number" id="src_insta" min="0" value="0">
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Performanse agenata</h2>
+        <div id="agents-container">
+          <p style="color:#aaa; font-size:0.9rem;">Učitavanje agenata...</p>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-success" id="submit-btn">
+        Sačuvaj nedeljni izveštaj
+      </button>
+    </form>
+
+    <!-- Javni link -->
+    <div class="card" id="public-link-card" style="display:none">
+      <h2>Javni link</h2>
+      <p style="font-size:0.88rem;color:#666;margin-bottom:4px;">Podelite sa investitorima ili franšizodavcem — prikazuje KPI-eve bez logina.</p>
+      <div class="public-link-box">
+        <span class="public-link-text" id="public-link-text"></span>
+        <button class="btn-copy" onclick="copyPublicLink(this)">Kopiraj</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Uvoz tab ── -->
+  <div id="tab-import" hidden>
+    <div class="card">
+      <h2>CSV uvoz podataka</h2>
+      <p style="font-size:0.88rem;color:#666;margin-bottom:18px;">Uvezite istorijske podatke iz Excel/CSV fajla. Postojeći podaci za istu nedelju se prepisuju.</p>
+
+      <div class="form-group">
+        <label>Učitaj CSV fajl</label>
+        <input type="file" id="csv-file" accept=".csv,.txt" onchange="loadCsvFile(event)">
+      </div>
+
+      <div class="form-group">
+        <label>Ili nalepite CSV tekst</label>
+        <textarea id="csv-text" rows="7" placeholder="week_start,active_listings,new_listings,inquiries,contracts_sale,contracts_rent,revenue,halo_oglasi,4zida,sajt_agencije,instagram_ostalo&#10;2026-04-28,47,5,83,3,7,4200,38,21,14,10&#10;2026-05-05,52,6,91,4,8,4800,42,23,16,10"></textarea>
+      </div>
+
+      <button class="btn-outline" onclick="parseCsv()">Pregledaj uvoz</button>
+    </div>
+
+    <div class="card" id="csv-preview-card" style="display:none">
+      <h2>Pregled podataka</h2>
+      <div id="csv-preview-table" style="overflow-x:auto"></div>
+      <div id="import-msg" style="margin-top:12px"></div>
+      <button class="btn btn-success" id="import-btn" onclick="importCsv()" style="margin-top:14px;">
+        Uvezi u bazu
+      </button>
+    </div>
+  </div>
+
+  <!-- ── Arhiva tab ── -->
+  <div id="tab-archive" hidden>
+    <div class="card">
+      <h2>Arhiva izveštaja</h2>
+      <div id="archive-list">
+        <p class="archive-empty">Učitavanje...</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL ZA PREGLED IZVEŠTAJA ═══ -->
+<div id="report-modal">
+  <div class="modal-backdrop" onclick="closeModal()"></div>
+  <div class="modal-wrapper">
+    <div class="modal-header">
+      <span class="modal-title" id="modal-title">Izveštaj</span>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button class="btn-print" onclick="printReport()">&#128438; Preuzmi PDF</button>
+        <button class="modal-close" onclick="closeModal()">&#x2715;</button>
+      </div>
+    </div>
+    <iframe id="report-iframe" srcdoc=""></iframe>
+  </div>
+</div>
+
+<script>
+  const { createClient } = supabase;
+  const sb = createClient(
+    'https://cesxmcbodcpfnpyusxhj.supabase.co',
+    'sb_publishable_uMe0x5mYYyTI707MbRLzag_6NIDIE_K'
+  );
+
+  let agencyId   = null;
+  let agentsList = [];
+  let activeTab  = 'form';
+
+  // ── Helpers ────────────────────────────────────────────────────────────────
+
+  function showMsg(id, text, isError = false) {
+    document.getElementById(id).innerHTML =
+      `<div class="msg ${isError ? 'msg-error' : 'msg-success'}">${text}</div>`;
+  }
+
+  function getMonday() {
+    const d   = new Date();
+    const day = d.getDay();
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+    d.setDate(diff);
+    return d.toISOString().split('T')[0];
+  }
+
+  function fmtDate(iso) {
+    if (!iso) return '—';
+    const [y, m, d] = iso.split('-');
+    return `${d}.${m}.${y}`;
+  }
+
+  // ── Tabs ───────────────────────────────────────────────────────────────────
+
+  function switchTab(tab) {
+    activeTab = tab;
+    document.getElementById('tab-form').hidden    = (tab !== 'form');
+    document.getElementById('tab-import').hidden  = (tab !== 'import');
+    document.getElementById('tab-archive').hidden = (tab !== 'archive');
+    document.getElementById('tab-form-btn').classList.toggle('active',    tab === 'form');
+    document.getElementById('tab-import-btn').classList.toggle('active',  tab === 'import');
+    document.getElementById('tab-archive-btn').classList.toggle('active', tab === 'archive');
+
+    if (tab === 'archive') loadArchive();
+  }
+
+  // ── Auth ───────────────────────────────────────────────────────────────────
+
+  async function doLogin() {
+    const email    = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+    const btn      = document.getElementById('login-btn');
+    btn.disabled    = true;
+    btn.textContent = 'Prijavljivanje...';
+
+    const { error } = await sb.auth.signInWithPassword({ email, password });
+    if (error) {
+      showMsg('login-msg', 'Pogrešan email ili lozinka.', true);
+      btn.disabled    = false;
+      btn.textContent = 'Prijavi se';
+    } else {
+      await initDashboard();
+    }
+  }
+
+  async function doLogout() {
+    await sb.auth.signOut();
+    document.getElementById('dashboard').hidden         = true;
+    document.getElementById('login-view').style.display = 'flex';
+    document.getElementById('login-msg').innerHTML      = '';
+  }
+
+  // ── Dashboard ──────────────────────────────────────────────────────────────
+
+  async function initDashboard() {
+    const { data: { user } } = await sb.auth.getUser();
+    if (!user) return;
+
+    const { data: agencies, error } = await sb
+      .from('agencies')
+      .select('id, name, public_token')
+      .eq('user_id', user.id)
+      .limit(1);
+
+    if (error || !agencies?.length) {
+      showMsg('login-msg', 'Nalog nije povezan sa agencijom. Kontaktirajte podršku.', true);
+      await sb.auth.signOut();
+      return;
+    }
+
+    agencyId = agencies[0].id;
+    document.getElementById('agency-name-header').textContent = agencies[0].name;
+
+    const token = agencies[0].public_token;
+    if (token) {
+      const link = `${window.location.origin}/public.html?token=${token}`;
+      document.getElementById('public-link-text').textContent = link;
+      document.getElementById('public-link-card').style.display = 'block';
+    }
+
+    const { data: agents } = await sb
+      .from('agents')
+      .select('id, name')
+      .eq('agency_id', agencyId)
+      .eq('active', true)
+      .order('name');
+
+    agentsList = agents || [];
+    renderAgents();
+    document.getElementById('week_start').value = getMonday();
+
+    document.getElementById('login-view').style.display = 'none';
+    document.getElementById('dashboard').hidden          = false;
+  }
+
+  function renderAgents() {
+    const container = document.getElementById('agents-container');
+    if (!agentsList.length) {
+      container.innerHTML = '<p style="color:#aaa">Nema aktivnih agenata.</p>';
+      return;
+    }
+    container.innerHTML = `
+      <div class="agents-header">
+        <span>Agent</span><span>Upiti</span><span>Ugovori</span>
+      </div>
+      ${agentsList.map(a => `
+        <div class="agent-row">
+          <div class="agent-name">${a.name}</div>
+          <input type="number" id="agent_inq_${a.id}" min="0" value="0">
+          <input type="number" id="agent_con_${a.id}" min="0" value="0">
+        </div>
+      `).join('')}
+    `;
+  }
+
+  // ── Archive ─────────────────────────────────────────────────────────────────
+
+  async function loadArchive() {
+    const list = document.getElementById('archive-list');
+    list.innerHTML = '<p class="archive-empty">Učitavanje...</p>';
+
+    const { data: reports, error } = await sb
+      .from('reports')
+      .select('week_start, sent_at, report_type')
+      .eq('agency_id', agencyId)
+      .order('week_start', { ascending: false })
+      .limit(52);
+
+    if (error) {
+      list.innerHTML = `<p class="archive-empty" style="color:#dc2626">Greška: ${error.message}</p>`;
+      return;
+    }
+
+    if (!reports?.length) {
+      list.innerHTML = '<p class="archive-empty">Nema sačuvanih izveštaja.</p>';
+      return;
+    }
+
+    list.innerHTML = reports.map(r => {
+      const type    = r.report_type === 'monthly' ? 'monthly' : 'weekly';
+      const label   = type === 'monthly' ? 'Mesečni' : 'Nedeljni';
+      const cls     = type === 'monthly' ? 'badge-monthly' : 'badge-weekly';
+      const sentTxt = r.sent_at ? `Poslat ${fmtDate(r.sent_at)}` : '';
+      return `
+        <div class="report-row">
+          <div>
+            <div class="report-date">
+              ${fmtDate(r.week_start)}
+              <span class="report-type-badge ${cls}">${label}</span>
+            </div>
+            ${sentTxt ? `<div class="report-meta">${sentTxt}</div>` : ''}
+          </div>
+          <button class="btn-view" onclick="viewReport('${r.week_start}', '${label}', this)">
+            Pregledaj
+          </button>
+        </div>
+      `;
+    }).join('');
+  }
+
+  async function viewReport(weekStart, label, btn) {
+    btn.disabled    = true;
+    btn.textContent = 'Učitavanje...';
+
+    const { data, error } = await sb
+      .from('reports')
+      .select('html')
+      .eq('agency_id', agencyId)
+      .eq('week_start', weekStart)
+      .single();
+
+    btn.disabled    = false;
+    btn.textContent = 'Pregledaj';
+
+    if (error || !data?.html) {
+      alert('Izveštaj nije pronađen.');
+      return;
+    }
+
+    document.getElementById('modal-title').textContent = `${label} izveštaj — ${fmtDate(weekStart)}`;
+    document.getElementById('report-iframe').srcdoc    = data.html;
+    document.getElementById('report-modal').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+  }
+
+  function printReport() {
+    const iframe = document.getElementById('report-iframe');
+    iframe.contentWindow.focus();
+    iframe.contentWindow.print();
+  }
+
+  function closeModal() {
+    document.getElementById('report-modal').style.display = 'none';
+    document.getElementById('report-iframe').srcdoc       = '';
+    document.body.style.overflow = '';
+  }
+
+  // ── Submit ─────────────────────────────────────────────────────────────────
+
+  async function submitForm(e) {
+    e.preventDefault();
+    const btn = document.getElementById('submit-btn');
+    btn.disabled    = true;
+    btn.textContent = 'Čuvanje...';
+    document.getElementById('form-msg').innerHTML = '';
+
+    const weekStart = document.getElementById('week_start').value;
+
+    try {
+      const { error: e1 } = await sb.from('weekly_kpis').upsert({
+        agency_id:       agencyId,
+        week_start:      weekStart,
+        active_listings: +document.getElementById('active_listings').value,
+        new_listings:    +document.getElementById('new_listings').value,
+        inquiries:       +document.getElementById('inquiries').value,
+        contracts_sale:  +document.getElementById('contracts_sale').value,
+        contracts_rent:  +document.getElementById('contracts_rent').value,
+        revenue:         +document.getElementById('revenue').value,
+      }, { onConflict: 'agency_id,week_start' });
+      if (e1) throw e1;
+
+      const sources = [
+        { source: 'Halo oglasi',      count: +document.getElementById('src_halo').value },
+        { source: '4zida',            count: +document.getElementById('src_4zida').value },
+        { source: 'Sajt agencije',    count: +document.getElementById('src_sajt').value },
+        { source: 'Instagram/ostalo', count: +document.getElementById('src_insta').value },
+      ];
+      for (const s of sources) {
+        const { error: e2 } = await sb.from('inquiry_sources').upsert(
+          { agency_id: agencyId, week_start: weekStart, ...s },
+          { onConflict: 'agency_id,week_start,source' }
+        );
+        if (e2) throw e2;
+      }
+
+      for (const a of agentsList) {
+        const { error: e3 } = await sb.from('agent_performance').upsert({
+          agent_id:   a.id,
+          agency_id:  agencyId,
+          week_start: weekStart,
+          inquiries:  +document.getElementById(`agent_inq_${a.id}`).value,
+          contracts:  +document.getElementById(`agent_con_${a.id}`).value,
+        }, { onConflict: 'agent_id,week_start' });
+        if (e3) throw e3;
+      }
+
+      showMsg('form-msg', `Podaci za nedelju ${weekStart} su sačuvani. Izveštaj će biti poslat u ponedeljak ujutru.`);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    } catch (err) {
+      showMsg('form-msg', `Greška: ${err.message}`, true);
+    }
+
+    btn.disabled    = false;
+    btn.textContent = 'Sačuvaj nedeljni izveštaj';
+  }
+
+  // ── Javni link ─────────────────────────────────────────────────────────────
+
+  function copyPublicLink(btn) {
+    const link = document.getElementById('public-link-text').textContent;
+    navigator.clipboard.writeText(link).then(() => {
+      btn.textContent = 'Kopirano!';
+      setTimeout(() => btn.textContent = 'Kopiraj', 1600);
+    });
+  }
+
+  // ── CSV uvoz ────────────────────────────────────────────────────────────────
+
+  let parsedCsvRows = [];
+
+  function loadCsvFile(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => { document.getElementById('csv-text').value = e.target.result.trim(); };
+    reader.readAsText(file, 'UTF-8');
+  }
+
+  function parseCsv() {
+    const text = document.getElementById('csv-text').value.trim();
+    if (!text) { alert('Nema podataka za uvoz.'); return; }
+
+    const lines    = text.split('\n').map(l => l.trim()).filter(Boolean);
+    if (lines.length < 2) { alert('CSV mora imati zaglavlje i bar jedan red podataka.'); return; }
+
+    const expected = ['week_start','active_listings','new_listings','inquiries',
+                      'contracts_sale','contracts_rent','revenue',
+                      'halo_oglasi','4zida','sajt_agencije','instagram_ostalo'];
+    const headers  = lines[0].split(',').map(h => h.trim());
+
+    if (!expected.every((h, i) => headers[i] === h)) {
+      alert('Zaglavlje CSV-a nije ispravno.\n\nOčekivano:\n' + expected.join(','));
+      return;
+    }
+
+    parsedCsvRows = [];
+    const errors  = [];
+
+    for (let i = 1; i < lines.length; i++) {
+      const vals = lines[i].split(',');
+      if (vals.length !== expected.length) { errors.push(`Red ${i + 1}: pogrešan broj kolona (${vals.length})`); continue; }
+
+      const row = {
+        week_start:       vals[0].trim(),
+        active_listings:  parseInt(vals[1]),
+        new_listings:     parseInt(vals[2]),
+        inquiries:        parseInt(vals[3]),
+        contracts_sale:   parseInt(vals[4]),
+        contracts_rent:   parseInt(vals[5]),
+        revenue:          parseFloat(vals[6]),
+        halo_oglasi:      parseInt(vals[7]),
+        '4zida':          parseInt(vals[8]),
+        sajt_agencije:    parseInt(vals[9]),
+        instagram_ostalo: parseInt(vals[10]),
+      };
+
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(row.week_start)) {
+        errors.push(`Red ${i + 1}: datum mora biti YYYY-MM-DD (npr. 2026-04-28)`); continue;
+      }
+      if (Object.values(row).some(v => typeof v === 'number' && isNaN(v))) {
+        errors.push(`Red ${i + 1}: neispravan broj`); continue;
+      }
+
+      parsedCsvRows.push(row);
+    }
+
+    if (errors.length) { alert('Greške u CSV-u:\n' + errors.join('\n')); return; }
+    if (!parsedCsvRows.length) { alert('Nema ispravnih redova za uvoz.'); return; }
+
+    let html = `<table class="csv-table"><thead><tr>
+      <th>Nedelja</th><th>Oglasi</th><th>Upiti</th><th>Ugovori</th><th>Prihod</th>
+    </tr></thead><tbody>`;
+    for (const r of parsedCsvRows) {
+      html += `<tr>
+        <td>${r.week_start}</td>
+        <td>${r.active_listings}</td>
+        <td>${r.inquiries}</td>
+        <td>${r.contracts_sale + r.contracts_rent}</td>
+        <td>${r.revenue.toLocaleString('sr')}€</td>
+      </tr>`;
+    }
+    html += `</tbody></table><p style="font-size:0.82rem;color:#888;margin-top:8px;">${parsedCsvRows.length} ${parsedCsvRows.length === 1 ? 'nedelja' : 'nedelja'} spreman/o za uvoz.</p>`;
+
+    document.getElementById('csv-preview-table').innerHTML = html;
+    document.getElementById('csv-preview-card').style.display = 'block';
+    document.getElementById('import-msg').innerHTML = '';
+    document.getElementById('import-btn').disabled  = false;
+    document.getElementById('import-btn').textContent = 'Uvezi u bazu';
+  }
+
+  async function importCsv() {
+    if (!parsedCsvRows.length) return;
+    const btn = document.getElementById('import-btn');
+    btn.disabled    = true;
+    btn.textContent = 'Uvoz u toku...';
+    document.getElementById('import-msg').innerHTML = '';
+
+    let ok = 0, fail = 0;
+
+    for (const row of parsedCsvRows) {
+      try {
+        const { error: e1 } = await sb.from('weekly_kpis').upsert({
+          agency_id:       agencyId,
+          week_start:      row.week_start,
+          active_listings: row.active_listings,
+          new_listings:    row.new_listings,
+          inquiries:       row.inquiries,
+          contracts_sale:  row.contracts_sale,
+          contracts_rent:  row.contracts_rent,
+          revenue:         row.revenue,
+        }, { onConflict: 'agency_id,week_start' });
+        if (e1) throw e1;
+
+        const sources = [
+          { source: 'Halo oglasi',      count: row.halo_oglasi },
+          { source: '4zida',            count: row['4zida'] },
+          { source: 'Sajt agencije',    count: row.sajt_agencije },
+          { source: 'Instagram/ostalo', count: row.instagram_ostalo },
+        ];
+        for (const s of sources) {
+          const { error: e2 } = await sb.from('inquiry_sources').upsert(
+            { agency_id: agencyId, week_start: row.week_start, ...s },
+            { onConflict: 'agency_id,week_start,source' }
+          );
+          if (e2) throw e2;
+        }
+        ok++;
+      } catch (err) {
+        fail++;
+        console.error('Import error for', row.week_start, err);
+      }
+    }
+
+    btn.disabled    = false;
+    btn.textContent = 'Uvezi u bazu';
+
+    const msg     = fail
+      ? `Uvezeno ${ok} nedelja. Greška: ${fail} nedelja (pogledajte konzolu).`
+      : `Uspešno uvezeno ${ok} ${ok === 1 ? 'nedelja' : 'nedelja'}.`;
+    document.getElementById('import-msg').innerHTML =
+      `<div class="msg ${fail ? 'msg-error' : 'msg-success'}">${msg}</div>`;
+
+    if (!fail) parsedCsvRows = [];
+  }
+
+  // ── Auto-session ───────────────────────────────────────────────────────────
+
+  sb.auth.getSession().then(({ data: { session } }) => {
+    if (session) initDashboard();
+  });
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && document.getElementById('login-view').style.display !== 'none'
+        && !document.getElementById('login-view').hidden) {
+      doLogin();
+    }
+  });
+</script>
+</body>
+</html>

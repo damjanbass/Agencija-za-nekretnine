@@ -3,770 +3,411 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Panel — Nekretnine</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <title>Izveštaj — AI nedeljni izveštaj za agencije nekretnina</title>
+  <meta name="description" content="Prestanite da gubite 6 sati nedeljno na ručno pravljenje izveštaja. Izveštaj automatski generiše AI analizu sa konkretnim sledećim koracima za vašu agenciju nekretnina.">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: system-ui, -apple-system, sans-serif; background: #f4f6f9; color: #1a1a1a; min-height: 100vh; }
+    html { scroll-behavior: smooth; }
+    body { font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; background: #f4f6f9; color: #1a1a2e; line-height: 1.55; -webkit-font-smoothing: antialiased; }
+    a { color: inherit; text-decoration: none; }
 
-    /* ── Login ── */
-    #login-view { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; }
-    .login-card { background: white; border-radius: 14px; padding: 44px 40px; width: 100%; max-width: 400px; box-shadow: 0 4px 32px rgba(0,0,0,0.09); }
-    .login-card h1 { font-size: 1.5rem; margin-bottom: 6px; }
-    .login-card p { color: #666; margin-bottom: 28px; font-size: 0.95rem; }
-
-    /* ── Forms ── */
-    label { display: block; font-size: 0.82rem; font-weight: 600; color: #444; margin-bottom: 5px; letter-spacing: 0.02em; text-transform: uppercase; }
-    input[type="email"], input[type="password"], input[type="date"], input[type="number"] {
-      width: 100%; padding: 10px 13px; border: 1.5px solid #e2e6ea; border-radius: 8px;
-      font-size: 0.95rem; outline: none; transition: border-color 0.2s; background: #fafafa;
+    /* ── Nav ── */
+    .nav {
+      position: sticky; top: 0; z-index: 50; background: rgba(255,255,255,0.96);
+      backdrop-filter: blur(10px); border-bottom: 1px solid #eaedf3;
     }
-    input:focus { border-color: #2563eb; background: white; }
-    .form-group { margin-bottom: 16px; }
-
-    /* ── Buttons ── */
-    .btn { width: 100%; padding: 12px; border: none; border-radius: 9px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+    .nav-inner {
+      max-width: 1120px; margin: 0 auto; padding: 14px 24px;
+      display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    }
+    .brand { font-size: 1.15rem; font-weight: 700; color: #1a1a2e; letter-spacing: -0.01em; }
+    .brand-dot { color: #2563eb; }
+    .nav-links { display: flex; align-items: center; gap: 8px; }
+    .nav-link { padding: 8px 14px; font-size: 0.92rem; font-weight: 500; color: #4a5168; border-radius: 8px; transition: all 0.18s; }
+    .nav-link:hover { background: #f4f6f9; color: #1a1a2e; }
+    .nav-link.active { color: #2563eb; }
+    .nav-link-register { color: #2563eb; font-weight: 600; }
+    .nav-link-register:hover { background: #eff6ff; color: #1d4ed8; }
+    .btn { display: inline-block; padding: 11px 20px; border-radius: 9px; font-size: 0.92rem; font-weight: 600; cursor: pointer; transition: all 0.18s; border: none; text-align: center; }
     .btn-primary { background: #2563eb; color: white; }
-    .btn-primary:hover { background: #1d4ed8; }
-    .btn-primary:disabled { background: #93c5fd; cursor: not-allowed; }
-    .btn-success { background: #16a34a; color: white; margin-top: 8px; }
-    .btn-success:hover { background: #15803d; }
-    .btn-success:disabled { background: #86efac; cursor: not-allowed; }
-
-    /* ── Dashboard wrapper ── */
-    #dashboard { max-width: 740px; margin: 0 auto; padding: 28px 20px 60px; }
-
-    /* ── Page header ── */
-    .page-header {
-      background: white; border-radius: 12px; padding: 18px 24px;
-      margin-bottom: 18px; box-shadow: 0 2px 10px rgba(0,0,0,0.06);
-      display: flex; align-items: center; justify-content: space-between; gap: 12px;
-    }
-    .page-header h1 { font-size: 1.2rem; }
-    .header-right { display: flex; align-items: center; gap: 10px; }
-
-    /* ── Tabs ── */
-    .tab-nav { display: flex; gap: 4px; background: #f4f6f9; border-radius: 8px; padding: 3px; }
-    .tab-btn {
-      padding: 6px 16px; border: none; border-radius: 6px; font-size: 0.85rem;
-      font-weight: 600; cursor: pointer; background: transparent; color: #666;
-      transition: all 0.18s;
-    }
-    .tab-btn.active { background: white; color: #2563eb; box-shadow: 0 1px 4px rgba(0,0,0,0.10); }
-    .tab-btn:hover:not(.active) { background: #eaecef; }
-
-    /* ── Cards ── */
-    .card { background: white; border-radius: 12px; padding: 26px; margin-bottom: 16px; box-shadow: 0 2px 10px rgba(0,0,0,0.06); }
-    .card h2 { font-size: 0.9rem; color: #2563eb; font-weight: 700; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid #eff6ff; text-transform: uppercase; letter-spacing: 0.05em; }
-
-    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-
-    /* ── Agent rows ── */
-    .agents-header { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 12px; margin-bottom: 8px; }
-    .agents-header span { font-size: 0.78rem; color: #999; font-weight: 600; text-transform: uppercase; }
-    .agent-row { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 12px; align-items: center; margin-bottom: 10px; }
-    .agent-name { font-size: 0.92rem; font-weight: 500; }
-
-    /* ── Messages ── */
-    .msg { padding: 13px 16px; border-radius: 9px; margin-bottom: 16px; font-size: 0.9rem; }
-    .msg-error   { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
-    .msg-success { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
-
-    .logout-btn { background: none; border: 1px solid #e2e6ea; color: #555; cursor: pointer; font-size: 0.82rem; padding: 6px 12px; border-radius: 6px; transition: all 0.2s; white-space: nowrap; }
-    .logout-btn:hover { background: #f4f6f9; }
-
-    /* ── CSV import ── */
-    textarea { width: 100%; padding: 10px 13px; border: 1.5px solid #e2e6ea; border-radius: 8px; font-size: 0.82rem; font-family: monospace; resize: vertical; background: #fafafa; outline: none; transition: border-color 0.2s; }
-    textarea:focus { border-color: #2563eb; background: white; }
-    input[type="file"] { width: 100%; padding: 6px 0; font-size: 0.88rem; color: #555; cursor: pointer; }
-    .csv-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
-    .csv-table th { background: #f4f6f9; padding: 8px 10px; text-align: left; font-size: 0.75rem; text-transform: uppercase; color: #666; border-bottom: 2px solid #e2e6ea; }
-    .csv-table td { padding: 8px 10px; border-bottom: 1px solid #f0f2f5; }
-    .csv-table tr:last-child td { border-bottom: none; }
-    .btn-outline { background: white; border: 1.5px solid #2563eb; color: #2563eb; padding: 10px 22px; border-radius: 9px; font-size: 0.92rem; font-weight: 600; cursor: pointer; transition: all 0.18s; display: inline-block; }
+    .btn-primary:hover { background: #1d4ed8; transform: translateY(-1px); box-shadow: 0 6px 16px rgba(37,99,235,0.28); }
+    .btn-outline { background: white; border: 1.5px solid #2563eb; color: #2563eb; }
     .btn-outline:hover { background: #2563eb; color: white; }
+    .btn-lg { padding: 15px 28px; font-size: 1rem; }
 
-    /* ── Javni link ── */
-    .public-link-box { display: flex; align-items: center; gap: 10px; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 12px 14px; margin-top: 10px; }
-    .public-link-text { font-size: 0.82rem; color: #1d4ed8; word-break: break-all; flex: 1; }
-    .btn-copy { background: #eff6ff; border: 1.5px solid #2563eb; color: #2563eb; padding: 7px 14px; border-radius: 6px; font-size: 0.82rem; font-weight: 600; cursor: pointer; white-space: nowrap; transition: all 0.18s; flex-shrink: 0; }
-    .btn-copy:hover { background: #2563eb; color: white; }
+    /* ── Hero ── */
+    .hero {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      color: white; padding: 80px 24px 100px; position: relative; overflow: hidden;
+    }
+    .hero::before {
+      content: ''; position: absolute; top: -50%; right: -10%; width: 600px; height: 600px;
+      background: radial-gradient(circle, rgba(37,99,235,0.18) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .hero-inner {
+      max-width: 1120px; margin: 0 auto; display: grid; grid-template-columns: 1.05fr 1fr;
+      gap: 56px; align-items: center; position: relative; z-index: 1;
+    }
+    .hero-eyebrow {
+      display: inline-block; padding: 6px 12px; background: rgba(37,99,235,0.18);
+      border: 1px solid rgba(37,99,235,0.35); border-radius: 999px;
+      font-size: 0.78rem; font-weight: 600; letter-spacing: 0.04em;
+      text-transform: uppercase; color: #93c5fd; margin-bottom: 22px;
+    }
+    .hero h1 {
+      font-size: 2.85rem; font-weight: 800; line-height: 1.1;
+      letter-spacing: -0.02em; margin-bottom: 22px;
+    }
+    .hero h1 .accent { color: #93c5fd; }
+    .hero-sub { font-size: 1.12rem; color: #c8d0e0; margin-bottom: 32px; max-width: 540px; }
+    .hero-cta-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+    .hero .btn-primary { box-shadow: 0 8px 24px rgba(37,99,235,0.35); }
+    .hero-trust { margin-top: 16px; font-size: 0.88rem; color: #8892a4; display: flex; align-items: center; gap: 8px; }
+    .hero-trust .dot { width: 6px; height: 6px; background: #16a34a; border-radius: 50%; }
 
-    /* ── Archive list ── */
-    .archive-empty { color: #aaa; font-size: 0.9rem; padding: 8px 0; }
-    .report-row {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 13px 0; border-bottom: 1px solid #f0f2f5;
+    /* ── Hero mockup ── */
+    .mockup {
+      background: white; color: #1a1a2e; border-radius: 14px;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.4), 0 4px 16px rgba(0,0,0,0.2);
+      padding: 22px; transform: rotate(-1.2deg); position: relative;
     }
-    .report-row:last-child { border-bottom: none; }
-    .report-date { font-size: 0.95rem; font-weight: 600; }
-    .report-meta { font-size: 0.82rem; color: #888; margin-top: 2px; }
-    .report-type-badge {
-      display: inline-block; font-size: 0.75rem; font-weight: 700;
-      padding: 2px 8px; border-radius: 10px; margin-left: 8px;
-    }
-    .badge-weekly  { background: #eff6ff; color: #2563eb; }
-    .badge-monthly { background: #fef9c3; color: #ca8a04; }
-    .btn-view {
-      padding: 7px 16px; border: 1.5px solid #2563eb; border-radius: 7px;
-      background: white; color: #2563eb; font-size: 0.85rem; font-weight: 600;
-      cursor: pointer; transition: all 0.18s; white-space: nowrap;
-    }
-    .btn-view:hover { background: #2563eb; color: white; }
-    .btn-view:disabled { border-color: #bfdbfe; color: #93c5fd; cursor: not-allowed; }
+    .mockup-header { display: flex; align-items: center; justify-content: space-between; padding-bottom: 14px; border-bottom: 1px solid #eaedf3; margin-bottom: 14px; }
+    .mockup-title { font-size: 0.95rem; font-weight: 700; }
+    .mockup-sub { font-size: 0.72rem; color: #8892a4; text-transform: uppercase; letter-spacing: 0.6px; }
+    .mockup-badge { font-size: 0.7rem; background: #eff6ff; color: #1d4ed8; padding: 4px 9px; border-radius: 999px; font-weight: 600; }
+    .kpi-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+    .kpi-cell { background: #f8f9fc; border: 1px solid #eaedf3; border-radius: 8px; padding: 10px 11px; }
+    .kpi-label { font-size: 0.62rem; color: #8892a4; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
+    .kpi-value { font-size: 1.2rem; font-weight: 700; margin-top: 3px; }
+    .kpi-delta-up { font-size: 0.7rem; color: #16a34a; font-weight: 600; }
+    .kpi-delta-down { font-size: 0.7rem; color: #dc2626; font-weight: 600; }
+    .insight { padding: 11px 13px; border-radius: 8px; margin-bottom: 8px; font-size: 0.82rem; line-height: 1.45; }
+    .insight-good { background: #f0fdf4; border-left: 3px solid #16a34a; }
+    .insight-bad { background: #fef2f2; border-left: 3px solid #dc2626; }
+    .insight-action { background: #eff6ff; border-left: 3px solid #2563eb; }
+    .insight strong { font-weight: 700; }
 
-    /* ── Report modal ── */
-    #report-modal {
-      display: none; position: fixed; inset: 0; z-index: 1000;
-      align-items: center; justify-content: center;
+    /* ── Sections ── */
+    .section { padding: 80px 24px; }
+    .section-inner { max-width: 1120px; margin: 0 auto; }
+    .section-eyebrow {
+      font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.8px;
+      color: #8892a4; font-weight: 700; margin-bottom: 12px;
     }
-    .modal-backdrop {
-      position: absolute; inset: 0; background: rgba(0,0,0,0.55);
+    .section h2 {
+      font-size: 2.1rem; font-weight: 800; letter-spacing: -0.02em;
+      margin-bottom: 14px; line-height: 1.15;
     }
-    .modal-wrapper {
-      position: relative; z-index: 1; width: 94vw; max-width: 720px;
-      height: 88vh; background: white; border-radius: 14px;
-      display: flex; flex-direction: column; overflow: hidden;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-    }
-    .modal-header {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 14px 20px; border-bottom: 1px solid #eaedf3; flex-shrink: 0;
-    }
-    .modal-title { font-size: 0.95rem; font-weight: 700; color: #1a1a2e; }
-    .modal-close {
-      background: none; border: none; font-size: 1.4rem; cursor: pointer;
-      color: #888; line-height: 1; padding: 2px 6px; border-radius: 4px;
-    }
-    .modal-close:hover { background: #f4f6f9; color: #333; }
-    .btn-print {
-      padding: 6px 14px; border: 1.5px solid #16a34a; border-radius: 7px;
-      background: white; color: #16a34a; font-size: 0.82rem; font-weight: 600;
-      cursor: pointer; transition: all 0.18s;
-    }
-    .btn-print:hover { background: #16a34a; color: white; }
-    #report-iframe { flex: 1; width: 100%; border: none; }
+    .section-lede { font-size: 1.05rem; color: #4a5168; max-width: 640px; margin-bottom: 48px; }
 
-    @media (max-width: 520px) {
-      .grid-2 { grid-template-columns: 1fr; }
-      .agent-row, .agents-header { grid-template-columns: 2fr 1fr 1fr; }
-      .login-card { padding: 32px 24px; }
-      .modal-wrapper { width: 100vw; height: 100vh; border-radius: 0; }
+    /* ── Problem cards ── */
+    .problem-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+    .problem-card {
+      background: white; border-radius: 12px; padding: 28px 26px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+      border-top: 3px solid #dc2626;
+    }
+    .problem-icon {
+      width: 38px; height: 38px; border-radius: 9px;
+      background: #fef2f2; color: #dc2626;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.2rem; font-weight: 700; margin-bottom: 14px;
+    }
+    .problem-card h3 { font-size: 1.05rem; font-weight: 700; margin-bottom: 8px; line-height: 1.3; }
+    .problem-card p { font-size: 0.93rem; color: #4a5168; }
+
+    /* ── Solution ── */
+    .solution { background: white; }
+    .solution-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; }
+    .solution-card {
+      background: #f8f9fc; border: 1px solid #eaedf3; border-radius: 12px;
+      padding: 28px 26px; transition: all 0.2s;
+    }
+    .solution-card:hover { background: white; box-shadow: 0 8px 22px rgba(0,0,0,0.06); border-color: #dbe3ee; }
+    .solution-icon {
+      width: 42px; height: 42px; border-radius: 10px;
+      background: #eff6ff; color: #2563eb;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 16px;
+    }
+    .solution-card h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 8px; }
+    .solution-card p { font-size: 0.95rem; color: #4a5168; }
+
+    /* ── How it works ── */
+    .steps-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; counter-reset: step; }
+    .step-card {
+      background: white; border-radius: 12px; padding: 32px 26px 28px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.06); position: relative;
+    }
+    .step-num {
+      width: 36px; height: 36px; border-radius: 50%;
+      background: #2563eb; color: white;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem; font-weight: 700; margin-bottom: 14px;
+    }
+    .step-card h3 { font-size: 1.05rem; font-weight: 700; margin-bottom: 7px; }
+    .step-card p { font-size: 0.92rem; color: #4a5168; }
+
+    /* ── Stat strip ── */
+    .strip { background: white; padding: 36px 24px; border-top: 1px solid #eaedf3; border-bottom: 1px solid #eaedf3; }
+    .strip-inner {
+      max-width: 1120px; margin: 0 auto;
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; text-align: center;
+    }
+    .strip-stat { padding: 0 12px; }
+    .strip-num { font-size: 2.1rem; font-weight: 800; color: #2563eb; line-height: 1; }
+    .strip-label { font-size: 0.85rem; color: #4a5168; margin-top: 6px; }
+
+    /* ── Final CTA ── */
+    .cta-band {
+      background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+      color: white; padding: 70px 24px;
+    }
+    .cta-inner { max-width: 760px; margin: 0 auto; text-align: center; }
+    .cta-band h2 { font-size: 2rem; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 12px; line-height: 1.2; }
+    .cta-band p { font-size: 1.05rem; color: #dbe6ff; margin-bottom: 28px; }
+    .cta-band .btn-primary { background: white; color: #2563eb; }
+    .cta-band .btn-primary:hover { background: #f0f4ff; }
+    .cta-secondary { display: inline-block; margin-left: 16px; color: white; font-weight: 600; font-size: 0.95rem; opacity: 0.9; }
+    .cta-secondary:hover { opacity: 1; }
+
+    /* ── Footer ── */
+    .footer { background: #0f172a; color: #8892a4; padding: 40px 24px 32px; }
+    .footer-inner { max-width: 1120px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; }
+    .footer-brand { color: white; font-weight: 700; font-size: 1rem; }
+    .footer-links { display: flex; gap: 22px; font-size: 0.88rem; }
+    .footer-links a:hover { color: white; }
+    .footer-copy { font-size: 0.82rem; }
+
+    /* ── Responsive ── */
+    @media (max-width: 960px) {
+      .hero-inner { grid-template-columns: 1fr; gap: 48px; }
+      .mockup { transform: none; max-width: 480px; margin: 0 auto; }
+      .hero h1 { font-size: 2.3rem; }
+      .problem-grid { grid-template-columns: 1fr; }
+      .solution-grid { grid-template-columns: 1fr; }
+      .steps-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 780px) {
+      .nav-link { display: none; }
+      .nav-links .btn { padding: 9px 16px; font-size: 0.88rem; }
+    }
+    @media (max-width: 600px) {
+      .hero { padding: 56px 22px 72px; }
+      .hero h1 { font-size: 1.95rem; }
+      .hero-sub { font-size: 1rem; }
+      .section { padding: 60px 22px; }
+      .section h2 { font-size: 1.7rem; }
+      .strip-inner { grid-template-columns: 1fr; gap: 18px; }
+      .cta-band h2 { font-size: 1.55rem; }
+      .cta-secondary { display: block; margin: 16px 0 0 0; }
+      .footer-inner { flex-direction: column; text-align: center; }
     }
   </style>
 </head>
 <body>
 
-<!-- ═══ LOGIN ═══ -->
-<div id="login-view">
-  <div class="login-card">
-    <h1>Nedeljni izveštaj</h1>
-    <p>Prijavite se da unesete podatke za nedelju</p>
-    <div id="login-msg"></div>
-    <div class="form-group">
-      <label>Email</label>
-      <input type="email" id="email" placeholder="vas@email.com" autocomplete="email">
-    </div>
-    <div class="form-group">
-      <label>Lozinka</label>
-      <input type="password" id="password" placeholder="••••••••" autocomplete="current-password">
-    </div>
-    <button class="btn btn-primary" id="login-btn" onclick="doLogin()">Prijavi se</button>
-  </div>
-</div>
-
-<!-- ═══ DASHBOARD ═══ -->
-<div id="dashboard" hidden>
-  <div class="page-header">
-    <h1 id="agency-name-header">Unos podataka</h1>
-    <div class="header-right">
-      <div class="tab-nav">
-        <button class="tab-btn active" id="tab-form-btn"    onclick="switchTab('form')">Unos</button>
-        <button class="tab-btn"        id="tab-import-btn"  onclick="switchTab('import')">Uvoz</button>
-        <button class="tab-btn"        id="tab-archive-btn" onclick="switchTab('archive')">Arhiva</button>
+  <!-- ── NAV ── -->
+  <nav class="nav">
+    <div class="nav-inner">
+      <a href="/" class="brand">Izveštaj<span class="brand-dot">.</span></a>
+      <div class="nav-links">
+        <a href="/" class="nav-link active">Početna</a>
+        <a href="pricing.html" class="nav-link">Cene</a>
+        <a href="app.html" class="nav-link">Uloguj se</a>
+        <a href="app.html" class="nav-link nav-link-register">Registracija</a>
+        <a href="app.html" class="btn btn-primary">Probaj besplatno</a>
       </div>
-      <button class="logout-btn" onclick="doLogout()">Odjavi se</button>
     </div>
-  </div>
+  </nav>
 
-  <div id="form-msg"></div>
-
-  <!-- ── Unos tab ── -->
-  <div id="tab-form">
-    <form id="report-form" onsubmit="submitForm(event)">
-
-      <div class="card">
-        <h2>Osnovi KPI-evi</h2>
-        <div class="form-group">
-          <label>Datum početka nedelje (ponedeljak)</label>
-          <input type="date" id="week_start" required>
+  <!-- ── HERO ── -->
+  <header class="hero">
+    <div class="hero-inner">
+      <div>
+        <span class="hero-eyebrow">AI izveštaj za agencije nekretnina</span>
+        <h1>Prestanite da gubite <span class="accent">6 sati nedeljno</span> na izveštaje koji ništa ne menjaju.</h1>
+        <p class="hero-sub">Izveštaj automatski pravi nedeljni AI izveštaj za vašu agenciju — sa konkretnim sledećim koracima, ne samo sa brojevima. Bez Excel-a. Bez nagađanja.</p>
+        <div class="hero-cta-row">
+          <a href="app.html" class="btn btn-primary btn-lg">Probaj besplatno</a>
+          <a href="pricing.html" class="cta-secondary" style="color:#93c5fd;">Pogledaj cene →</a>
         </div>
-        <div class="grid-2">
-          <div class="form-group">
-            <label>Aktivni oglasi</label>
-            <input type="number" id="active_listings" min="0" placeholder="0" required>
-          </div>
-          <div class="form-group">
-            <label>Novi oglasi ove nedelje</label>
-            <input type="number" id="new_listings" min="0" placeholder="0" required>
-          </div>
-          <div class="form-group">
-            <label>Upiti ove nedelje</label>
-            <input type="number" id="inquiries" min="0" placeholder="0" required>
-          </div>
-          <div class="form-group">
-            <label>Ugovori — prodaja</label>
-            <input type="number" id="contracts_sale" min="0" placeholder="0" required>
-          </div>
-          <div class="form-group">
-            <label>Ugovori — zakup</label>
-            <input type="number" id="contracts_rent" min="0" placeholder="0" required>
-          </div>
-          <div class="form-group">
-            <label>Prihod (€)</label>
-            <input type="number" id="revenue" min="0" placeholder="0" required>
-          </div>
+        <div class="hero-trust">
+          <span class="dot"></span>
+          <span>Bez kartice. Postavka za 5 minuta. Otkazivanje u jednom kliku.</span>
         </div>
       </div>
 
-      <div class="card">
-        <h2>Upiti po izvoru</h2>
-        <div class="grid-2">
-          <div class="form-group">
-            <label>Halo oglasi</label>
-            <input type="number" id="src_halo" min="0" value="0">
-          </div>
-          <div class="form-group">
-            <label>4zida</label>
-            <input type="number" id="src_4zida" min="0" value="0">
-          </div>
-          <div class="form-group">
-            <label>Sajt agencije</label>
-            <input type="number" id="src_sajt" min="0" value="0">
-          </div>
-          <div class="form-group">
-            <label>Instagram / ostalo</label>
-            <input type="number" id="src_insta" min="0" value="0">
-          </div>
-        </div>
-      </div>
-
-      <div class="card">
-        <h2>Performanse agenata</h2>
-        <div id="agents-container">
-          <p style="color:#aaa; font-size:0.9rem;">Učitavanje agenata...</p>
-        </div>
-      </div>
-
-      <button type="submit" class="btn btn-success" id="submit-btn">
-        Sačuvaj nedeljni izveštaj
-      </button>
-    </form>
-
-    <!-- Javni link -->
-    <div class="card" id="public-link-card" style="display:none">
-      <h2>Javni link</h2>
-      <p style="font-size:0.88rem;color:#666;margin-bottom:4px;">Podelite sa investitorima ili franšizodavcem — prikazuje KPI-eve bez logina.</p>
-      <div class="public-link-box">
-        <span class="public-link-text" id="public-link-text"></span>
-        <button class="btn-copy" onclick="copyPublicLink(this)">Kopiraj</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ── Uvoz tab ── -->
-  <div id="tab-import" hidden>
-    <div class="card">
-      <h2>CSV uvoz podataka</h2>
-      <p style="font-size:0.88rem;color:#666;margin-bottom:18px;">Uvezite istorijske podatke iz Excel/CSV fajla. Postojeći podaci za istu nedelju se prepisuju.</p>
-
-      <div class="form-group">
-        <label>Učitaj CSV fajl</label>
-        <input type="file" id="csv-file" accept=".csv,.txt" onchange="loadCsvFile(event)">
-      </div>
-
-      <div class="form-group">
-        <label>Ili nalepite CSV tekst</label>
-        <textarea id="csv-text" rows="7" placeholder="week_start,active_listings,new_listings,inquiries,contracts_sale,contracts_rent,revenue,halo_oglasi,4zida,sajt_agencije,instagram_ostalo&#10;2026-04-28,47,5,83,3,7,4200,38,21,14,10&#10;2026-05-05,52,6,91,4,8,4800,42,23,16,10"></textarea>
-      </div>
-
-      <button class="btn-outline" onclick="parseCsv()">Pregledaj uvoz</button>
-    </div>
-
-    <div class="card" id="csv-preview-card" style="display:none">
-      <h2>Pregled podataka</h2>
-      <div id="csv-preview-table" style="overflow-x:auto"></div>
-      <div id="import-msg" style="margin-top:12px"></div>
-      <button class="btn btn-success" id="import-btn" onclick="importCsv()" style="margin-top:14px;">
-        Uvezi u bazu
-      </button>
-    </div>
-  </div>
-
-  <!-- ── Arhiva tab ── -->
-  <div id="tab-archive" hidden>
-    <div class="card">
-      <h2>Arhiva izveštaja</h2>
-      <div id="archive-list">
-        <p class="archive-empty">Učitavanje...</p>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ═══ MODAL ZA PREGLED IZVEŠTAJA ═══ -->
-<div id="report-modal">
-  <div class="modal-backdrop" onclick="closeModal()"></div>
-  <div class="modal-wrapper">
-    <div class="modal-header">
-      <span class="modal-title" id="modal-title">Izveštaj</span>
-      <div style="display:flex;gap:8px;align-items:center;">
-        <button class="btn-print" onclick="printReport()">&#128438; Preuzmi PDF</button>
-        <button class="modal-close" onclick="closeModal()">&#x2715;</button>
-      </div>
-    </div>
-    <iframe id="report-iframe" srcdoc=""></iframe>
-  </div>
-</div>
-
-<script>
-  const { createClient } = supabase;
-  const sb = createClient(
-    'https://cesxmcbodcpfnpyusxhj.supabase.co',
-    'sb_publishable_uMe0x5mYYyTI707MbRLzag_6NIDIE_K'
-  );
-
-  let agencyId   = null;
-  let agentsList = [];
-  let activeTab  = 'form';
-
-  // ── Helpers ────────────────────────────────────────────────────────────────
-
-  function showMsg(id, text, isError = false) {
-    document.getElementById(id).innerHTML =
-      `<div class="msg ${isError ? 'msg-error' : 'msg-success'}">${text}</div>`;
-  }
-
-  function getMonday() {
-    const d   = new Date();
-    const day = d.getDay();
-    const diff = d.getDate() - day + (day === 0 ? -6 : 1);
-    d.setDate(diff);
-    return d.toISOString().split('T')[0];
-  }
-
-  function fmtDate(iso) {
-    if (!iso) return '—';
-    const [y, m, d] = iso.split('-');
-    return `${d}.${m}.${y}`;
-  }
-
-  // ── Tabs ───────────────────────────────────────────────────────────────────
-
-  function switchTab(tab) {
-    activeTab = tab;
-    document.getElementById('tab-form').hidden    = (tab !== 'form');
-    document.getElementById('tab-import').hidden  = (tab !== 'import');
-    document.getElementById('tab-archive').hidden = (tab !== 'archive');
-    document.getElementById('tab-form-btn').classList.toggle('active',    tab === 'form');
-    document.getElementById('tab-import-btn').classList.toggle('active',  tab === 'import');
-    document.getElementById('tab-archive-btn').classList.toggle('active', tab === 'archive');
-
-    if (tab === 'archive') loadArchive();
-  }
-
-  // ── Auth ───────────────────────────────────────────────────────────────────
-
-  async function doLogin() {
-    const email    = document.getElementById('email').value.trim();
-    const password = document.getElementById('password').value;
-    const btn      = document.getElementById('login-btn');
-    btn.disabled    = true;
-    btn.textContent = 'Prijavljivanje...';
-
-    const { error } = await sb.auth.signInWithPassword({ email, password });
-    if (error) {
-      showMsg('login-msg', 'Pogrešan email ili lozinka.', true);
-      btn.disabled    = false;
-      btn.textContent = 'Prijavi se';
-    } else {
-      await initDashboard();
-    }
-  }
-
-  async function doLogout() {
-    await sb.auth.signOut();
-    document.getElementById('dashboard').hidden         = true;
-    document.getElementById('login-view').style.display = 'flex';
-    document.getElementById('login-msg').innerHTML      = '';
-  }
-
-  // ── Dashboard ──────────────────────────────────────────────────────────────
-
-  async function initDashboard() {
-    const { data: { user } } = await sb.auth.getUser();
-    if (!user) return;
-
-    const { data: agencies, error } = await sb
-      .from('agencies')
-      .select('id, name, public_token')
-      .eq('user_id', user.id)
-      .limit(1);
-
-    if (error || !agencies?.length) {
-      showMsg('login-msg', 'Nalog nije povezan sa agencijom. Kontaktirajte podršku.', true);
-      await sb.auth.signOut();
-      return;
-    }
-
-    agencyId = agencies[0].id;
-    document.getElementById('agency-name-header').textContent = agencies[0].name;
-
-    const token = agencies[0].public_token;
-    if (token) {
-      const link = `${window.location.origin}/public.html?token=${token}`;
-      document.getElementById('public-link-text').textContent = link;
-      document.getElementById('public-link-card').style.display = 'block';
-    }
-
-    const { data: agents } = await sb
-      .from('agents')
-      .select('id, name')
-      .eq('agency_id', agencyId)
-      .eq('active', true)
-      .order('name');
-
-    agentsList = agents || [];
-    renderAgents();
-    document.getElementById('week_start').value = getMonday();
-
-    document.getElementById('login-view').style.display = 'none';
-    document.getElementById('dashboard').hidden          = false;
-  }
-
-  function renderAgents() {
-    const container = document.getElementById('agents-container');
-    if (!agentsList.length) {
-      container.innerHTML = '<p style="color:#aaa">Nema aktivnih agenata.</p>';
-      return;
-    }
-    container.innerHTML = `
-      <div class="agents-header">
-        <span>Agent</span><span>Upiti</span><span>Ugovori</span>
-      </div>
-      ${agentsList.map(a => `
-        <div class="agent-row">
-          <div class="agent-name">${a.name}</div>
-          <input type="number" id="agent_inq_${a.id}" min="0" value="0">
-          <input type="number" id="agent_con_${a.id}" min="0" value="0">
-        </div>
-      `).join('')}
-    `;
-  }
-
-  // ── Archive ─────────────────────────────────────────────────────────────────
-
-  async function loadArchive() {
-    const list = document.getElementById('archive-list');
-    list.innerHTML = '<p class="archive-empty">Učitavanje...</p>';
-
-    const { data: reports, error } = await sb
-      .from('reports')
-      .select('week_start, sent_at, report_type')
-      .eq('agency_id', agencyId)
-      .order('week_start', { ascending: false })
-      .limit(52);
-
-    if (error) {
-      list.innerHTML = `<p class="archive-empty" style="color:#dc2626">Greška: ${error.message}</p>`;
-      return;
-    }
-
-    if (!reports?.length) {
-      list.innerHTML = '<p class="archive-empty">Nema sačuvanih izveštaja.</p>';
-      return;
-    }
-
-    list.innerHTML = reports.map(r => {
-      const type    = r.report_type === 'monthly' ? 'monthly' : 'weekly';
-      const label   = type === 'monthly' ? 'Mesečni' : 'Nedeljni';
-      const cls     = type === 'monthly' ? 'badge-monthly' : 'badge-weekly';
-      const sentTxt = r.sent_at ? `Poslat ${fmtDate(r.sent_at)}` : '';
-      return `
-        <div class="report-row">
+      <!-- Report mockup -->
+      <div class="mockup" aria-hidden="true">
+        <div class="mockup-header">
           <div>
-            <div class="report-date">
-              ${fmtDate(r.week_start)}
-              <span class="report-type-badge ${cls}">${label}</span>
-            </div>
-            ${sentTxt ? `<div class="report-meta">${sentTxt}</div>` : ''}
+            <div class="mockup-title">Nedeljni izveštaj</div>
+            <div class="mockup-sub">04.05 — 10.05.2026</div>
           </div>
-          <button class="btn-view" onclick="viewReport('${r.week_start}', '${label}', this)">
-            Pregledaj
-          </button>
+          <span class="mockup-badge">PRO</span>
         </div>
-      `;
-    }).join('');
-  }
+        <div class="kpi-row">
+          <div class="kpi-cell">
+            <div class="kpi-label">Upiti</div>
+            <div class="kpi-value">142</div>
+            <div class="kpi-delta-up">↑ 18%</div>
+          </div>
+          <div class="kpi-cell">
+            <div class="kpi-label">Ugovori</div>
+            <div class="kpi-value">17</div>
+            <div class="kpi-delta-up">↑ 4</div>
+          </div>
+          <div class="kpi-cell">
+            <div class="kpi-label">Prihod</div>
+            <div class="kpi-value">28.4k€</div>
+            <div class="kpi-delta-down">↓ 6%</div>
+          </div>
+        </div>
+        <div class="insight insight-good"><strong>Dobar rad:</strong> Marko ima konverziju 18% — 2% iznad timskog proseka. Razmotrite mentoring.</div>
+        <div class="insight insight-bad"><strong>Pažnja:</strong> Upiti sa 4zida pali su 23%. Proverite poziciju oglasa.</div>
+        <div class="insight insight-action"><strong>Sledeća nedelja:</strong> Fokus na CRM follow-up — cilj +12 zatvorenih ugovora.</div>
+      </div>
+    </div>
+  </header>
 
-  async function viewReport(weekStart, label, btn) {
-    btn.disabled    = true;
-    btn.textContent = 'Učitavanje...';
+  <!-- ── PROBLEM ── -->
+  <section class="section" style="background:#f4f6f9;">
+    <div class="section-inner">
+      <div class="section-eyebrow">Poznato?</div>
+      <h2>Ovako izgleda ponedeljak u većini agencija.</h2>
+      <p class="section-lede">Ako se prepoznajete u bilo kom od ova tri scenarija — niste sami. I može drugačije.</p>
 
-    const { data, error } = await sb
-      .from('reports')
-      .select('html')
-      .eq('agency_id', agencyId)
-      .eq('week_start', weekStart)
-      .single();
+      <div class="problem-grid">
+        <div class="problem-card">
+          <div class="problem-icon">⏱</div>
+          <h3>Ponedeljkom popunjavate Excel umesto da zovete klijente.</h3>
+          <p>4 do 8 sati nedeljno odlazi na ručno kopiranje brojeva iz tabela u tabele. Vreme koje bi trebalo da prodaje stanove troši se na formatiranje.</p>
+        </div>
+        <div class="problem-card">
+          <div class="problem-icon">?</div>
+          <h3>Tabela kaže 23 upita, 4 ugovora. I šta sad?</h3>
+          <p>Sirovi brojevi ne kažu šta da uradite. Konverzija pala — zašto? Upiti porasli — gde da uložite više? Bez analize, KPI su samo cifre.</p>
+        </div>
+        <div class="problem-card">
+          <div class="problem-icon">!</div>
+          <h3>Najbolji agent ne zna da je najbolji.</h3>
+          <p>Bez individualnih izveštaja nema priznanja za top performere, niti jasne slike za one koji zaostaju. Tim radi naslepo.</p>
+        </div>
+      </div>
+    </div>
+  </section>
 
-    btn.disabled    = false;
-    btn.textContent = 'Pregledaj';
+  <!-- ── SOLUTION ── -->
+  <section class="section solution">
+    <div class="section-inner">
+      <div class="section-eyebrow">Rešenje</div>
+      <h2>Šta dobijate svakog ponedeljka u 08:00.</h2>
+      <p class="section-lede">Jedan email. Jedan PDF. Konkretni zaključci. Bez ručnog rada.</p>
 
-    if (error || !data?.html) {
-      alert('Izveštaj nije pronađen.');
-      return;
-    }
+      <div class="solution-grid">
+        <div class="solution-card">
+          <div class="solution-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
+          </div>
+          <h3>AI analiza, ne sirovi brojevi.</h3>
+          <p>Claude AI čita vaše KPI i piše 4 konkretna zaključka: šta je dobro, šta je problem, šta uraditi do petka, i prognoza za sledeću nedelju.</p>
+        </div>
+        <div class="solution-card">
+          <div class="solution-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-5"/></svg>
+          </div>
+          <h3>Poređenje sa tržištem.</h3>
+          <p>Cene €/m² i prosečni broj upita sa Halo oglasa, 4zida i Nekretnine.rs — direktno u izveštaju. Vidite gde stojite u odnosu na konkurenciju.</p>
+        </div>
+        <div class="solution-card">
+          <div class="solution-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </div>
+          <h3>Pojedinačni izveštaji po agentu.</h3>
+          <p>Svaki agent dobija svoj email sa rangom u timu, konverzijom, i preporukom za sledeću nedelju. Najbolji vide priznanje. Slabiji vide gde da poprave.</p>
+        </div>
+        <div class="solution-card">
+          <div class="solution-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+          </div>
+          <h3>PDF + javni link.</h3>
+          <p>Profesionalan PDF izveštaj za vlasnika. Deljiv link za tim i investitore. Sve izgleda jednako, svake nedelje — bez Excel-a.</p>
+        </div>
+      </div>
+    </div>
+  </section>
 
-    document.getElementById('modal-title').textContent = `${label} izveštaj — ${fmtDate(weekStart)}`;
-    document.getElementById('report-iframe').srcdoc    = data.html;
-    document.getElementById('report-modal').style.display = 'flex';
-    document.body.style.overflow = 'hidden';
-  }
+  <!-- ── HOW IT WORKS ── -->
+  <section class="section" style="background:#f4f6f9;">
+    <div class="section-inner">
+      <div class="section-eyebrow">Kako radi</div>
+      <h2>Tri koraka. Pet minuta nedeljno.</h2>
+      <p class="section-lede">Nema migracija, nema integracija sa vašim CRM-om. Samo unesete brojeve — mi radimo ostalo.</p>
 
-  function printReport() {
-    const iframe = document.getElementById('report-iframe');
-    iframe.contentWindow.focus();
-    iframe.contentWindow.print();
-  }
+      <div class="steps-grid">
+        <div class="step-card">
+          <div class="step-num">1</div>
+          <h3>Unesete KPI u panel</h3>
+          <p>Ponedeljkom ujutru, 5 minuta. Upiti, ugovori, prihod po agentu. Imate CSV? Učitajte direktno.</p>
+        </div>
+        <div class="step-card">
+          <div class="step-num">2</div>
+          <h3>AI generiše izveštaj</h3>
+          <p>Claude analizira brojeve, poredi sa tržištem i prošlim nedeljama, pravi 4 zaključka i šalje na email.</p>
+        </div>
+        <div class="step-card">
+          <div class="step-num">3</div>
+          <h3>Pratite preporuke</h3>
+          <p>Tim dobija individualne izveštaje. Vlasnik prati napredak. Sledeći ponedeljak — još jasnija slika.</p>
+        </div>
+      </div>
+    </div>
+  </section>
 
-  function closeModal() {
-    document.getElementById('report-modal').style.display = 'none';
-    document.getElementById('report-iframe').srcdoc       = '';
-    document.body.style.overflow = '';
-  }
+  <!-- ── STAT STRIP ── -->
+  <section class="strip">
+    <div class="strip-inner">
+      <div class="strip-stat">
+        <div class="strip-num">5 min</div>
+        <div class="strip-label">postavka i unos podataka nedeljno</div>
+      </div>
+      <div class="strip-stat">
+        <div class="strip-num">3–20</div>
+        <div class="strip-label">agenata po agenciji (idealna veličina)</div>
+      </div>
+      <div class="strip-stat">
+        <div class="strip-num">0€</div>
+        <div class="strip-label">za prvi mesec — bez kartice</div>
+      </div>
+    </div>
+  </section>
 
-  // ── Submit ─────────────────────────────────────────────────────────────────
+  <!-- ── FINAL CTA ── -->
+  <section class="cta-band">
+    <div class="cta-inner">
+      <h2>Spremni da automatizujete ponedeljak ujutru?</h2>
+      <p>Postavka traje 5 minuta. Prvi izveštaj stiže već sledeće nedelje.</p>
+      <div>
+        <a href="app.html" class="btn btn-primary btn-lg">Probaj besplatno</a>
+        <a href="pricing.html" class="cta-secondary">Pogledaj cene →</a>
+      </div>
+    </div>
+  </section>
 
-  async function submitForm(e) {
-    e.preventDefault();
-    const btn = document.getElementById('submit-btn');
-    btn.disabled    = true;
-    btn.textContent = 'Čuvanje...';
-    document.getElementById('form-msg').innerHTML = '';
+  <!-- ── FOOTER ── -->
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-brand">Izveštaj<span style="color:#2563eb;">.</span></div>
+      <div class="footer-links">
+        <a href="pricing.html">Cene</a>
+        <a href="app.html">Uloguj se</a>
+        <a href="mailto:hello@izvestaj.rs">Kontakt</a>
+      </div>
+      <div class="footer-copy">© 2026 Izveštaj</div>
+    </div>
+  </footer>
 
-    const weekStart = document.getElementById('week_start').value;
-
-    try {
-      const { error: e1 } = await sb.from('weekly_kpis').upsert({
-        agency_id:       agencyId,
-        week_start:      weekStart,
-        active_listings: +document.getElementById('active_listings').value,
-        new_listings:    +document.getElementById('new_listings').value,
-        inquiries:       +document.getElementById('inquiries').value,
-        contracts_sale:  +document.getElementById('contracts_sale').value,
-        contracts_rent:  +document.getElementById('contracts_rent').value,
-        revenue:         +document.getElementById('revenue').value,
-      }, { onConflict: 'agency_id,week_start' });
-      if (e1) throw e1;
-
-      const sources = [
-        { source: 'Halo oglasi',      count: +document.getElementById('src_halo').value },
-        { source: '4zida',            count: +document.getElementById('src_4zida').value },
-        { source: 'Sajt agencije',    count: +document.getElementById('src_sajt').value },
-        { source: 'Instagram/ostalo', count: +document.getElementById('src_insta').value },
-      ];
-      for (const s of sources) {
-        const { error: e2 } = await sb.from('inquiry_sources').upsert(
-          { agency_id: agencyId, week_start: weekStart, ...s },
-          { onConflict: 'agency_id,week_start,source' }
-        );
-        if (e2) throw e2;
-      }
-
-      for (const a of agentsList) {
-        const { error: e3 } = await sb.from('agent_performance').upsert({
-          agent_id:   a.id,
-          agency_id:  agencyId,
-          week_start: weekStart,
-          inquiries:  +document.getElementById(`agent_inq_${a.id}`).value,
-          contracts:  +document.getElementById(`agent_con_${a.id}`).value,
-        }, { onConflict: 'agent_id,week_start' });
-        if (e3) throw e3;
-      }
-
-      showMsg('form-msg', `Podaci za nedelju ${weekStart} su sačuvani. Izveštaj će biti poslat u ponedeljak ujutru.`);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-
-    } catch (err) {
-      showMsg('form-msg', `Greška: ${err.message}`, true);
-    }
-
-    btn.disabled    = false;
-    btn.textContent = 'Sačuvaj nedeljni izveštaj';
-  }
-
-  // ── Javni link ─────────────────────────────────────────────────────────────
-
-  function copyPublicLink(btn) {
-    const link = document.getElementById('public-link-text').textContent;
-    navigator.clipboard.writeText(link).then(() => {
-      btn.textContent = 'Kopirano!';
-      setTimeout(() => btn.textContent = 'Kopiraj', 1600);
-    });
-  }
-
-  // ── CSV uvoz ────────────────────────────────────────────────────────────────
-
-  let parsedCsvRows = [];
-
-  function loadCsvFile(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = e => { document.getElementById('csv-text').value = e.target.result.trim(); };
-    reader.readAsText(file, 'UTF-8');
-  }
-
-  function parseCsv() {
-    const text = document.getElementById('csv-text').value.trim();
-    if (!text) { alert('Nema podataka za uvoz.'); return; }
-
-    const lines    = text.split('\n').map(l => l.trim()).filter(Boolean);
-    if (lines.length < 2) { alert('CSV mora imati zaglavlje i bar jedan red podataka.'); return; }
-
-    const expected = ['week_start','active_listings','new_listings','inquiries',
-                      'contracts_sale','contracts_rent','revenue',
-                      'halo_oglasi','4zida','sajt_agencije','instagram_ostalo'];
-    const headers  = lines[0].split(',').map(h => h.trim());
-
-    if (!expected.every((h, i) => headers[i] === h)) {
-      alert('Zaglavlje CSV-a nije ispravno.\n\nOčekivano:\n' + expected.join(','));
-      return;
-    }
-
-    parsedCsvRows = [];
-    const errors  = [];
-
-    for (let i = 1; i < lines.length; i++) {
-      const vals = lines[i].split(',');
-      if (vals.length !== expected.length) { errors.push(`Red ${i + 1}: pogrešan broj kolona (${vals.length})`); continue; }
-
-      const row = {
-        week_start:       vals[0].trim(),
-        active_listings:  parseInt(vals[1]),
-        new_listings:     parseInt(vals[2]),
-        inquiries:        parseInt(vals[3]),
-        contracts_sale:   parseInt(vals[4]),
-        contracts_rent:   parseInt(vals[5]),
-        revenue:          parseFloat(vals[6]),
-        halo_oglasi:      parseInt(vals[7]),
-        '4zida':          parseInt(vals[8]),
-        sajt_agencije:    parseInt(vals[9]),
-        instagram_ostalo: parseInt(vals[10]),
-      };
-
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(row.week_start)) {
-        errors.push(`Red ${i + 1}: datum mora biti YYYY-MM-DD (npr. 2026-04-28)`); continue;
-      }
-      if (Object.values(row).some(v => typeof v === 'number' && isNaN(v))) {
-        errors.push(`Red ${i + 1}: neispravan broj`); continue;
-      }
-
-      parsedCsvRows.push(row);
-    }
-
-    if (errors.length) { alert('Greške u CSV-u:\n' + errors.join('\n')); return; }
-    if (!parsedCsvRows.length) { alert('Nema ispravnih redova za uvoz.'); return; }
-
-    let html = `<table class="csv-table"><thead><tr>
-      <th>Nedelja</th><th>Oglasi</th><th>Upiti</th><th>Ugovori</th><th>Prihod</th>
-    </tr></thead><tbody>`;
-    for (const r of parsedCsvRows) {
-      html += `<tr>
-        <td>${r.week_start}</td>
-        <td>${r.active_listings}</td>
-        <td>${r.inquiries}</td>
-        <td>${r.contracts_sale + r.contracts_rent}</td>
-        <td>${r.revenue.toLocaleString('sr')}€</td>
-      </tr>`;
-    }
-    html += `</tbody></table><p style="font-size:0.82rem;color:#888;margin-top:8px;">${parsedCsvRows.length} ${parsedCsvRows.length === 1 ? 'nedelja' : 'nedelja'} spreman/o za uvoz.</p>`;
-
-    document.getElementById('csv-preview-table').innerHTML = html;
-    document.getElementById('csv-preview-card').style.display = 'block';
-    document.getElementById('import-msg').innerHTML = '';
-    document.getElementById('import-btn').disabled  = false;
-    document.getElementById('import-btn').textContent = 'Uvezi u bazu';
-  }
-
-  async function importCsv() {
-    if (!parsedCsvRows.length) return;
-    const btn = document.getElementById('import-btn');
-    btn.disabled    = true;
-    btn.textContent = 'Uvoz u toku...';
-    document.getElementById('import-msg').innerHTML = '';
-
-    let ok = 0, fail = 0;
-
-    for (const row of parsedCsvRows) {
-      try {
-        const { error: e1 } = await sb.from('weekly_kpis').upsert({
-          agency_id:       agencyId,
-          week_start:      row.week_start,
-          active_listings: row.active_listings,
-          new_listings:    row.new_listings,
-          inquiries:       row.inquiries,
-          contracts_sale:  row.contracts_sale,
-          contracts_rent:  row.contracts_rent,
-          revenue:         row.revenue,
-        }, { onConflict: 'agency_id,week_start' });
-        if (e1) throw e1;
-
-        const sources = [
-          { source: 'Halo oglasi',      count: row.halo_oglasi },
-          { source: '4zida',            count: row['4zida'] },
-          { source: 'Sajt agencije',    count: row.sajt_agencije },
-          { source: 'Instagram/ostalo', count: row.instagram_ostalo },
-        ];
-        for (const s of sources) {
-          const { error: e2 } = await sb.from('inquiry_sources').upsert(
-            { agency_id: agencyId, week_start: row.week_start, ...s },
-            { onConflict: 'agency_id,week_start,source' }
-          );
-          if (e2) throw e2;
-        }
-        ok++;
-      } catch (err) {
-        fail++;
-        console.error('Import error for', row.week_start, err);
-      }
-    }
-
-    btn.disabled    = false;
-    btn.textContent = 'Uvezi u bazu';
-
-    const msg     = fail
-      ? `Uvezeno ${ok} nedelja. Greška: ${fail} nedelja (pogledajte konzolu).`
-      : `Uspešno uvezeno ${ok} ${ok === 1 ? 'nedelja' : 'nedelja'}.`;
-    document.getElementById('import-msg').innerHTML =
-      `<div class="msg ${fail ? 'msg-error' : 'msg-success'}">${msg}</div>`;
-
-    if (!fail) parsedCsvRows = [];
-  }
-
-  // ── Auto-session ───────────────────────────────────────────────────────────
-
-  sb.auth.getSession().then(({ data: { session } }) => {
-    if (session) initDashboard();
-  });
-
-  document.addEventListener('keydown', e => {
-    if (e.key === 'Enter' && document.getElementById('login-view').style.display !== 'none'
-        && !document.getElementById('login-view').hidden) {
-      doLogin();
-    }
-  });
-</script>
 </body>
 </html>

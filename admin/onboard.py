@@ -33,7 +33,7 @@ import config
 from data.supabase_client import get_client
 
 
-WEB_PANEL_URL   = "https://agencija-za-nekretnine-nine.vercel.app/index.html"
+WEB_PANEL_URL   = "https://agencija-za-nekretnine-nine.vercel.app/app.html"
 PUBLIC_BASE_URL = "https://agencija-za-nekretnine-nine.vercel.app/public.html"
 VALID_PLANS     = ["basic", "pro", "premium"]
 

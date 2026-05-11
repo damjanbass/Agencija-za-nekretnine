@@ -52,7 +52,7 @@ Pozdrav [Naziv kontakt osobe],
 
 Vaš nalog je aktiviran. Detalji:
 
-  Web panel:     https://agencija-za-nekretnine-nine.vercel.app/index.html
+  Web panel:     https://agencija-za-nekretnine-nine.vercel.app/app.html
   Email:         office@agencija-petrovic.rs
   Početni pass:  PetrovicStart2026  (promenite ga nakon prvog login-a)
   Plan:          Basic (69€/mes)

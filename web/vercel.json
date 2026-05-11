@@ -1,8 +1,5 @@
 {
   "buildCommand": null,
   "outputDirectory": ".",
-  "framework": null,
-  "rewrites": [
-    { "source": "/", "destination": "/landing.html" }
-  ]
+  "framework": null
 }
