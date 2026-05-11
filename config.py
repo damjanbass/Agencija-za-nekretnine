@@ -5,8 +5,9 @@ load_dotenv()
 
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
 
-EMAIL_FROM      = "izvestaji@vasaagencija.rs"
-EMAIL_FROM_NAME = "Nekretnine Izveštaji"
+EMAIL_FROM      = os.getenv("EMAIL_FROM", os.getenv("SMTP_USER", ""))
+EMAIL_FROM_NAME = os.getenv("EMAIL_FROM_NAME", "Nekretnine Izveštaji")
+SUPPORT_EMAIL   = os.getenv("SUPPORT_EMAIL", EMAIL_FROM)
 
 CLAUDE_MODEL = "claude-sonnet-4-6"
 

@@ -6,6 +6,7 @@ Pokretanje:
 """
 
 import argparse
+import re
 import sys
 from datetime import date, timedelta
 from pathlib import Path
@@ -34,7 +35,7 @@ def prepare_template_vars(data: dict, analysis: dict | None,
     sign = "+" if inquiries_change >= 0 else ""
     inquiries_change_str = f"{sign}{inquiries_change} ({sign}{inquiries_pct}%)"
 
-    plan = get_plan(data.get("plan_id", "free"))
+    plan = get_plan(data.get("plan_id", "basic"))
 
     return {
         **data,
@@ -55,6 +56,7 @@ def prepare_template_vars(data: dict, analysis: dict | None,
 def render_report(vars: dict, template: str = "report.html") -> str:
     template_dir = Path(__file__).parent / "templates"
     env = Environment(loader=FileSystemLoader(str(template_dir)))
+    env.globals["support_email"] = config.SUPPORT_EMAIL
     return env.get_template(template).render(**vars)
 
 
@@ -70,7 +72,7 @@ def run(preview: bool = False, use_mock: bool = False, city: str = "beograd"):
         clients_data = [(c["id"], get_report_data(c["id"])) for c in clients_raw]
 
     for agency_id, data in clients_data:
-        plan = get_plan(data.get("plan_id", "free"))
+        plan = get_plan(data.get("plan_id", "basic"))
         print(f"\n[→] {data['agency_name']}  [{plan.name} · {plan.price_eur}€/mes]"
               f"  ({data['week_start']} – {data['week_end']})")
 
@@ -129,7 +131,7 @@ def run(preview: bool = False, use_mock: bool = False, city: str = "beograd"):
         # Render
         html = render_report(prepare_template_vars(data, analysis, snapshots, city, benchmark))
 
-        slug = data["agency_name"].lower().replace(" ", "_")
+        slug = re.sub(r"[^\w]", "_", data["agency_name"].lower()).strip("_")
         out  = Path(__file__).parent / f"izvestaj_{slug}.html"
         out.write_text(html, encoding="utf-8")
         print(f"    [HTML] {out.name}")
@@ -143,7 +145,9 @@ def run(preview: bool = False, use_mock: bool = False, city: str = "beograd"):
 
         # PDF export
         pdf_bytes = None
-        if plan.allows_pdf():
+        if preview:
+            print(f"    [PDF] Preview mod — preskočeno.")
+        elif plan.allows_pdf():
             from pdf.generator import generate_pdf
             print("    [PDF] Generišem PDF...")
             pdf_bytes = generate_pdf(html)
@@ -183,7 +187,7 @@ def run_monthly(preview: bool = False, use_mock: bool = False):
         clients_data = [(c["id"], get_monthly_report_data(c["id"])) for c in clients_raw]
 
     for agency_id, data in clients_data:
-        plan = get_plan(data.get("plan_id", "free"))
+        plan = get_plan(data.get("plan_id", "basic"))
         print(f"\n[→] {data['agency_name']}  [{plan.name}]  ({data['month_name']})")
 
         # Tržišna analiza (za mesečni kontekst)
@@ -215,7 +219,7 @@ def run_monthly(preview: bool = False, use_mock: bool = False):
         vars = {**data, "analysis": analysis, "plan": plan}
         html = render_report(vars, template="monthly_report.html")
 
-        slug = data["agency_name"].lower().replace(" ", "_")
+        slug = re.sub(r"[^\w]", "_", data["agency_name"].lower()).strip("_")
         out  = Path(__file__).parent / f"mesecni_{slug}.html"
         out.write_text(html, encoding="utf-8")
         print(f"    [HTML] {out.name}")
@@ -231,7 +235,9 @@ def run_monthly(preview: bool = False, use_mock: bool = False):
 
         # PDF export
         pdf_bytes = None
-        if plan.allows_pdf():
+        if preview:
+            print(f"    [PDF] Preview mod — preskočeno.")
+        elif plan.allows_pdf():
             from pdf.generator import generate_pdf
             print("    [PDF] Generišem PDF...")
             pdf_bytes = generate_pdf(html)
@@ -271,7 +277,7 @@ def run_agent_reports(preview: bool = False, use_mock: bool = False):
         clients_data = [(c["id"], get_report_data(c["id"])) for c in clients_raw]
 
     for agency_id, data in clients_data:
-        plan = get_plan(data.get("plan_id", "free"))
+        plan = get_plan(data.get("plan_id", "basic"))
         if not plan.allows_agent_reports():
             print(f"\n[skip] {data['agency_name']} — agent izveštaji nisu dostupni na {plan.name} planu.")
             continue

@@ -602,7 +602,7 @@
   <div class="footer">
     Generisano automatski · {{ generated_at }}<br>
     Ovaj izveštaj je kreiran pomoću AI analize na osnovu podataka vaše agencije.<br>
-    Za pitanja: <a href="mailto:podrska@vasaagencija.rs" style="color:#6b7280;">podrska@vasaagencija.rs</a>
+    {% if support_email %}Za pitanja: <a href="mailto:{{ support_email }}" style="color:#6b7280;">{{ support_email }}</a>{% endif %}
   </div>
 
 </div>

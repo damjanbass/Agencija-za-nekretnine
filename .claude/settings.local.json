@@ -6,7 +6,8 @@
       "Bash(python -X utf8 main.py --preview)",
       "Bash(start \"\" \"c:\\\\Users\\\\PC\\\\OneDrive\\\\Desktop\\\\Agencija za nekretnine\\\\izvestaj_prima.html\")",
       "Bash(python -X utf8 main.py --mock --preview)",
-      "Bash(pip install *)"
+      "Bash(pip install *)",
+      "Bash(git commit -m ' *)"
     ],
     "additionalDirectories": [
       "c:\\Users\\PC\\OneDrive\\Desktop\\Agencija za nekretnine"

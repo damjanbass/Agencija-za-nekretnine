@@ -91,7 +91,7 @@ def get_report_data(agency_id: str) -> dict:
     return {
         "agency_name":            agency["name"],
         "agency_email":           agency["email"],
-        "plan_id":                agency.get("plan_id", "free"),
+        "plan_id":                agency.get("plan_id", "basic"),
         "week_start":             week_start.strftime("%d.%m.%Y"),
         "week_end":               week_end.strftime("%d.%m.%Y"),
         "generated_at":           today.strftime("%d.%m.%Y"),
@@ -207,7 +207,7 @@ def get_monthly_report_data(agency_id: str) -> dict:
     return {
         "agency_name":          agency["name"],
         "agency_email":         agency["email"],
-        "plan_id":              agency.get("plan_id", "free"),
+        "plan_id":              agency.get("plan_id", "basic"),
         "month_name":           f"{MONTHS_SR[month_start.month]} {month_start.year}",
         "month_start":          month_start.strftime("%d.%m.%Y"),
         "month_end":            month_end.strftime("%d.%m.%Y"),

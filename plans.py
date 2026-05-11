@@ -38,17 +38,8 @@ class Plan:
 
 
 PLANS: dict[str, Plan] = {
-    "free": Plan(
-        id="free", name="Free", price_eur=0,
-        max_agencies=1, max_agents=3, history_months=1,
-        ai_analysis=False, email_send=False,
-        weekly_report=True, monthly_report=False, daily_report=False,
-        pdf_export=False, custom_branding=False,
-        benchmark=False, agent_reports=False,
-        market_sites=[],
-    ),
     "basic": Plan(
-        id="basic", name="Basic", price_eur=150,
+        id="basic", name="Basic", price_eur=69,
         max_agencies=1, max_agents=5, history_months=3,
         ai_analysis=True, email_send=True,
         weekly_report=True, monthly_report=False, daily_report=False,
@@ -57,7 +48,7 @@ PLANS: dict[str, Plan] = {
         market_sites=["Halo oglasi"],
     ),
     "pro": Plan(
-        id="pro", name="Pro", price_eur=300,
+        id="pro", name="Pro", price_eur=139,
         max_agencies=3, max_agents=15, history_months=12,
         ai_analysis=True, email_send=True,
         weekly_report=True, monthly_report=True, daily_report=False,
@@ -66,7 +57,7 @@ PLANS: dict[str, Plan] = {
         market_sites=["Halo oglasi", "4zida", "Nekretnine.rs"],
     ),
     "premium": Plan(
-        id="premium", name="Premium", price_eur=500,
+        id="premium", name="Premium", price_eur=199,
         max_agencies=-1, max_agents=-1, history_months=-1,
         ai_analysis=True, email_send=True,
         weekly_report=True, monthly_report=True, daily_report=True,
@@ -78,4 +69,4 @@ PLANS: dict[str, Plan] = {
 
 
 def get_plan(plan_id: str) -> Plan:
-    return PLANS.get(plan_id, PLANS["free"])
+    return PLANS.get(plan_id, PLANS["basic"])

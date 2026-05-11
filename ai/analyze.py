@@ -177,21 +177,47 @@ def generate_analysis_fallback(data: dict, market: list[dict] | None = None) -> 
     total_contracts = data["contracts_sale"] + data["contracts_rent"]
     conversion = round(total_contracts / (data["inquiries"] or 1) * 100, 1)
 
+    best_agent = max(data["agents"], key=lambda a: a["contracts"] / max(a["inquiries"], 1)) if data["agents"] else None
     problem_agents = [a for a in data["agents"] if a["contracts"] == 0 and a["inquiries"] > 5]
     problem_name   = problem_agents[0]["name"] if problem_agents else None
 
     if market:
         avg_m2  = round(sum(s["avg_price_eur_m2"] for s in market) / len(market))
         new_ads = sum(s["new_this_week"] for s in market)
-        dobro   = f"Tržište beleži {new_ads} novih oglasa ove nedelje — prosečna cena je {avg_m2} €/m²."
+        if pct > 0:
+            dobro = (f"Upiti porasli za {pct}% na {data['inquiries']} ove nedelje uz {new_ads} novih oglasa na tržištu "
+                     f"— prosečna cena stanova je {avg_m2:,} €/m².")
+        else:
+            dobro = (f"Tržište beleži {new_ads} novih oglasa uz prosečnu cenu od {avg_m2:,} €/m² "
+                     f"— konverzija agencije od {conversion}% pokazuje stabilnu prodajnu efikasnost.")
     elif pct > 0:
-        dobro = f"Broj upita porastao za {pct}% ({data['prev_inquiries']} → {data['inquiries']}) — trend rasta se nastavlja."
+        dobro = (f"Upiti porasli za {pct}% ({data['prev_inquiries']} → {data['inquiries']}) i konverzija od {conversion}% "
+                 f"donela je {total_contracts} {'ugovora' if total_contracts != 1 else 'ugovor'} ove nedelje.")
     else:
-        dobro = f"Konverzija upita u ugovore iznosi {conversion}% — {total_contracts} ugovora zaključeno ove nedelje."
+        dobro = (f"Konverzija od {conversion}% uz {total_contracts} zaključenih ugovora — "
+                 f"prihod od {data['revenue']:,}€ čini {round(data['revenue']/(data['revenue_goal'] or 1)*100)}% nedeljnog cilja.")
 
     if problem_name:
-        paznja  = f"{problem_name} ima {problem_agents[0]['inquiries']} upita ali 0 ugovora — potrebna je podrška u zatvaranju."
-        predlog = f"Organizovati kratki 1:1 sa {problem_name} i proći kroz poslednje 3 ponude koje nisu zatvorene."
+        pi = problem_agents[0]["inquiries"]
+        paznja  = (f"{problem_name} ima {pi} {'upita' if pi != 1 else 'upit'} ove nedelje bez zaključenog ugovora "
+                   f"— konverzija od 0% zahteva hitan razgovor i pregled aktivnih ponuda.")
+        predlog = (f"Zakazati 30-minutni 1:1 sa {problem_name} do srede — proći kroz svaki aktivan upit "
+                   f"i definisati konkretan sledeći korak za minimum 3 potencijalna kupca.")
+    elif best_agent:
+        ba_conv = round(best_agent["contracts"] / max(best_agent["inquiries"], 1) * 100, 1)
+        agents_below = [a for a in data["agents"] if a["contracts"] / max(a["inquiries"], 1) * 100 < conversion and a != best_agent]
+        if agents_below:
+            names = ", ".join(a["name"].split()[0] for a in agents_below[:2])
+            paznja  = (f"{best_agent['name']} vodi tim sa konverzijom od {ba_conv}% — "
+                       f"{names} {'su' if len(agents_below) > 1 else 'je'} ispod proseka tima od {conversion}%.")
+            predlog = (f"Organizovati kratku sesiju razmene iskustava: {best_agent['name'].split()[0]} da podeli "
+                       f"pristup zatvaranju ugovora sa ostatkom tima — cilj je podići prosek tima na {round(conversion*1.1,1)}%.")
+        else:
+            rev_pct = round(data["revenue"] / (data["revenue_goal"] or 1) * 100)
+            paznja  = (f"Prihod od {data['revenue']:,}€ je na {rev_pct}% nedeljnog cilja — "
+                       f"nedostaje {data['revenue_goal'] - data['revenue']:,}€ do punog ostvarenja.")
+            predlog = (f"Fokusirati se na zakup u narednim danima — svaki dodatni zakupni ugovor donosi "
+                       f"brži prihod od prodajnih i može popuniti razliku do cilja.")
     else:
         rev_pct = round(data["revenue"] / (data["revenue_goal"] or 1) * 100)
         paznja  = f"Prihod je na {rev_pct}% od nedeljnog cilja — potrebno ubrzati zatvaranje ugovora."
@@ -199,11 +225,15 @@ def generate_analysis_fallback(data: dict, market: list[dict] | None = None) -> 
 
     weekly_rev    = data["revenue"]
     monthly_proj  = weekly_rev * 4
-    monthly_goal  = data["revenue_goal"]
+    weekly_goal   = data["revenue_goal"]
+    monthly_goal  = weekly_goal * 4
     proj_pct      = round(monthly_proj / (monthly_goal or 1) * 100)
     if proj_pct >= 100:
-        prognoza = f"Na osnovu prihoda od {weekly_rev:,}€ ove nedelje, mesečna projekcija je {monthly_proj:,}€ — cilj od {monthly_goal:,}€ je dostižan."
+        prognoza = (f"Na osnovu prihoda od {weekly_rev:,}€ ove nedelje, mesečna projekcija je {monthly_proj:,}€ "
+                    f"— mesečni cilj od {monthly_goal:,}€ je dostižan uz nastavak trenutnog tempa.")
     else:
-        prognoza = f"Na osnovu prihoda od {weekly_rev:,}€ ove nedelje, mesečna projekcija je {monthly_proj:,}€ ({proj_pct}% cilja) — potrebno ubrzanje."
+        needed_weekly = monthly_goal // 4 + (monthly_goal - monthly_proj) // 3
+        prognoza = (f"Mesečna projekcija iznosi {monthly_proj:,}€ ({proj_pct}% mesečnog cilja od {monthly_goal:,}€) "
+                    f"— za dostizanje cilja potrebno je ostvarivati oko {needed_weekly:,}€ nedeljno u preostale 3 nedelje.")
 
     return {"dobro": dobro, "paznja": paznja, "predlog": predlog, "prognoza": prognoza}
