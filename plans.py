@@ -47,15 +47,6 @@ PLANS: dict[str, Plan] = {
         benchmark=False, agent_reports=False,
         market_sites=["Halo oglasi"],
     ),
-    "basic": Plan(
-        id="basic", name="Basic", price_eur=69,
-        max_agencies=1, max_agents=5, history_months=3,
-        ai_analysis=True, email_send=True,
-        weekly_report=True, monthly_report=False, daily_report=False,
-        pdf_export=False, custom_branding=False,
-        benchmark=False, agent_reports=True,
-        market_sites=["Halo oglasi"],
-    ),
     "pro": Plan(
         id="pro", name="Pro", price_eur=49,
         max_agencies=3, max_agents=15, history_months=12,
@@ -64,15 +55,6 @@ PLANS: dict[str, Plan] = {
         pdf_export=True, custom_branding=False,
         benchmark=True, agent_reports=True,
         market_sites=["Halo oglasi", "4zida", "Nekretnine.rs"],
-    ),
-    "premium": Plan(
-        id="premium", name="Premium", price_eur=199,
-        max_agencies=-1, max_agents=-1, history_months=-1,
-        ai_analysis=True, email_send=True,
-        weekly_report=True, monthly_report=True, daily_report=True,
-        pdf_export=True, custom_branding=True,
-        benchmark=True, agent_reports=True,
-        market_sites=["Halo oglasi", "4zida", "Nekretnine.rs", "CityExpert"],
     ),
 }
 
