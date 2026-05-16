@@ -34,7 +34,7 @@ $$;
 
 GRANT EXECUTE ON FUNCTION get_benchmark(DATE) TO anon;
 
--- 4. Javni dashboard RPC: vraća poslednju nedelju za dati public_token
+-- 4. Javni dashboard RPC: vraća poslednju nedelju + prethodnu za delta prikaz
 CREATE OR REPLACE FUNCTION get_public_dashboard(p_token TEXT)
 RETURNS JSONB
 LANGUAGE plpgsql
@@ -44,7 +44,9 @@ AS $$
 DECLARE
   v_agency_id  UUID;
   v_week_start DATE;
+  v_prev_start DATE;
   result       JSONB;
+  prev_row     RECORD;
 BEGIN
   BEGIN
     SELECT id INTO STRICT v_agency_id
@@ -63,15 +65,28 @@ BEGIN
 
   IF NOT FOUND THEN RETURN NULL; END IF;
 
+  v_prev_start := v_week_start - INTERVAL '7 days';
+
+  SELECT w.active_listings, w.inquiries, w.contracts_sale, w.contracts_rent, w.revenue
+  INTO prev_row
+  FROM weekly_kpis w
+  WHERE w.agency_id = v_agency_id AND w.week_start = v_prev_start;
+
   SELECT jsonb_build_object(
-    'agency_name',     a.name,
-    'week_start',      w.week_start::TEXT,
-    'active_listings', w.active_listings,
-    'inquiries',       w.inquiries,
-    'contracts_sale',  w.contracts_sale,
-    'contracts_rent',  w.contracts_rent,
-    'revenue',         w.revenue,
-    'revenue_goal',    a.revenue_goal
+    'agency_name',          a.name,
+    'week_start',           w.week_start::TEXT,
+    'active_listings',      w.active_listings,
+    'inquiries',            w.inquiries,
+    'contracts_sale',       w.contracts_sale,
+    'contracts_rent',       w.contracts_rent,
+    'revenue',              w.revenue,
+    'revenue_goal',         a.revenue_goal,
+    -- prethodna nedelja (null ako ne postoji)
+    'prev_listings',        prev_row.active_listings,
+    'prev_inquiries',       prev_row.inquiries,
+    'prev_contracts_sale',  prev_row.contracts_sale,
+    'prev_contracts_rent',  prev_row.contracts_rent,
+    'prev_revenue',         prev_row.revenue
   ) INTO result
   FROM agencies a
   JOIN weekly_kpis w ON w.agency_id = a.id

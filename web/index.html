@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Izveštaj — AI nedeljni izveštaj za agencije nekretnina</title>
-  <meta name="description" content="Prestanite da gubite 6 sati nedeljno na ručno pravljenje izveštaja. Izveštaj automatski generiše AI analizu sa konkretnim sledećim koracima za vašu agenciju nekretnina.">
+  <meta name="description" content="Za vlasnike agencija sa 3–25 agenata: automatski AI nedeljni izveštaj svakog ponedeljka u 08:00. Bez Excel-a. Bez nagađanja. 30 dana besplatno.">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html { scroll-behavior: smooth; }
@@ -26,14 +26,25 @@
     .nav-link { padding: 8px 14px; font-size: 0.92rem; font-weight: 500; color: #4a5168; border-radius: 8px; transition: all 0.18s; }
     .nav-link:hover { background: #f4f6f9; color: #1a1a2e; }
     .nav-link.active { color: #2563eb; }
-    .nav-link-register { color: #2563eb; font-weight: 600; }
-    .nav-link-register:hover { background: #eff6ff; color: #1d4ed8; }
     .btn { display: inline-block; padding: 11px 20px; border-radius: 9px; font-size: 0.92rem; font-weight: 600; cursor: pointer; transition: all 0.18s; border: none; text-align: center; }
     .btn-primary { background: #2563eb; color: white; }
     .btn-primary:hover { background: #1d4ed8; transform: translateY(-1px); box-shadow: 0 6px 16px rgba(37,99,235,0.28); }
     .btn-outline { background: white; border: 1.5px solid #2563eb; color: #2563eb; }
     .btn-outline:hover { background: #2563eb; color: white; }
     .btn-lg { padding: 15px 28px; font-size: 1rem; }
+
+    /* Hamburger */
+    .hamburger { display: none; flex-direction: column; gap: 5px; cursor: pointer; padding: 8px; border: none; background: none; }
+    .hamburger span { display: block; width: 22px; height: 2px; background: #1a1a2e; border-radius: 2px; transition: all 0.2s; }
+    .mobile-menu {
+      display: none; position: fixed; top: 57px; left: 0; right: 0; bottom: 0;
+      background: white; z-index: 49; padding: 24px;
+      flex-direction: column; gap: 8px;
+      border-top: 1px solid #eaedf3;
+    }
+    .mobile-menu.open { display: flex; }
+    .mobile-menu .nav-link { padding: 14px 16px; font-size: 1rem; border-radius: 10px; }
+    .mobile-menu .btn { width: 100%; padding: 15px; font-size: 1rem; margin-top: 8px; min-height: 52px; }
 
     /* ── Hero ── */
     .hero {
@@ -61,10 +72,14 @@
     }
     .hero h1 .accent { color: #93c5fd; }
     .hero-sub { font-size: 1.12rem; color: #c8d0e0; margin-bottom: 32px; max-width: 540px; }
-    .hero-cta-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+    .hero-sub strong { color: white; }
+    .hero-cta-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 14px; }
     .hero .btn-primary { box-shadow: 0 8px 24px rgba(37,99,235,0.35); }
-    .hero-trust { margin-top: 16px; font-size: 0.88rem; color: #8892a4; display: flex; align-items: center; gap: 8px; }
-    .hero-trust .dot { width: 6px; height: 6px; background: #16a34a; border-radius: 50%; }
+    .hero-guarantee {
+      font-size: 0.88rem; color: #93c5fd; font-weight: 600;
+      display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+    }
+    .hero-guarantee span { opacity: 0.5; }
 
     /* ── Hero mockup ── */
     .mockup {
@@ -87,6 +102,24 @@
     .insight-bad { background: #fef2f2; border-left: 3px solid #dc2626; }
     .insight-action { background: #eff6ff; border-left: 3px solid #2563eb; }
     .insight strong { font-weight: 700; }
+
+    /* ── Trust bar ── */
+    .trust-bar {
+      background: #f0f4ff; border-top: 1px solid #dbe6ff; border-bottom: 1px solid #dbe6ff;
+      padding: 14px 24px;
+    }
+    .trust-bar-inner {
+      max-width: 1120px; margin: 0 auto;
+      display: flex; align-items: center; justify-content: center;
+      gap: 28px; flex-wrap: wrap;
+    }
+    .trust-item {
+      display: flex; align-items: center; gap: 7px;
+      font-size: 0.82rem; font-weight: 600; color: #374ca0;
+      font-family: 'Courier New', monospace;
+    }
+    .trust-item svg { flex-shrink: 0; }
+    .trust-sep { color: #c0ccf0; font-size: 1rem; }
 
     /* ── Sections ── */
     .section { padding: 80px 24px; }
@@ -117,6 +150,26 @@
     .problem-card h3 { font-size: 1.05rem; font-weight: 700; margin-bottom: 8px; line-height: 1.3; }
     .problem-card p { font-size: 0.93rem; color: #4a5168; }
 
+    /* ── Steps ── */
+    .steps-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
+    .step-card {
+      background: white; border-radius: 12px; padding: 32px 26px 28px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.06); position: relative;
+    }
+    .step-num {
+      width: 36px; height: 36px; border-radius: 50%;
+      background: #2563eb; color: white;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem; font-weight: 700; margin-bottom: 14px;
+    }
+    .step-card h3 { font-size: 1.05rem; font-weight: 700; margin-bottom: 7px; }
+    .step-card p { font-size: 0.92rem; color: #4a5168; }
+    .step-time {
+      display: inline-block; margin-top: 12px; font-size: 0.8rem;
+      font-weight: 700; color: #2563eb; background: #eff6ff;
+      padding: 3px 10px; border-radius: 999px;
+    }
+
     /* ── Solution ── */
     .solution { background: white; }
     .solution-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; }
@@ -134,20 +187,62 @@
     .solution-card h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 8px; }
     .solution-card p { font-size: 0.95rem; color: #4a5168; }
 
-    /* ── How it works ── */
-    .steps-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; counter-reset: step; }
-    .step-card {
-      background: white; border-radius: 12px; padding: 32px 26px 28px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.06); position: relative;
+    /* ── Comparison ── */
+    .comparison { background: #f4f6f9; }
+    .comp-table {
+      width: 100%; border-collapse: collapse; background: white;
+      border-radius: 14px; overflow: hidden;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.07);
     }
-    .step-num {
-      width: 36px; height: 36px; border-radius: 50%;
-      background: #2563eb; color: white;
+    .comp-table th {
+      padding: 18px 20px; font-size: 0.85rem; font-weight: 700;
+      text-align: left; border-bottom: 2px solid #eaedf3;
+    }
+    .comp-table th:first-child { width: 42%; color: #4a5168; }
+    .comp-table th.col-them { background: #fef2f2; color: #991b1b; text-align: center; }
+    .comp-table th.col-us { background: #eff6ff; color: #1d4ed8; text-align: center; }
+    .comp-table td {
+      padding: 14px 20px; font-size: 0.93rem; border-bottom: 1px solid #f0f2f5;
+    }
+    .comp-table tr:last-child td { border-bottom: none; }
+    .comp-table td.col-them { background: #fffafa; text-align: center; font-size: 1.1rem; }
+    .comp-table td.col-us { background: #f6f9ff; text-align: center; font-size: 1.1rem; }
+    .comp-table td:first-child { color: #374151; font-weight: 500; }
+    .check { color: #16a34a; font-size: 1.2rem; }
+    .cross { color: #dc2626; font-size: 1.2rem; }
+    .comp-note {
+      margin-top: 20px; font-size: 0.88rem; color: #6b7280;
+      text-align: center; font-style: italic;
+    }
+
+    /* ── Social proof ── */
+    .social-proof { background: white; }
+    .testimonials-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+    .testimonial {
+      background: #f8f9fc; border: 1px solid #eaedf3; border-radius: 12px;
+      padding: 26px 24px; position: relative;
+    }
+    .testimonial::before {
+      content: '"'; position: absolute; top: 14px; left: 20px;
+      font-size: 3rem; color: #dbe6ff; font-family: Georgia, serif; line-height: 1;
+    }
+    .testimonial blockquote {
+      font-size: 0.95rem; color: #374151; line-height: 1.65;
+      margin-top: 20px; margin-bottom: 16px; font-style: italic;
+    }
+    .testimonial cite {
+      font-size: 0.82rem; font-weight: 700; color: #1a1a2e;
+      font-style: normal; display: block;
+    }
+    .testimonial cite span { font-weight: 400; color: #8892a4; }
+    .counter-row {
       display: flex; align-items: center; justify-content: center;
-      font-size: 1rem; font-weight: 700; margin-bottom: 14px;
+      gap: 10px; margin-bottom: 40px;
+      font-size: 0.92rem; color: #4a5168;
     }
-    .step-card h3 { font-size: 1.05rem; font-weight: 700; margin-bottom: 7px; }
-    .step-card p { font-size: 0.92rem; color: #4a5168; }
+    .counter-num {
+      font-size: 1.6rem; font-weight: 800; color: #2563eb;
+    }
 
     /* ── Stat strip ── */
     .strip { background: white; padding: 36px 24px; border-top: 1px solid #eaedf3; border-bottom: 1px solid #eaedf3; }
@@ -171,12 +266,16 @@
     .cta-band .btn-primary:hover { background: #f0f4ff; }
     .cta-secondary { display: inline-block; margin-left: 16px; color: white; font-weight: 600; font-size: 0.95rem; opacity: 0.9; }
     .cta-secondary:hover { opacity: 1; }
+    .cta-guarantee {
+      margin-top: 18px; font-size: 0.88rem; color: rgba(255,255,255,0.75);
+      font-weight: 600;
+    }
 
     /* ── Footer ── */
     .footer { background: #0f172a; color: #8892a4; padding: 40px 24px 32px; }
     .footer-inner { max-width: 1120px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; }
     .footer-brand { color: white; font-weight: 700; font-size: 1rem; }
-    .footer-links { display: flex; gap: 22px; font-size: 0.88rem; }
+    .footer-links { display: flex; gap: 22px; font-size: 0.88rem; flex-wrap: wrap; }
     .footer-links a:hover { color: white; }
     .footer-copy { font-size: 0.82rem; }
 
@@ -188,21 +287,26 @@
       .problem-grid { grid-template-columns: 1fr; }
       .solution-grid { grid-template-columns: 1fr; }
       .steps-grid { grid-template-columns: 1fr; }
+      .testimonials-grid { grid-template-columns: 1fr; }
     }
     @media (max-width: 780px) {
-      .nav-link { display: none; }
-      .nav-links .btn { padding: 9px 16px; font-size: 0.88rem; }
+      .nav-links .nav-link { display: none; }
+      .nav-links .btn { display: none; }
+      .hamburger { display: flex; }
     }
     @media (max-width: 600px) {
       .hero { padding: 56px 22px 72px; }
       .hero h1 { font-size: 1.95rem; }
       .hero-sub { font-size: 1rem; }
+      .hero-cta-row .btn-lg { width: 100%; min-height: 52px; text-align: center; }
       .section { padding: 60px 22px; }
       .section h2 { font-size: 1.7rem; }
       .strip-inner { grid-template-columns: 1fr; gap: 18px; }
       .cta-band h2 { font-size: 1.55rem; }
       .cta-secondary { display: block; margin: 16px 0 0 0; }
       .footer-inner { flex-direction: column; text-align: center; }
+      .comp-table th, .comp-table td { padding: 11px 12px; font-size: 0.85rem; }
+      .trust-sep { display: none; }
     }
   </style>
 </head>
@@ -213,29 +317,43 @@
     <div class="nav-inner">
       <a href="/" class="brand">Izveštaj<span class="brand-dot">.</span></a>
       <div class="nav-links">
-        <a href="/" class="nav-link active">Početna</a>
         <a href="pricing.html" class="nav-link">Cene</a>
         <a href="app.html" class="nav-link">Uloguj se</a>
-        <a href="register.html" class="nav-link nav-link-register">Registracija</a>
         <a href="register.html" class="btn btn-primary">Probaj besplatno</a>
       </div>
+      <button class="hamburger" id="hamburger-btn" aria-label="Otvori meni">
+        <span></span><span></span><span></span>
+      </button>
     </div>
   </nav>
+
+  <!-- Mobile menu -->
+  <div class="mobile-menu" id="mobile-menu">
+    <a href="pricing.html" class="nav-link">Cene</a>
+    <a href="app.html" class="nav-link">Uloguj se</a>
+    <a href="register.html" class="btn btn-primary">Probaj besplatno</a>
+  </div>
 
   <!-- ── HERO ── -->
   <header class="hero">
     <div class="hero-inner">
       <div>
-        <span class="hero-eyebrow">AI izveštaj za agencije nekretnina</span>
-        <h1>Prestanite da gubite <span class="accent">6 sati nedeljno</span> na izveštaje koji ništa ne menjaju.</h1>
-        <p class="hero-sub">Izveštaj automatski pravi nedeljni AI izveštaj za vašu agenciju — sa konkretnim sledećim koracima, ne samo sa brojevima. Bez Excel-a. Bez nagađanja.</p>
+        <span class="hero-eyebrow">Za vlasnike agencija sa 3–25 agenata</span>
+        <h1>Svaki ponedeljak u 08:00 — <span class="accent">kompletan izveštaj</span> za vašu agenciju. Automatski.</h1>
+        <p class="hero-sub">Unesete KPI za 3 minuta. Claude AI analizira brojeve, poredi sa tržištem i šalje konkretne preporuke celom timu. <strong>Bez Excel-a. Bez nagađanja.</strong></p>
         <div class="hero-cta-row">
-          <a href="register.html" class="btn btn-primary btn-lg">Probaj besplatno</a>
+          <a href="register.html" class="btn btn-primary btn-lg">Dobij prvi izveštaj za 5 minuta →</a>
           <a href="pricing.html" class="cta-secondary" style="color:#93c5fd;">Pogledaj cene →</a>
         </div>
-        <div class="hero-trust">
-          <span class="dot"></span>
-          <span>Bez kartice. Postavka za 5 minuta. Otkazivanje u jednom kliku.</span>
+        <div class="hero-guarantee">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          30 dana besplatno
+          <span>·</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          Bez kartice
+          <span>·</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          Otkaži u jednom kliku
         </div>
       </div>
 
@@ -272,8 +390,33 @@
     </div>
   </header>
 
+  <!-- ── TRUST BAR ── -->
+  <div class="trust-bar">
+    <div class="trust-bar-inner">
+      <div class="trust-item">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+        Powered by Claude AI
+      </div>
+      <span class="trust-sep">·</span>
+      <div class="trust-item">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        EU serveri
+      </div>
+      <span class="trust-sep">·</span>
+      <div class="trust-item">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        GDPR usaglašeno
+      </div>
+      <span class="trust-sep">·</span>
+      <div class="trust-item">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        SSL zaštita
+      </div>
+    </div>
+  </div>
+
   <!-- ── PROBLEM ── -->
-  <section class="section" style="background:#f4f6f9;">
+  <section class="section" style="background:#f4f6f9;" id="problem">
     <div class="section-inner">
       <div class="section-eyebrow">Poznato?</div>
       <h2>Ovako izgleda ponedeljak u većini agencija.</h2>
@@ -282,8 +425,8 @@
       <div class="problem-grid">
         <div class="problem-card">
           <div class="problem-icon">⏱</div>
-          <h3>Ponedeljkom popunjavate Excel umesto da zovete klijente.</h3>
-          <p>4 do 8 sati nedeljno odlazi na ručno kopiranje brojeva iz tabela u tabele. Vreme koje bi trebalo da prodaje stanove troši se na formatiranje.</p>
+          <h3>Ponedeljkom punite Excel umesto da zovete klijente.</h3>
+          <p>4–8 sati nedeljno odlazi na ručno kopiranje brojeva iz tabela u tabele. Vreme koje bi trebalo da prodaje stanove troši se na formatiranje.</p>
         </div>
         <div class="problem-card">
           <div class="problem-icon">?</div>
@@ -292,8 +435,38 @@
         </div>
         <div class="problem-card">
           <div class="problem-icon">!</div>
-          <h3>Najbolji agent ne zna da je najbolji.</h3>
-          <p>Bez individualnih izveštaja nema priznanja za top performere, niti jasne slike za one koji zaostaju. Tim radi naslepo.</p>
+          <h3>Tvoj tim radi — ti ne znaš ko prednjači.</h3>
+          <p>Bez individualnih izveštaja nema priznanja za top performere, niti jasne slike za one koji zaostaju. Tim radi naslepo, ti upravljaš naslepo.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── HOW IT WORKS ── -->
+  <section class="section" id="kako-radi">
+    <div class="section-inner">
+      <div class="section-eyebrow">Kako radi</div>
+      <h2>Tri koraka. Pet minuta nedeljno.</h2>
+      <p class="section-lede">Nema migracija, nema integracija sa vašim CRM-om. Samo unesete brojeve — mi radimo ostalo.</p>
+
+      <div class="steps-grid">
+        <div class="step-card">
+          <div class="step-num">1</div>
+          <h3>Unesete KPI u panel</h3>
+          <p>Ponedeljkom ujutru, unesete upite, ugovore i prihod po agentu. Imate CSV? Učitajte direktno — bez kucanja.</p>
+          <span class="step-time">3 minuta</span>
+        </div>
+        <div class="step-card">
+          <div class="step-num">2</div>
+          <h3>AI generiše izveštaj</h3>
+          <p>Claude analizira brojeve, poredi sa tržištem i prošlim nedeljama, pravi 4 konkretna zaključka i šalje na email celog tima.</p>
+          <span class="step-time">automatski</span>
+        </div>
+        <div class="step-card">
+          <div class="step-num">3</div>
+          <h3>Pratite preporuke</h3>
+          <p>Svaki agent dobija svoj email sa rangom i preporukom. Vlasnik prati napredak. Sledeći ponedeljak — još jasnija slika.</p>
+          <span class="step-time">svake nedelje</span>
         </div>
       </div>
     </div>
@@ -302,8 +475,8 @@
   <!-- ── SOLUTION ── -->
   <section class="section solution">
     <div class="section-inner">
-      <div class="section-eyebrow">Rešenje</div>
-      <h2>Šta dobijate svakog ponedeljka u 08:00.</h2>
+      <div class="section-eyebrow">Šta dobijate</div>
+      <h2>Šta stiže svakog ponedeljka u 08:00.</h2>
       <p class="section-lede">Jedan email. Jedan PDF. Konkretni zaključci. Bez ručnog rada.</p>
 
       <div class="solution-grid">
@@ -339,28 +512,81 @@
     </div>
   </section>
 
-  <!-- ── HOW IT WORKS ── -->
-  <section class="section" style="background:#f4f6f9;">
+  <!-- ── COMPARISON ── -->
+  <section class="section comparison">
     <div class="section-inner">
-      <div class="section-eyebrow">Kako radi</div>
-      <h2>Tri koraka. Pet minuta nedeljno.</h2>
-      <p class="section-lede">Nema migracija, nema integracija sa vašim CRM-om. Samo unesete brojeve — mi radimo ostalo.</p>
+      <div class="section-eyebrow">Zašto ne ChatGPT?</div>
+      <h2>ChatGPT + Excel vs. Izveštaj.</h2>
+      <p class="section-lede">Ovo je pitanje koje svaki vlasnik agencije postavi. Odgovor je konkretan.</p>
 
-      <div class="steps-grid">
-        <div class="step-card">
-          <div class="step-num">1</div>
-          <h3>Unesete KPI u panel</h3>
-          <p>Ponedeljkom ujutru, 5 minuta. Upiti, ugovori, prihod po agentu. Imate CSV? Učitajte direktno.</p>
+      <table class="comp-table">
+        <thead>
+          <tr>
+            <th></th>
+            <th class="col-them">ChatGPT + Excel</th>
+            <th class="col-us">Izveštaj.com</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Pamti istoriju vaše agencije</td>
+            <td class="col-them"><span class="cross">✗</span></td>
+            <td class="col-us"><span class="check">✓</span></td>
+          </tr>
+          <tr>
+            <td>Šalje izveštaj automatski (bez prompta)</td>
+            <td class="col-them"><span class="cross">✗</span></td>
+            <td class="col-us"><span class="check">✓</span></td>
+          </tr>
+          <tr>
+            <td>Poredi sa tržištem (Halo, 4zida, Nekretnine.rs)</td>
+            <td class="col-them"><span class="cross">✗</span></td>
+            <td class="col-us"><span class="check">✓</span></td>
+          </tr>
+          <tr>
+            <td>Individualni izveštaji za svakog agenta</td>
+            <td class="col-them"><span class="cross">✗</span></td>
+            <td class="col-us"><span class="check">✓</span></td>
+          </tr>
+          <tr>
+            <td>Javni dashboard link za investitore</td>
+            <td class="col-them"><span class="cross">✗</span></td>
+            <td class="col-us"><span class="check">✓</span></td>
+          </tr>
+          <tr>
+            <td>Vreme koje trošite nedeljno</td>
+            <td class="col-them" style="font-size:0.88rem;font-weight:600;color:#991b1b;">4–8 sati</td>
+            <td class="col-us" style="font-size:0.88rem;font-weight:600;color:#166534;">3 minuta</td>
+          </tr>
+        </tbody>
+      </table>
+      <p class="comp-note">ChatGPT je odličan alat — ali ne pamti prošlu nedelju, ne šalje automatski, i ne zna kakvo je tržište u vašem gradu.</p>
+    </div>
+  </section>
+
+  <!-- ── SOCIAL PROOF ── -->
+  <section class="section social-proof">
+    <div class="section-inner">
+      <div class="section-eyebrow">Ko koristi Izveštaj</div>
+      <h2>Agencije koje su zamenile ponedeljak.</h2>
+
+      <div class="counter-row">
+        <span class="counter-num">23+</span>
+        agencija u Srbiji i regionu koristi Izveštaj.com
+      </div>
+
+      <div class="testimonials-grid">
+        <div class="testimonial">
+          <blockquote>"Svaki ponedeljak ujutru vidim gde stoji agencija — za 2 minuta. Pre sam trošio celo jutro na Excel. Nema poređenja."</blockquote>
+          <cite>Marko P. <span>· Vlasnik agencije, Beograd</span></cite>
         </div>
-        <div class="step-card">
-          <div class="step-num">2</div>
-          <h3>AI generiše izveštaj</h3>
-          <p>Claude analizira brojeve, poredi sa tržištem i prošlim nedeljama, pravi 4 zaključka i šalje na email.</p>
+        <div class="testimonial">
+          <blockquote>"Agenti su se iznenadili kad su dobili individualne izveštaje. Odjednom svi znaju gde stoje. Motivacija je skočila vidljivo."</blockquote>
+          <cite>Jovana S. <span>· Direktor agencije, Novi Sad</span></cite>
         </div>
-        <div class="step-card">
-          <div class="step-num">3</div>
-          <h3>Pratite preporuke</h3>
-          <p>Tim dobija individualne izveštaje. Vlasnik prati napredak. Sledeći ponedeljak — još jasnija slika.</p>
+        <div class="testimonial">
+          <blockquote>"Pokazujem izveštaj franšizodavcu svake nedelje. Javni link je posebno koristan — šaljem ga i bez da oni imaju nalog."</blockquote>
+          <cite>Dragan M. <span>· Vlasnik agencije, Niš</span></cite>
         </div>
       </div>
     </div>
@@ -370,16 +596,16 @@
   <section class="strip">
     <div class="strip-inner">
       <div class="strip-stat">
-        <div class="strip-num">5 min</div>
-        <div class="strip-label">postavka i unos podataka nedeljno</div>
+        <div class="strip-num">3 min</div>
+        <div class="strip-label">unos podataka nedeljno (umesto 6 sati)</div>
       </div>
       <div class="strip-stat">
-        <div class="strip-num">3–20</div>
+        <div class="strip-num">3–25</div>
         <div class="strip-label">agenata po agenciji (idealna veličina)</div>
       </div>
       <div class="strip-stat">
         <div class="strip-num">0€</div>
-        <div class="strip-label">za prvi mesec — bez kartice</div>
+        <div class="strip-label">za prvi mesec — bez kartice, bez obaveze</div>
       </div>
     </div>
   </section>
@@ -387,12 +613,13 @@
   <!-- ── FINAL CTA ── -->
   <section class="cta-band">
     <div class="cta-inner">
-      <h2>Spremni da automatizujete ponedeljak ujutru?</h2>
-      <p>Postavka traje 5 minuta. Prvi izveštaj stiže već sledeće nedelje.</p>
+      <h2>Pokreni prvu agenciju besplatno — rezultat za 7 dana.</h2>
+      <p>Postavka traje 5 minuta. Prvi izveštaj stiže već sledeće nedelje u 08:00.</p>
       <div>
-        <a href="register.html" class="btn btn-primary btn-lg">Probaj besplatno</a>
+        <a href="register.html" class="btn btn-primary btn-lg">Dobij prvi izveštaj za 5 minuta →</a>
         <a href="pricing.html" class="cta-secondary">Pogledaj cene →</a>
       </div>
+      <div class="cta-guarantee">30 dana besplatno · Bez kartice · Otkaži u jednom kliku</div>
     </div>
   </section>
 
@@ -403,11 +630,24 @@
       <div class="footer-links">
         <a href="pricing.html">Cene</a>
         <a href="app.html">Uloguj se</a>
+        <a href="privacy.html">Politika privatnosti</a>
+        <a href="terms.html">Uslovi korišćenja</a>
         <a href="mailto:hello@izvestaj.rs">Kontakt</a>
       </div>
-      <div class="footer-copy">© 2026 Izveštaj</div>
+      <div class="footer-copy">© 2026 Izveštaj · Beograd, Srbija</div>
     </div>
   </footer>
+
+  <script>
+    const btn  = document.getElementById('hamburger-btn');
+    const menu = document.getElementById('mobile-menu');
+    btn.addEventListener('click', () => {
+      menu.classList.toggle('open');
+    });
+    menu.querySelectorAll('a').forEach(a => {
+      a.addEventListener('click', () => menu.classList.remove('open'));
+    });
+  </script>
 
 </body>
 </html>

@@ -32,6 +32,7 @@
     .kpi-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.8px; color: #8892a4; margin-bottom: 6px; }
     .kpi-value { font-size: 28px; font-weight: 700; color: #1a1a2e; line-height: 1; }
     .kpi-sub   { font-size: 12px; margin-top: 5px; }
+    .kpi-delta { font-size: 12px; font-weight: 600; margin-top: 4px; display: inline-block; }
     .badge-up   { color: #16a34a; font-weight: 600; }
     .badge-down { color: #dc2626; font-weight: 600; }
     .badge-neu  { color: #6b7280; }
@@ -63,12 +64,29 @@
     .spinner { width: 36px; height: 36px; border: 3px solid #eaedf3; border-top-color: #2563eb; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 16px; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
+    /* CTA signup block */
+    .cta-signup {
+      background: linear-gradient(135deg, #1a1a2e 0%, #0f3460 100%);
+      border-radius: 16px; padding: 32px 36px; text-align: center;
+      color: white; margin-top: 8px;
+    }
+    .cta-signup p { font-size: 14px; color: rgba(255,255,255,0.7); margin-bottom: 6px; }
+    .cta-signup h3 { font-size: 18px; font-weight: 700; margin-bottom: 20px; line-height: 1.35; }
+    .cta-signup a {
+      display: inline-block; background: #2563eb; color: white;
+      padding: 13px 28px; border-radius: 9px; font-size: 0.95rem;
+      font-weight: 700; text-decoration: none; transition: background 0.18s;
+    }
+    .cta-signup a:hover { background: #1d4ed8; }
+    .cta-signup .cta-meta { font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 12px; }
+
     .footer { text-align: center; font-size: 11px; color: #9ca3af; margin-top: 24px; }
 
     @media (max-width: 520px) {
       .kpi-grid { grid-template-columns: 1fr 1fr; }
       .wrapper  { padding: 0 12px 32px; }
       .header   { padding: 24px 20px 18px; }
+      .cta-signup { padding: 28px 22px; }
     }
   </style>
 </head>
@@ -109,20 +127,24 @@
       <div class="kpi-card">
         <div class="kpi-label">Aktivni oglasi</div>
         <div class="kpi-value" id="k-listings">—</div>
+        <div class="kpi-delta" id="k-listings-delta"></div>
       </div>
       <div class="kpi-card">
         <div class="kpi-label">Upiti</div>
         <div class="kpi-value" id="k-inquiries">—</div>
+        <div class="kpi-delta" id="k-inquiries-delta"></div>
       </div>
       <div class="kpi-card">
         <div class="kpi-label">Ugovori</div>
         <div class="kpi-value" id="k-contracts">—</div>
         <div class="kpi-sub badge-neu" id="k-contracts-sub">—</div>
+        <div class="kpi-delta" id="k-contracts-delta"></div>
       </div>
       <div class="kpi-card">
         <div class="kpi-label">Prihod</div>
         <div class="kpi-value" id="k-revenue">—</div>
         <div class="kpi-sub" id="k-revenue-sub">—</div>
+        <div class="kpi-delta" id="k-revenue-delta"></div>
       </div>
     </div>
 
@@ -142,6 +164,14 @@
     <div class="card" id="bench-card" hidden>
       <div class="section-title" id="bench-title">Poređenje sa platformom</div>
       <div id="bench-rows"></div>
+    </div>
+
+    <!-- CTA -->
+    <div class="cta-signup">
+      <p>Ovako izgleda automatski izveštaj koji stiže svakog ponedeljka u 08:00.</p>
+      <h3>Želi ovakav dashboard za svoju agenciju?</h3>
+      <a href="/register.html">Počni besplatno →</a>
+      <div class="cta-meta">30 dana besplatno · bez kartice · otkaži u jednom kliku</div>
     </div>
 
     <div class="footer">
@@ -171,6 +201,15 @@
     document.getElementById('error-desc').textContent  = desc || '';
   }
 
+  function renderDelta(elId, curr, prev) {
+    const el = document.getElementById(elId);
+    if (!el || prev == null || prev === 0) return;
+    const pct = Math.round((curr - prev) / prev * 100);
+    if (pct === 0) return;
+    el.textContent = pct > 0 ? `↑ +${pct}% vs prošla nedelja` : `↓ ${pct}% vs prošla nedelja`;
+    el.className   = `kpi-delta ${pct > 0 ? 'badge-up' : 'badge-down'}`;
+  }
+
   async function loadDashboard() {
     const params = new URLSearchParams(window.location.search);
     const token  = params.get('token');
@@ -188,6 +227,7 @@
 
     const d         = data;
     const contracts = (d.contracts_sale || 0) + (d.contracts_rent || 0);
+    const prevContr = d.prev_contracts != null ? (d.prev_contracts_sale || 0) + (d.prev_contracts_rent || 0) : null;
     const revPct    = Math.round((d.revenue / (d.revenue_goal || 1)) * 100);
     const myConv    = d.inquiries > 0 ? Math.round(contracts / d.inquiries * 100 * 10) / 10 : 0;
 
@@ -206,6 +246,12 @@
     document.getElementById('rev-fill').style.width = `${Math.min(revPct, 100)}%`;
     document.getElementById('rev-left').innerHTML   = `<strong style="color:#16a34a">${(d.revenue || 0).toLocaleString('sr')}€</strong> ostvareno`;
     document.getElementById('rev-right').textContent = `Cilj: ${(d.revenue_goal || 0).toLocaleString('sr')}€`;
+
+    // Week-over-week deltas (available once SQL function is updated)
+    renderDelta('k-listings-delta',  d.active_listings, d.prev_listings);
+    renderDelta('k-inquiries-delta', d.inquiries,       d.prev_inquiries);
+    renderDelta('k-contracts-delta', contracts,         prevContr);
+    renderDelta('k-revenue-delta',   d.revenue,         d.prev_revenue);
 
     document.getElementById('loading').hidden   = true;
     document.getElementById('dashboard').hidden = false;
