@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Registracija — Izveštaj</title>
-  <meta name="description" content="Kreirajte besplatan nalog za vašu agenciju nekretnina. Bez kartice, postavka za 5 minuta.">
+  <meta name="description" content="Kreirajte nalog za vašu agenciju nekretnina. Bez kartice, postavka za 5 minuta.">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -96,20 +96,26 @@
     .trust-item { display: flex; align-items: flex-start; gap: 10px; font-size: 0.88rem; color: #4a5168; }
     .trust-icon { color: #16a34a; flex-shrink: 0; margin-top: 2px; }
 
-    /* ── Plan picker ── */
-    .plan-picker {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
-      margin-bottom: 20px;
+    /* ── Steps indicator ── */
+    .steps {
+      display: flex; align-items: center; gap: 6px;
+      margin-bottom: 24px; font-size: 0.82rem;
     }
-    .plan-card {
-      padding: 14px 14px; border: 1.5px solid #e5e7eb; border-radius: 9px;
-      background: white; cursor: pointer; transition: all 0.18s;
-      text-align: center; font-size: 0.88rem;
+    .step-item {
+      display: flex; align-items: center; gap: 5px;
+      color: #8892a4; font-weight: 500;
     }
-    .plan-card:hover { border-color: #2563eb; background: #eff6ff; }
-    .plan-card.selected { border-color: #2563eb; background: #eff6ff; font-weight: 600; color: #2563eb; }
-    .plan-name-picker { font-weight: 600; margin-bottom: 4px; }
-    .plan-price-picker { font-size: 1.2rem; font-weight: 700; }
+    .step-item.active { color: #2563eb; font-weight: 700; }
+    .step-item.done { color: #16a34a; }
+    .step-num {
+      width: 22px; height: 22px; border-radius: 50%;
+      background: #e5e7eb; color: #4a5168;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.75rem; font-weight: 700; flex-shrink: 0;
+    }
+    .step-item.active .step-num { background: #2563eb; color: white; }
+    .step-item.done .step-num { background: #16a34a; color: white; }
+    .step-sep { color: #d1d5db; }
 
     @media (max-width: 500px) {
       .card { padding: 32px 24px; }
@@ -135,22 +141,20 @@
   <!-- ── FORM ── -->
   <main class="wrap">
     <div class="card">
-      <span class="plan-badge"><span class="dot"></span><span id="badge-text">Pro plan — 79€/mes</span> · 30 dana besplatno</span>
-      <h1>Kreirajte nalog</h1>
-      <p class="sub">Bez kartice. Postavka traje 5 minuta. Prvi izveštaj već sledećeg ponedeljka.</p>
-
-      <div class="plan-picker">
-        <div class="plan-card selected" data-plan="pro" onclick="selectPlanCard('pro')">
-          <div class="plan-name-picker">Pro</div>
-          <div class="plan-price-picker">79€</div>
-          <div style="font-size: 0.75rem; color: #8892a4; margin-top: 4px;">10 agenata</div>
+      <div class="steps">
+        <div class="step-item active">
+          <div class="step-num">1</div>
+          <span>Nalog</span>
         </div>
-        <div class="plan-card" data-plan="basic" onclick="selectPlanCard('basic')">
-          <div class="plan-name-picker">Basic</div>
-          <div class="plan-price-picker">29€</div>
-          <div style="font-size: 0.75rem; color: #8892a4; margin-top: 4px;">do 3 agenta</div>
+        <span class="step-sep">›</span>
+        <div class="step-item">
+          <div class="step-num">2</div>
+          <span>Plan &amp; plaćanje</span>
         </div>
       </div>
+
+      <h1>Kreirajte nalog</h1>
+      <p class="sub">Bez kartice sada. Odabraćete plan u sledećem koraku.</p>
 
       <div id="form-msg"></div>
 
@@ -171,21 +175,21 @@
           <input type="password" id="password" name="password" required minlength="6" placeholder="Min. 6 karaktera">
         </div>
 
-        <button type="submit" id="submit-btn" class="btn btn-primary">Kreiraj nalog</button>
+        <button type="submit" id="submit-btn" class="btn btn-primary">Dalje — odaberi plan →</button>
       </form>
 
       <div class="trust">
         <div class="trust-item">
           <svg class="trust-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-          <span>1 agencija, do 3 agenta, nedeljni izveštaj</span>
+          <span>Odaberite plan u sledećem koraku — Basic, Pro ili Premium</span>
         </div>
         <div class="trust-item">
           <svg class="trust-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-          <span>AI analiza i email dostava uključeni</span>
+          <span>30 dana besplatno — kartica se ne naplaćuje odmah</span>
         </div>
         <div class="trust-item">
           <svg class="trust-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-          <span>Nadogradnja na Pro plan u jednom kliku</span>
+          <span>Otkazivanje u jednom kliku, bez penala</span>
         </div>
       </div>
 
@@ -201,30 +205,6 @@
     'https://cesxmcbodcpfnpyusxhj.supabase.co',
     'sb_publishable_uMe0x5mYYyTI707MbRLzag_6NIDIE_K'
   );
-
-  let selectedPlan = 'pro';
-
-  function getPlanFromUrl() {
-    const params = new URLSearchParams(window.location.search);
-    const plan = params.get('plan');
-    if (plan === 'basic' || plan === 'pro') return plan;
-    return 'pro';
-  }
-
-  function selectPlanCard(plan) {
-    selectedPlan = plan;
-    window.history.replaceState({}, '', `?plan=${plan}`);
-
-    document.querySelectorAll('.plan-card').forEach(card => {
-      card.classList.remove('selected');
-    });
-    document.querySelector(`[data-plan="${plan}"]`).classList.add('selected');
-
-    const planNames = { basic: 'Basic', pro: 'Pro' };
-    const planPrices = { basic: '29€', pro: '79€' };
-    document.getElementById('badge-text').textContent =
-      `${planNames[plan]} plan — ${planPrices[plan]}/mes`;
-  }
 
   function showMsg(text, type) {
     document.getElementById('form-msg').innerHTML =
@@ -257,7 +237,7 @@
       password,
       options: {
         data: { agency_name: agencyName },
-        emailRedirectTo: `${window.location.origin}/checkout.html?plan=${selectedPlan}`,
+        emailRedirectTo: `${window.location.origin}/checkout.html`,
       },
     });
 
@@ -270,29 +250,21 @@
       }
       showMsg(msg, 'error');
       btn.disabled    = false;
-      btn.textContent = 'Kreiraj nalog';
+      btn.textContent = 'Dalje — odaberi plan →';
       return;
     }
 
-    // Sačuvaj kontekst za checkout (radi i ako Supabase traži email konfirmaciju)
     try {
       localStorage.setItem('pending_signup', JSON.stringify({
         email,
-        plan: selectedPlan,
         agency_name: agencyName,
         needs_confirmation: !data.session,
         created_at: Date.now(),
       }));
     } catch (_) {}
 
-    showMsg('Nalog kreiran. Preusmeravamo vas na plaćanje...', 'success');
-    setTimeout(() => { window.location.href = `checkout.html?plan=${selectedPlan}`; }, 600);
-  });
-
-  // Init
-  document.addEventListener('DOMContentLoaded', () => {
-    selectedPlan = getPlanFromUrl();
-    selectPlanCard(selectedPlan);
+    showMsg('Nalog kreiran! Preusmeravamo vas na odabir plana...', 'success');
+    setTimeout(() => { window.location.href = 'checkout.html'; }, 600);
   });
 </script>
 

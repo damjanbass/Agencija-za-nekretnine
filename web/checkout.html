@@ -6,7 +6,7 @@
   <title>Plaćanje — Izveštaj</title>
   <meta name="description" content="Aktivirajte probni period od 30 dana. Bez kartice — plaćanje tek nakon probnog perioda.">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="https://www.paypal.com/sdk/js?client-id=sb&vault=true&intent=subscription"></script>
+  <script src="https://www.paypal.com/sdk/js?client-id=ASl69D8oJFvQnJWxTDimH0Se9ku-fYFoH3EHc2ie3COw7kqqnI0L3OwN20_e-iL7LOj567jUKIrg4hzo&vault=true&intent=subscription&currency=EUR"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; background: #f4f6f9; color: #1a1a2e; min-height: 100vh; -webkit-font-smoothing: antialiased; }
@@ -136,6 +136,51 @@
     .trust-text { font-size: 0.9rem; color: #4a5168; line-height: 1.5; }
     .trust-text strong { color: #1a1a2e; display: block; margin-bottom: 3px; }
 
+    /* ── Steps indicator ── */
+    .steps-bar {
+      padding: 16px 40px; border-bottom: 1px solid #f0f2f5;
+      display: flex; align-items: center; gap: 8px; font-size: 0.82rem;
+    }
+    .step-item {
+      display: flex; align-items: center; gap: 5px;
+      color: #8892a4; font-weight: 500;
+    }
+    .step-item.active { color: #2563eb; font-weight: 700; }
+    .step-item.done { color: #16a34a; }
+    .step-num {
+      width: 22px; height: 22px; border-radius: 50%;
+      background: #e5e7eb; color: #4a5168;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.75rem; font-weight: 700; flex-shrink: 0;
+    }
+    .step-item.active .step-num { background: #2563eb; color: white; }
+    .step-item.done .step-num { background: #16a34a; color: white; }
+    .step-sep { color: #d1d5db; }
+
+    /* ── Success screen ── */
+    .success-screen {
+      display: none; flex-direction: column; align-items: center;
+      padding: 56px 40px; text-align: center;
+    }
+    .success-screen.visible { display: flex; }
+    .success-icon { font-size: 3rem; margin-bottom: 16px; }
+    .success-screen h2 { font-size: 1.5rem; font-weight: 800; color: #1a1a2e; margin-bottom: 10px; }
+    .success-screen .success-sub { font-size: 0.97rem; color: #4a5168; margin-bottom: 28px; line-height: 1.6; max-width: 420px; }
+    .email-reminder {
+      background: #fef3c7; border: 1px solid #fcd34d;
+      border-radius: 12px; padding: 20px 24px; margin-bottom: 28px;
+      text-align: left; max-width: 420px; width: 100%;
+    }
+    .email-reminder strong { display: block; color: #92400e; margin-bottom: 6px; font-size: 0.95rem; }
+    .email-reminder p { font-size: 0.88rem; color: #78350f; line-height: 1.55; }
+    .btn-go-app {
+      display: inline-block; padding: 13px 32px;
+      background: #2563eb; color: white; border-radius: 9px;
+      font-size: 1rem; font-weight: 600; cursor: pointer;
+      border: none; font-family: inherit; transition: background 0.18s;
+    }
+    .btn-go-app:hover { background: #1d4ed8; }
+
     /* ── Messages ── */
     .msg { padding: 12px 16px; border-radius: 9px; margin-bottom: 16px; font-size: 0.9rem; }
     .msg-error   { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
@@ -181,20 +226,39 @@
       <!-- Header -->
       <div class="checkout-header">
         <div>
-          <h1>Korak 2 od 2 — Plaćanje</h1>
-          <div class="step">Aktivacija probnog perioda od 30 dana</div>
+          <h1>Odaberite plan i platite</h1>
+          <div class="step">30 dana besplatno — kartica se ne naplaćuje odmah</div>
         </div>
-        <a href="register.html" class="change-link">← Promeni plan</a>
+        <a href="register.html" class="change-link">← Nazad na registraciju</a>
       </div>
 
-      <!-- Email confirmation banner (shown only if session is missing) -->
-      <div id="email-confirm-banner" style="display: none; background: #fef3c7; border-bottom: 1px solid #fcd34d; padding: 16px 40px; color: #92400e; font-size: 0.92rem;">
-        <strong>📧 Potvrdite email pre nastavka</strong><br>
-        Poslali smo link za potvrdu na <strong id="banner-email">vaš email</strong>. Kliknite na link u email-u, pa se vratite ovde da završite plaćanje. Plan možete pregledati ispod.
+      <!-- Steps bar -->
+      <div class="steps-bar">
+        <div class="step-item done">
+          <div class="step-num">✓</div>
+          <span>Nalog kreiran</span>
+        </div>
+        <span class="step-sep">›</span>
+        <div class="step-item active">
+          <div class="step-num">2</div>
+          <span>Odabir plana &amp; plaćanje</span>
+        </div>
+      </div>
+
+      <!-- Success screen (shown after payment) -->
+      <div class="success-screen" id="success-screen">
+        <div class="success-icon">🎉</div>
+        <h2>Pretplata aktivirana!</h2>
+        <p class="success-sub">Vaš probni period od 30 dana je aktivan. Kartica neće biti naplaćena do <strong id="success-charge-date"></strong>.</p>
+        <div class="email-reminder">
+          <strong>📧 Potvrdite email adresu</strong>
+          <p>Poslali smo email na <strong id="success-email"></strong>.<br>Kliknite na link u email-u da biste aktivirali punu funkcionalnost naloga.</p>
+        </div>
+        <button class="btn-go-app" onclick="window.location.href='app.html'">Idi na panel →</button>
       </div>
 
       <!-- Body (2 columns) -->
-      <div class="checkout-body">
+      <div class="checkout-body" id="checkout-body">
 
         <!-- Left: Plan Summary -->
         <div class="plan-summary">
@@ -208,11 +272,14 @@
           </ul>
 
           <div class="plan-toggle">
+            <button class="plan-btn" data-plan="basic" onclick="selectPlan('basic')">
+              Basic <span style="font-size: 0.85rem; color: #8892a4;">29€</span>
+            </button>
             <button class="plan-btn active" data-plan="pro" onclick="selectPlan('pro')">
               Pro <span style="font-size: 0.85rem; color: #8892a4;">79€</span>
             </button>
-            <button class="plan-btn" data-plan="basic" onclick="selectPlan('basic')">
-              Basic <span style="font-size: 0.85rem; color: #8892a4;">29€</span>
+            <button class="plan-btn" data-plan="premium" onclick="selectPlan('premium')">
+              Premium <span style="font-size: 0.85rem; color: #8892a4;">149€</span>
             </button>
           </div>
         </div>
@@ -244,7 +311,7 @@
       </div>
 
       <!-- Trust strip -->
-      <div class="trust-strip">
+      <div class="trust-strip" id="trust-strip">
         <div class="trust-item">
           <div class="trust-icon">🔒</div>
           <div class="trust-text">
@@ -265,13 +332,13 @@
   </main>
 
 <script>
-  // ── PayPal config — replace "sb" with your Business client ID when ready ──
-  const PAYPAL_CLIENT_ID = "sb";
+  const PAYPAL_CLIENT_ID = "ASl69D8oJFvQnJWxTDimH0Se9ku-fYFoH3EHc2ie3COw7kqqnI0L3OwN20_e-iL7LOj567jUKIrg4hzo";
   const PAYPAL_CURRENCY  = "EUR";
   const PAYPAL_MODE      = "subscription";
   const PAYPAL_PLAN_IDS = {
-    basic: "REPLACE_WITH_PAYPAL_PLAN_ID_BASIC",
-    pro:   "REPLACE_WITH_PAYPAL_PLAN_ID_PRO",
+    basic:   "P-5WL46779EE353592MNIFCF2I",
+    pro:     "P-57P38024HH908405XNIFCF2Y",
+    premium: "P-78T289589V882241MNIFCF3I",
   };
 
   const PLAN_DATA = {
@@ -300,6 +367,18 @@
         "Email dostava",
       ],
     },
+    premium: {
+      id: "premium",
+      name: "Premium",
+      price: 149,
+      features: [
+        "Neograničen broj agenata",
+        "Sve iz Pro plana",
+        "Custom branding (logo agencije)",
+        "12 meseci istorije izveštaja",
+        "Prioritetna podrška",
+      ],
+    },
   };
 
   let currentPlan = "pro";
@@ -315,7 +394,7 @@
   function getPlanFromUrl() {
     const params = new URLSearchParams(window.location.search);
     const plan = params.get('plan');
-    if (plan === 'basic' || plan === 'pro') return plan;
+    if (plan === 'basic' || plan === 'pro' || plan === 'premium') return plan;
     return 'pro';
   }
 
@@ -365,51 +444,19 @@
     const containerId = 'paypal-button-container';
     document.getElementById(containerId).innerHTML = '';
 
-    // Block PayPal if email is not confirmed yet
-    if (!hasSession && pendingSignup) {
+    if (typeof paypal === 'undefined') {
       document.getElementById(containerId).innerHTML =
-        `<div style="text-align: center; padding: 30px 20px;">
-          <div style="font-size: 2rem; margin-bottom: 8px;">📧</div>
-          <div style="font-weight: 600; color: #1a1a2e; margin-bottom: 8px;">Potvrdite email prvo</div>
-          <div style="font-size: 0.88rem; color: #4a5168; line-height: 1.5;">
-            Kliknite na link u email-u koji smo poslali na<br>
-            <strong>${pendingSignup.email}</strong><br><br>
-            Zatim se vratite ovde da povežete karticu.
-          </div>
+        `<div style="text-align:center;padding:24px 16px;color:#4a5168;font-size:0.88rem;line-height:1.6;">
+          PayPal SDK se nije učitao.<br>Osvežite stranicu ili kontaktirajte <strong>hello@izvestaj.rs</strong>.
         </div>`;
       return;
     }
 
-    // Check if plan IDs are set (i.e., not the placeholder)
-    if (PAYPAL_PLAN_IDS[currentPlan].includes('REPLACE_WITH')) {
-      document.getElementById(containerId).innerHTML =
-        `<div style="text-align: center; padding: 40px 20px; color: #8892a4;">
-          <p style="font-size: 0.9rem; margin-bottom: 12px;">PayPal je još uvek u podešavanju.</p>
-          <p style="font-size: 0.85rem;">Kontaktirajte nas na <strong>hello@izvestaj.rs</strong> ili<br>otkazivanje će biti dostupno u panelu nakon aktivacije.</p>
-        </div>`;
-      return;
-    }
-
-    // If in sandbox mode (client-id = "sb"), show demo button
-    if (PAYPAL_CLIENT_ID === "sb") {
-      document.getElementById(containerId).innerHTML =
-        `<div style="text-align: center; padding: 20px; background: #fef3c7; border: 1px solid #fcd34d; border-radius: 8px; color: #92400e;">
-          <div style="font-weight: 600; margin-bottom: 8px;">🧪 PayPal Sandbox režim</div>
-          <div style="font-size: 0.88rem; margin-bottom: 12px;">Ovaj gumb je test gumb. Plaćanja se neće obraditi.</div>
-          <button onclick="simulatePayPalApproval()" style="background: #2563eb; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600;">
-            Simuliraj odobrenje
-          </button>
-        </div>`;
-      return;
-    }
-
-    // Real PayPal button would render here
     paypal.Buttons({
-      createSubscriptionDetails() {
-        return {
+      createSubscription(data, actions) {
+        return actions.subscription.create({
           plan_id: PAYPAL_PLAN_IDS[currentPlan],
-          quantity: "1",
-        };
+        });
       },
       onApprove(data) {
         saveSubscriptionAndRedirect(data.subscriptionID);
@@ -417,12 +464,14 @@
       onError(err) {
         showMsg('Greška pri plaćanju: ' + (err.message || 'Pokušajte ponovo'), 'error');
       },
-    }).render(containerId);
-  }
-
-  async function simulatePayPalApproval() {
-    showMsg('Simuliram odobrenje PayPala...', 'loading');
-    setTimeout(() => saveSubscriptionAndRedirect('I-SANDBOX-SUBSCRIPTION-ID'), 800);
+    }).render(containerId).catch(err => {
+      console.error('PayPal render error:', err);
+      document.getElementById(containerId).innerHTML =
+        `<div style="text-align:center;padding:24px 16px;color:#4a5168;font-size:0.88rem;line-height:1.6;">
+          Nije moguće učitati PayPal dugme.<br>
+          Proverite vezu i osvežite stranicu ili nas kontaktirajte na <strong>hello@izvestaj.rs</strong>.
+        </div>`;
+    });
   }
 
   async function saveSubscriptionAndRedirect(subscriptionId) {
@@ -430,7 +479,13 @@
       const today = new Date();
       const trialEndsAt = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString();
 
-      const { error } = await sb.auth.updateUser({
+      const { data: { user }, error: userErr } = await sb.auth.getUser();
+      if (userErr || !user) {
+        showMsg('Sesija nije pronađena. Prijavite se ponovo.', 'error');
+        return;
+      }
+
+      await sb.auth.updateUser({
         data: {
           plan: currentPlan,
           plan_status: 'trialing',
@@ -439,47 +494,59 @@
         },
       });
 
-      if (error) {
-        showMsg('Greška pri čuvanju plana: ' + error.message, 'error');
+      const { error: agencyErr } = await sb
+        .from('agencies')
+        .update({
+          plan_id: currentPlan,
+          subscription_status: 'trial',
+          trial_ends_at: trialEndsAt,
+          paypal_subscription_id: subscriptionId,
+        })
+        .eq('user_id', user.id);
+
+      if (agencyErr) {
+        showMsg('Greška pri aktivaciji plana: ' + agencyErr.message, 'error');
         return;
       }
 
-      showMsg('✓ Nalog je aktiviran! Preusmeravamo vas na panel...', 'success');
-      setTimeout(() => { window.location.href = 'app.html'; }, 1200);
+      showSuccessScreen(user.email, trialEndsAt);
     } catch (err) {
       showMsg('Greška: ' + err.message, 'error');
     }
   }
 
+  function showSuccessScreen(email, trialEndsAt) {
+    // Format charge date
+    const d = new Date(trialEndsAt);
+    const dd = String(d.getDate()).padStart(2, '0');
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const yyyy = d.getFullYear();
+    document.getElementById('success-charge-date').textContent = `${dd}.${mm}.${yyyy}`;
+
+    // Show user email (fallback to pending signup email)
+    const displayEmail = email || (pendingSignup && pendingSignup.email) || '';
+    document.getElementById('success-email').textContent = displayEmail;
+
+    // Hide checkout body, show success
+    document.getElementById('checkout-body').style.display = 'none';
+    document.getElementById('trust-strip').style.display = 'none';
+    document.getElementById('success-screen').classList.add('visible');
+
+    try { localStorage.removeItem('pending_signup'); } catch (_) {}
+  }
+
   async function checkSessionAndInit() {
-    // Load pending signup from localStorage (if user just registered)
     try {
       const raw = localStorage.getItem('pending_signup');
       if (raw) pendingSignup = JSON.parse(raw);
     } catch (_) {}
 
-    // Check if Supabase session is active
     const { data } = await sb.auth.getSession();
     hasSession = !!(data && data.session);
 
-    // Pick plan: URL param > localStorage pending signup > default
+    // Pick plan from URL param (plan picker on this page handles the rest)
     const urlPlan = getPlanFromUrl();
-    if (urlPlan) {
-      currentPlan = urlPlan;
-    } else if (pendingSignup && pendingSignup.plan) {
-      currentPlan = pendingSignup.plan;
-    }
-
-    // Show banner if email not confirmed yet
-    if (!hasSession && pendingSignup) {
-      document.getElementById('banner-email').textContent = pendingSignup.email;
-      document.getElementById('email-confirm-banner').style.display = 'block';
-    }
-
-    // If user is fully signed in and pending data exists, clear it
-    if (hasSession && pendingSignup) {
-      try { localStorage.removeItem('pending_signup'); } catch (_) {}
-    }
+    if (urlPlan) currentPlan = urlPlan;
 
     updatePlanDisplay();
   }
