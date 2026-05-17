@@ -274,19 +274,19 @@
       return;
     }
 
-    // Ako je email konfirmacija ON → nema session-a, čeka se klik na email link
-    if (!data.session) {
-      showMsg(
-        `Nalog kreiran. Poslali smo email na <strong>${email}</strong> — kliknite link za potvrdu, pa se ulogujte.`,
-        'success'
-      );
-      btn.textContent = 'Proverite email';
-      return;
-    }
+    // Sačuvaj kontekst za checkout (radi i ako Supabase traži email konfirmaciju)
+    try {
+      localStorage.setItem('pending_signup', JSON.stringify({
+        email,
+        plan: selectedPlan,
+        agency_name: agencyName,
+        needs_confirmation: !data.session,
+        created_at: Date.now(),
+      }));
+    } catch (_) {}
 
-    // Ako je email konfirmacija OFF → već smo ulogovani, idemo na checkout
     showMsg('Nalog kreiran. Preusmeravamo vas na plaćanje...', 'success');
-    setTimeout(() => { window.location.href = `checkout.html?plan=${selectedPlan}`; }, 800);
+    setTimeout(() => { window.location.href = `checkout.html?plan=${selectedPlan}`; }, 600);
   });
 
   // Init
