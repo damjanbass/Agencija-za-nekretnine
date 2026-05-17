@@ -96,6 +96,21 @@
     .trust-item { display: flex; align-items: flex-start; gap: 10px; font-size: 0.88rem; color: #4a5168; }
     .trust-icon { color: #16a34a; flex-shrink: 0; margin-top: 2px; }
 
+    /* ── Plan picker ── */
+    .plan-picker {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+      margin-bottom: 20px;
+    }
+    .plan-card {
+      padding: 14px 14px; border: 1.5px solid #e5e7eb; border-radius: 9px;
+      background: white; cursor: pointer; transition: all 0.18s;
+      text-align: center; font-size: 0.88rem;
+    }
+    .plan-card:hover { border-color: #2563eb; background: #eff6ff; }
+    .plan-card.selected { border-color: #2563eb; background: #eff6ff; font-weight: 600; color: #2563eb; }
+    .plan-name-picker { font-weight: 600; margin-bottom: 4px; }
+    .plan-price-picker { font-size: 1.2rem; font-weight: 700; }
+
     @media (max-width: 500px) {
       .card { padding: 32px 24px; }
       .card h1 { font-size: 1.35rem; }
@@ -120,9 +135,22 @@
   <!-- ── FORM ── -->
   <main class="wrap">
     <div class="card">
-      <span class="plan-badge"><span class="dot"></span>Basic plan — 29€/mes · 30 dana besplatno</span>
+      <span class="plan-badge"><span class="dot"></span><span id="badge-text">Pro plan — 79€/mes</span> · 30 dana besplatno</span>
       <h1>Kreirajte nalog</h1>
       <p class="sub">Bez kartice. Postavka traje 5 minuta. Prvi izveštaj već sledećeg ponedeljka.</p>
+
+      <div class="plan-picker">
+        <div class="plan-card selected" data-plan="pro" onclick="selectPlanCard('pro')">
+          <div class="plan-name-picker">Pro</div>
+          <div class="plan-price-picker">79€</div>
+          <div style="font-size: 0.75rem; color: #8892a4; margin-top: 4px;">10 agenata</div>
+        </div>
+        <div class="plan-card" data-plan="basic" onclick="selectPlanCard('basic')">
+          <div class="plan-name-picker">Basic</div>
+          <div class="plan-price-picker">29€</div>
+          <div style="font-size: 0.75rem; color: #8892a4; margin-top: 4px;">do 3 agenta</div>
+        </div>
+      </div>
 
       <div id="form-msg"></div>
 
@@ -174,6 +202,30 @@
     'sb_publishable_uMe0x5mYYyTI707MbRLzag_6NIDIE_K'
   );
 
+  let selectedPlan = 'pro';
+
+  function getPlanFromUrl() {
+    const params = new URLSearchParams(window.location.search);
+    const plan = params.get('plan');
+    if (plan === 'basic' || plan === 'pro') return plan;
+    return 'pro';
+  }
+
+  function selectPlanCard(plan) {
+    selectedPlan = plan;
+    window.history.replaceState({}, '', `?plan=${plan}`);
+
+    document.querySelectorAll('.plan-card').forEach(card => {
+      card.classList.remove('selected');
+    });
+    document.querySelector(`[data-plan="${plan}"]`).classList.add('selected');
+
+    const planNames = { basic: 'Basic', pro: 'Pro' };
+    const planPrices = { basic: '29€', pro: '79€' };
+    document.getElementById('badge-text').textContent =
+      `${planNames[plan]} plan — ${planPrices[plan]}/mes`;
+  }
+
   function showMsg(text, type) {
     document.getElementById('form-msg').innerHTML =
       `<div class="msg msg-${type}">${text}</div>`;
@@ -205,7 +257,7 @@
       password,
       options: {
         data: { agency_name: agencyName },
-        emailRedirectTo: `${window.location.origin}/app.html`,
+        emailRedirectTo: `${window.location.origin}/checkout.html?plan=${selectedPlan}`,
       },
     });
 
@@ -232,9 +284,15 @@
       return;
     }
 
-    // Ako je email konfirmacija OFF → već smo ulogovani, idemo na panel
-    showMsg('Nalog kreiran. Preusmeravamo vas na panel...', 'success');
-    setTimeout(() => { window.location.href = 'app.html'; }, 800);
+    // Ako je email konfirmacija OFF → već smo ulogovani, idemo na checkout
+    showMsg('Nalog kreiran. Preusmeravamo vas na plaćanje...', 'success');
+    setTimeout(() => { window.location.href = `checkout.html?plan=${selectedPlan}`; }, 800);
+  });
+
+  // Init
+  document.addEventListener('DOMContentLoaded', () => {
+    selectedPlan = getPlanFromUrl();
+    selectPlanCard(selectedPlan);
   });
 </script>
 
