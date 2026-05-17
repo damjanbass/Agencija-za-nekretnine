@@ -26,6 +26,7 @@ from fastapi import FastAPI, HTTPException, Header, Request
 
 import config
 from data.supabase_client import get_client, expire_stale_trials
+from mailer.billing_email import send_invoice, send_subscription_activated
 
 if sys.platform == "win32":
     sys.stdout.reconfigure(encoding="utf-8")
@@ -92,6 +93,22 @@ def _update_by_subscription(sub_id: str, fields: dict) -> int:
     return len(res.data or [])
 
 
+def _get_agency_by_subscription(sub_id: str) -> dict | None:
+    """Učitava agenciju + sva billing polja za slanje email-a."""
+    sb = get_client()
+    res = (
+        sb.table("agencies")
+        .select("id, name, email, billing_email, plan_id, trial_ends_at, "
+                "current_period_end, paypal_subscription_id, pib, maticni_broj, "
+                "legal_address, legal_city")
+        .eq("paypal_subscription_id", sub_id)
+        .limit(1)
+        .execute()
+    )
+    rows = res.data or []
+    return rows[0] if rows else None
+
+
 def _set_subscription_on_agency(agency_id: str, sub_id: str, plan_id: str | None = None) -> None:
     sb = get_client()
     fields = {"paypal_subscription_id": sub_id, "subscription_status": "active"}
@@ -119,6 +136,18 @@ def _handle_event(event: dict) -> None:
         })
         print(f"[paypal] {et} sub={sub_id} updated={n}")
 
+        # Email: aktivacija pretplate (početak probnog perioda)
+        try:
+            agency = _get_agency_by_subscription(sub_id)
+            if agency:
+                send_subscription_activated(
+                    agency        = agency,
+                    plan_id       = agency.get("plan_id"),
+                    trial_ends_at = agency.get("trial_ends_at") or period_end,
+                )
+        except Exception as e:
+            print(f"[paypal] activation email greška: {e}")
+
     elif et == "PAYMENT.SALE.COMPLETED":
         # Obnova perioda — guramo current_period_end kad PayPal već zna sledeći datum.
         period_end = resource.get("next_billing_time")
@@ -127,6 +156,27 @@ def _handle_event(event: dict) -> None:
             fields["current_period_end"] = period_end
         n = _update_by_subscription(sub_id, fields)
         print(f"[paypal] {et} sub={sub_id} updated={n}")
+
+        # Email: račun za uspešnu naplatu
+        try:
+            agency = _get_agency_by_subscription(sub_id)
+            if agency:
+                amount_raw   = (resource.get("amount") or {}).get("total")
+                sale_id      = resource.get("id") or ""
+                create_time  = resource.get("create_time")
+                amount_value = float(amount_raw) if amount_raw else None
+                send_invoice(
+                    agency           = agency,
+                    plan_id          = agency.get("plan_id"),
+                    invoice_number   = f"INV-{sale_id[-12:]}" if sale_id else None,
+                    charge_date      = create_time,
+                    period_start     = create_time,
+                    period_end       = period_end,
+                    next_charge_date = period_end,
+                    amount           = amount_value,
+                )
+        except Exception as e:
+            print(f"[paypal] invoice email greška: {e}")
 
     elif et in ("BILLING.SUBSCRIPTION.CANCELLED", "BILLING.SUBSCRIPTION.EXPIRED"):
         n = _update_by_subscription(sub_id, {"subscription_status": "canceled"})

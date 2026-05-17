@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pretplata aktivirana — Izveštaj</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6f9; color: #1a1a2e; line-height: 1.55; }
+
+  .wrapper {
+    max-width: 600px; margin: 32px auto; background: #fff;
+    border-radius: 14px; overflow: hidden;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+  }
+
+  .header {
+    background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+    padding: 36px 36px 32px; color: #fff; text-align: center;
+  }
+  .header-icon { font-size: 44px; line-height: 1; margin-bottom: 12px; }
+  .header-name { font-size: 22px; font-weight: 700; letter-spacing: -0.2px; margin-bottom: 6px; }
+  .header-sub  { font-size: 14px; opacity: 0.95; }
+
+  .body { padding: 32px 36px; }
+
+  .greeting {
+    font-size: 15px; color: #1a1a2e; margin-bottom: 22px;
+  }
+
+  .plan-box {
+    background: #f8f9fc; border: 1px solid #eaedf3;
+    border-radius: 10px; padding: 22px 24px; margin-bottom: 22px;
+  }
+  .plan-box .label {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.6px;
+    color: #8892a4; font-weight: 700; margin-bottom: 6px;
+  }
+  .plan-box .name { font-size: 22px; font-weight: 800; color: #1a1a2e; margin-bottom: 10px; }
+  .plan-box .price { font-size: 15px; color: #4a5168; }
+  .plan-box .price strong { color: #1a1a2e; font-weight: 700; }
+
+  .trial-strip {
+    background: #f0fdf4; border: 1px solid #bbf7d0;
+    border-radius: 10px; padding: 18px 22px; margin-bottom: 22px;
+    display: table; width: 100%;
+  }
+  .trial-cell { display: table-cell; vertical-align: middle; }
+  .trial-cell.icon { width: 48px; font-size: 28px; }
+  .trial-cell.text { font-size: 14px; color: #166534; }
+  .trial-cell.text strong { display: block; font-size: 15px; color: #14532d; margin-bottom: 3px; }
+
+  .info-table {
+    width: 100%; border-collapse: collapse; margin-bottom: 24px;
+  }
+  .info-table td {
+    padding: 12px 0; border-bottom: 1px solid #eaedf3;
+    font-size: 14px; color: #1a1a2e;
+  }
+  .info-table td.label { color: #8892a4; font-weight: 600; width: 55%; }
+  .info-table td.value { text-align: right; font-weight: 600; }
+  .info-table tr:last-child td { border-bottom: none; }
+
+  .cta-button {
+    display: block; background: #2563eb; color: #fff !important;
+    padding: 14px 24px; border-radius: 9px;
+    text-align: center; text-decoration: none;
+    font-size: 15px; font-weight: 600;
+    margin-bottom: 22px;
+  }
+
+  .note {
+    background: #fef9c3; border: 1px solid #fde68a;
+    border-radius: 9px; padding: 14px 18px;
+    font-size: 13px; color: #78350f; line-height: 1.55;
+  }
+  .note strong { display: block; color: #92400e; margin-bottom: 4px; }
+
+  .footer {
+    background: #0f172a; color: #8892a4; padding: 24px 36px;
+    text-align: center; font-size: 12px;
+  }
+  .footer-brand { color: #fff; font-weight: 700; margin-bottom: 4px; }
+  .footer a { color: #93c5fd; text-decoration: none; }
+
+  @media (max-width: 600px) {
+    .wrapper { margin: 0; border-radius: 0; }
+    .header, .body, .footer { padding-left: 22px; padding-right: 22px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrapper">
+
+  <!-- ── Header ── -->
+  <div class="header">
+    <div class="header-icon">✓</div>
+    <div class="header-name">Pretplata je aktivirana</div>
+    <div class="header-sub">Vaš probni period je započeo.</div>
+  </div>
+
+  <!-- ── Body ── -->
+  <div class="body">
+
+    <p class="greeting">
+      Zdravo {{ agency_name }},<br><br>
+      Hvala što ste odabrali Izveštaj. Vaša pretplata je uspešno povezana sa PayPal nalogom i možete odmah da koristite sve funkcije plana.
+    </p>
+
+    <!-- Plan info -->
+    <div class="plan-box">
+      <div class="label">Plan</div>
+      <div class="name">{{ plan_display_name }}</div>
+      <div class="price">
+        <strong>{{ amount }}€</strong> / mesečno · obnova kroz PayPal
+      </div>
+    </div>
+
+    <!-- Trial strip -->
+    <div class="trial-strip">
+      <div class="trial-cell icon">🎁</div>
+      <div class="trial-cell text">
+        <strong>30 dana besplatno</strong>
+        Probni period traje do {{ trial_ends_at }}. Tokom tog perioda <strong>nećemo ništa naplatiti</strong>.
+      </div>
+    </div>
+
+    <!-- Key dates -->
+    <table class="info-table">
+      <tr>
+        <td class="label">Probni period ističe</td>
+        <td class="value">{{ trial_ends_at }}</td>
+      </tr>
+      <tr>
+        <td class="label">Prva naplata</td>
+        <td class="value">{{ trial_ends_at }} · {{ amount }}€</td>
+      </tr>
+      <tr>
+        <td class="label">Račun stiže</td>
+        <td class="value">automatski na ovaj email</td>
+      </tr>
+    </table>
+
+    <a href="https://izvestaj.rs/app.html" class="cta-button">Otvori panel →</a>
+
+    <div class="note">
+      <strong>💡 Potreban vam je R-1 račun?</strong>
+      Unesite PIB i matični broj agencije u panelu (Podešavanja), pa će svi sledeći računi automatski sadržati R-1 elemente.
+    </div>
+
+  </div>
+
+  <!-- ── Footer ── -->
+  <div class="footer">
+    <div class="footer-brand">Izveštaj.</div>
+    <div>Pitanja? Pišite nam na <a href="mailto:{{ support_email }}">{{ support_email }}</a></div>
+    <div style="margin-top: 8px; opacity: 0.7;">Otkazivanje je moguće u svakom trenutku u panelu.</div>
+  </div>
+
+</div>
+
+</body>
+</html>

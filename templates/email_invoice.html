@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Račun {{ invoice_number }} — Izveštaj</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6f9; color: #1a1a2e; line-height: 1.5; }
+
+  .wrapper {
+    max-width: 600px; margin: 32px auto; background: #fff;
+    border-radius: 14px; overflow: hidden;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+  }
+
+  .header {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 60%, #0f3460 100%);
+    padding: 32px 36px; color: #fff;
+  }
+  .header-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1.2px; opacity: 0.7; margin-bottom: 8px; }
+  .header-name  { font-size: 24px; font-weight: 700; letter-spacing: -0.3px; margin-bottom: 6px; }
+  .header-sub   { font-size: 13px; opacity: 0.85; }
+
+  .invoice-summary {
+    background: #f8f9fc; padding: 24px 36px;
+    border-bottom: 1px solid #eaedf3;
+    display: table; width: 100%;
+  }
+  .summary-row {
+    display: table-row;
+  }
+  .summary-cell {
+    display: table-cell; padding: 4px 0;
+    font-size: 14px; color: #4a5168;
+  }
+  .summary-cell.label { font-weight: 600; color: #8892a4; text-transform: uppercase; font-size: 11px; letter-spacing: 0.6px; }
+  .summary-cell.value { text-align: right; font-weight: 600; color: #1a1a2e; }
+
+  .body { padding: 32px 36px; }
+
+  .section-title {
+    font-size: 13px; text-transform: uppercase; letter-spacing: 0.6px;
+    color: #8892a4; font-weight: 700; margin-bottom: 14px;
+    padding-bottom: 8px; border-bottom: 1px solid #eaedf3;
+  }
+
+  .billing-grid {
+    display: table; width: 100%; margin-bottom: 28px;
+  }
+  .billing-col {
+    display: table-cell; vertical-align: top; width: 50%; padding-right: 14px;
+  }
+  .billing-name { font-size: 14px; font-weight: 700; color: #1a1a2e; margin-bottom: 6px; }
+  .billing-meta { font-size: 13px; color: #4a5168; line-height: 1.55; }
+
+  .line-table {
+    width: 100%; border-collapse: collapse; margin-bottom: 24px;
+  }
+  .line-table th {
+    background: #f8f9fc; padding: 12px 14px; font-size: 11px;
+    text-transform: uppercase; letter-spacing: 0.6px; color: #8892a4;
+    text-align: left; font-weight: 700;
+  }
+  .line-table th.align-right { text-align: right; }
+  .line-table td {
+    padding: 14px; font-size: 14px; color: #1a1a2e;
+    border-bottom: 1px solid #eaedf3;
+  }
+  .line-table td.align-right { text-align: right; font-weight: 600; }
+  .line-table td.desc-meta { color: #6b7280; font-size: 12px; padding-top: 2px; }
+
+  .total-row {
+    background: #eff6ff;
+    padding: 16px 14px;
+    display: table; width: 100%;
+    border-radius: 8px; margin-bottom: 24px;
+  }
+  .total-cell {
+    display: table-cell; padding: 6px 0;
+    font-size: 14px; color: #1a1a2e;
+  }
+  .total-cell.label { font-weight: 600; }
+  .total-cell.value { text-align: right; font-weight: 700; font-size: 18px; color: #1d4ed8; }
+
+  .next-charge {
+    background: #f9fafb; border: 1px solid #eaedf3;
+    border-radius: 9px; padding: 16px 18px;
+    font-size: 13px; color: #4a5168; line-height: 1.55;
+    margin-bottom: 20px;
+  }
+  .next-charge strong { color: #1a1a2e; }
+
+  .pib-note {
+    background: #fef9c3; border: 1px solid #fde68a;
+    border-radius: 9px; padding: 14px 18px;
+    font-size: 13px; color: #78350f; line-height: 1.55;
+  }
+  .pib-note strong { display: block; color: #92400e; margin-bottom: 4px; }
+  .pib-note a { color: #1d4ed8; font-weight: 600; text-decoration: none; }
+
+  .footer {
+    background: #0f172a; color: #8892a4; padding: 24px 36px;
+    text-align: center; font-size: 12px;
+  }
+  .footer-brand { color: #fff; font-weight: 700; margin-bottom: 4px; }
+  .footer a { color: #93c5fd; text-decoration: none; }
+
+  @media (max-width: 600px) {
+    .wrapper { margin: 0; border-radius: 0; }
+    .header, .invoice-summary, .body, .footer { padding-left: 22px; padding-right: 22px; }
+    .billing-col { display: block; width: 100%; padding-right: 0; padding-bottom: 18px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrapper">
+
+  <!-- ── Header ── -->
+  <div class="header">
+    <div class="header-label">Račun za pretplatu</div>
+    <div class="header-name">Izveštaj.</div>
+    <div class="header-sub">Plaćanje je uspešno obrađeno. Hvala što koristite naš servis.</div>
+  </div>
+
+  <!-- ── Invoice summary ── -->
+  <div class="invoice-summary">
+    <div class="summary-row">
+      <div class="summary-cell label">Broj računa</div>
+      <div class="summary-cell value">{{ invoice_number }}</div>
+    </div>
+    <div class="summary-row">
+      <div class="summary-cell label">Datum naplate</div>
+      <div class="summary-cell value">{{ charge_date }}</div>
+    </div>
+    <div class="summary-row">
+      <div class="summary-cell label">Period</div>
+      <div class="summary-cell value">{{ period_start }} — {{ period_end }}</div>
+    </div>
+    <div class="summary-row">
+      <div class="summary-cell label">Način plaćanja</div>
+      <div class="summary-cell value">PayPal · {{ payment_method }}</div>
+    </div>
+  </div>
+
+  <!-- ── Body ── -->
+  <div class="body">
+
+    <!-- Billing info -->
+    <div class="section-title">Klijent / Pružalac usluge</div>
+    <div class="billing-grid">
+      <div class="billing-col">
+        <div class="billing-name">{{ agency_name }}</div>
+        <div class="billing-meta">
+          {% if pib %}PIB: {{ pib }}<br>{% endif %}
+          {% if maticni_broj %}MB: {{ maticni_broj }}<br>{% endif %}
+          {% if legal_address %}{{ legal_address }}<br>{% endif %}
+          {% if legal_city %}{{ legal_city }}<br>{% endif %}
+          {{ billing_email }}
+        </div>
+      </div>
+      <div class="billing-col">
+        <div class="billing-name">Izveštaj.</div>
+        <div class="billing-meta">
+          Pretplata na SaaS uslugu<br>
+          {{ provider_email }}
+        </div>
+      </div>
+    </div>
+
+    <!-- Line items -->
+    <div class="section-title">Stavke</div>
+    <table class="line-table">
+      <thead>
+        <tr>
+          <th>Opis</th>
+          <th class="align-right">Iznos</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            <strong>{{ plan_display_name }} plan — mesečna pretplata</strong>
+            <div class="desc-meta">Period: {{ period_start }} — {{ period_end }}</div>
+          </td>
+          <td class="align-right">{{ amount }}€</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Total -->
+    <div class="total-row">
+      <div class="total-cell label">Ukupno (PDV uključen)</div>
+      <div class="total-cell value">{{ amount }}€</div>
+    </div>
+
+    <!-- Next charge -->
+    <div class="next-charge">
+      <strong>📅 Sledeća naplata:</strong> {{ next_charge_date }} — biće naplaćeno {{ amount }}€ sa iste PayPal kartice.
+      Pretplatu možete otkazati u svakom trenutku u <a href="https://izvestaj.rs/app.html" style="color: #2563eb; font-weight: 600;">panelu</a>.
+    </div>
+
+    <!-- PIB note (only if PIB not yet entered) -->
+    {% if not pib %}
+    <div class="pib-note">
+      <strong>💡 Potreban vam je R-1 račun?</strong>
+      Unesite PIB i matični broj agencije u <a href="https://izvestaj.rs/app.html">panelu → Podešavanja</a>, pa će sledeći račun automatski sadržati R-1 elemente.
+    </div>
+    {% endif %}
+
+  </div>
+
+  <!-- ── Footer ── -->
+  <div class="footer">
+    <div class="footer-brand">Izveštaj.</div>
+    <div>Pitanja? Pišite nam na <a href="mailto:{{ support_email }}">{{ support_email }}</a></div>
+  </div>
+
+</div>
+
+</body>
+</html>
