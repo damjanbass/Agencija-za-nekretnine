@@ -384,6 +384,7 @@
   let currentPlan = "pro";
   let hasSession = false;
   let pendingSignup = null;
+  let paypalInstance = null;
   const { createClient } = supabase;
   const sb = createClient(
     'https://cesxmcbodcpfnpyusxhj.supabase.co',
@@ -440,19 +441,26 @@
       `<div class="msg msg-${type}">${text}</div>`;
   }
 
-  function renderPayPalButton() {
+  async function renderPayPalButton() {
     const containerId = 'paypal-button-container';
-    document.getElementById(containerId).innerHTML = '';
+    const container = document.getElementById(containerId);
+
+    // Destroy previous PayPal instance cleanly before touching the DOM
+    if (paypalInstance) {
+      try { await paypalInstance.close(); } catch (_) {}
+      paypalInstance = null;
+    }
+    container.innerHTML = '';
 
     if (typeof paypal === 'undefined') {
-      document.getElementById(containerId).innerHTML =
+      container.innerHTML =
         `<div style="text-align:center;padding:24px 16px;color:#4a5168;font-size:0.88rem;line-height:1.6;">
           PayPal SDK se nije učitao.<br>Osvežite stranicu ili kontaktirajte <strong>hello@izvestaj.rs</strong>.
         </div>`;
       return;
     }
 
-    paypal.Buttons({
+    paypalInstance = paypal.Buttons({
       createSubscription(data, actions) {
         return actions.subscription.create({
           plan_id: PAYPAL_PLAN_IDS[currentPlan],
@@ -462,16 +470,21 @@
         saveSubscriptionAndRedirect(data.subscriptionID);
       },
       onError(err) {
-        showMsg('Greška pri plaćanju: ' + (err.message || 'Pokušajte ponovo'), 'error');
+        console.error('PayPal onError:', err);
+        showMsg('Greška pri plaćanju. Pokušajte ponovo ili nas kontaktirajte na hello@izvestaj.rs.', 'error');
       },
-    }).render(containerId).catch(err => {
+    });
+
+    try {
+      await paypalInstance.render('#' + containerId);
+    } catch (err) {
       console.error('PayPal render error:', err);
-      document.getElementById(containerId).innerHTML =
+      container.innerHTML =
         `<div style="text-align:center;padding:24px 16px;color:#4a5168;font-size:0.88rem;line-height:1.6;">
           Nije moguće učitati PayPal dugme.<br>
-          Proverite vezu i osvežite stranicu ili nas kontaktirajte na <strong>hello@izvestaj.rs</strong>.
+          Osvežite stranicu ili kontaktirajte <strong>hello@izvestaj.rs</strong>.
         </div>`;
-    });
+    }
   }
 
   async function saveSubscriptionAndRedirect(subscriptionId) {
