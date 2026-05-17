@@ -205,6 +205,7 @@
         <button class="tab-btn"        id="tab-import-btn"   onclick="switchTab('import')">Uvoz</button>
         <button class="tab-btn"        id="tab-archive-btn"  onclick="switchTab('archive')">Arhiva</button>
         <button class="tab-btn"        id="tab-branding-btn" onclick="switchTab('branding')" hidden>Brending</button>
+        <button class="tab-btn"        id="tab-settings-btn" onclick="switchTab('settings')">Podešavanja</button>
       </div>
       <button class="logout-btn" onclick="doLogout()">Odjavi se</button>
     </div>
@@ -371,6 +372,49 @@
       <button class="btn-outline" id="logo-remove-btn" onclick="removeLogo()" style="display:none;">Ukloni logo</button>
     </div>
   </div>
+
+  <!-- ═══ PODEŠAVANJA / R-1 RAČUN ═══ -->
+  <div id="tab-settings" hidden>
+    <div class="card">
+      <h2>Podaci za R-1 račun</h2>
+      <p style="font-size:0.9rem;color:#666;margin-bottom:16px;">
+        Unesite PIB i matični broj agencije ako želite da račun za pretplatu sadrži R-1 elemente. Polja su <strong>opciona</strong> — ako ih ne unesete, račun će stizati bez tih podataka.
+      </p>
+      <div id="settings-msg"></div>
+
+      <form id="settings-form" onsubmit="saveSettings(event)">
+
+        <div class="form-group">
+          <label for="settings-pib">PIB</label>
+          <input type="text" id="settings-pib" maxlength="20" placeholder="npr. 123456789">
+        </div>
+
+        <div class="form-group">
+          <label for="settings-mb">Matični broj</label>
+          <input type="text" id="settings-mb" maxlength="20" placeholder="npr. 12345678">
+        </div>
+
+        <div class="form-group">
+          <label for="settings-address">Pravna adresa</label>
+          <input type="text" id="settings-address" maxlength="200" placeholder="npr. Kneza Miloša 25">
+        </div>
+
+        <div class="form-group">
+          <label for="settings-city">Grad</label>
+          <input type="text" id="settings-city" maxlength="100" placeholder="npr. Beograd">
+        </div>
+
+        <div class="form-group">
+          <label for="settings-billing-email">Email za fakture <span style="font-weight:400;color:#8892a4;text-transform:none;letter-spacing:0;">(opciono)</span></label>
+          <input type="email" id="settings-billing-email" maxlength="200" placeholder="Ostavite prazno za glavni email">
+          <div style="font-size:0.78rem;color:#8892a4;margin-top:5px;">Ako ostavite prazno, fakture stižu na glavni email naloga.</div>
+        </div>
+
+        <button type="submit" class="btn-primary" id="settings-save-btn">Sačuvaj podatke</button>
+      </form>
+    </div>
+  </div>
+
 </div>
 
 <!-- ═══ MODAL ZA PREGLED IZVEŠTAJA ═══ -->
@@ -431,15 +475,18 @@
     document.getElementById('tab-import').hidden   = (tab !== 'import');
     document.getElementById('tab-archive').hidden  = (tab !== 'archive');
     document.getElementById('tab-branding').hidden = (tab !== 'branding');
+    document.getElementById('tab-settings').hidden = (tab !== 'settings');
     document.getElementById('tab-form-btn').classList.toggle('active',     tab === 'form');
     document.getElementById('tab-agents-btn').classList.toggle('active',   tab === 'agents');
     document.getElementById('tab-import-btn').classList.toggle('active',   tab === 'import');
     document.getElementById('tab-archive-btn').classList.toggle('active',  tab === 'archive');
     document.getElementById('tab-branding-btn').classList.toggle('active', tab === 'branding');
+    document.getElementById('tab-settings-btn').classList.toggle('active', tab === 'settings');
 
     if (tab === 'archive')  loadArchive();
     if (tab === 'agents')   renderAgentsManage();
     if (tab === 'branding') renderBranding();
+    if (tab === 'settings') renderSettings();
   }
 
   // ── Auth ───────────────────────────────────────────────────────────────────
@@ -1026,6 +1073,63 @@
     agencyLogo = null;
     renderBranding();
     showMsg('branding-msg', 'Logo je uklonjen.');
+  }
+
+  // ── Podešavanja / R-1 račun ────────────────────────────────────────────────
+
+  async function renderSettings() {
+    document.getElementById('settings-msg').innerHTML = '';
+    if (!agencyId) return;
+
+    const { data, error } = await sb
+      .from('agencies')
+      .select('pib, maticni_broj, legal_address, legal_city, billing_email')
+      .eq('id', agencyId)
+      .single();
+
+    if (error) {
+      showMsg('settings-msg', `Greška pri učitavanju: ${error.message}`, true);
+      return;
+    }
+
+    document.getElementById('settings-pib').value           = data?.pib            || '';
+    document.getElementById('settings-mb').value            = data?.maticni_broj   || '';
+    document.getElementById('settings-address').value       = data?.legal_address  || '';
+    document.getElementById('settings-city').value          = data?.legal_city     || '';
+    document.getElementById('settings-billing-email').value = data?.billing_email  || '';
+  }
+
+  async function saveSettings(event) {
+    event.preventDefault();
+    if (!agencyId) return;
+
+    const btn = document.getElementById('settings-save-btn');
+    btn.disabled    = true;
+    btn.textContent = 'Čuvam...';
+    document.getElementById('settings-msg').innerHTML = '';
+
+    const payload = {
+      pib:           document.getElementById('settings-pib').value.trim()           || null,
+      maticni_broj:  document.getElementById('settings-mb').value.trim()            || null,
+      legal_address: document.getElementById('settings-address').value.trim()       || null,
+      legal_city:    document.getElementById('settings-city').value.trim()          || null,
+      billing_email: document.getElementById('settings-billing-email').value.trim() || null,
+    };
+
+    const { error } = await sb
+      .from('agencies')
+      .update(payload)
+      .eq('id', agencyId);
+
+    btn.disabled    = false;
+    btn.textContent = 'Sačuvaj podatke';
+
+    if (error) {
+      showMsg('settings-msg', `Greška: ${error.message}`, true);
+      return;
+    }
+
+    showMsg('settings-msg', 'Podaci su sačuvani. Sledeći račun će sadržati R-1 elemente.');
   }
 
   // ── Auto-session ───────────────────────────────────────────────────────────
