@@ -474,6 +474,15 @@
     const { data: { user } } = await sb.auth.getUser();
     if (!user) return;
 
+    // ── Checkout gate: user mora završiti odabir plana pre pristupa panelu ──
+    const meta = user.user_metadata || {};
+    const validStatuses = ['trialing', 'active'];
+    if (!validStatuses.includes(meta.plan_status)) {
+      const plan = (meta.plan === 'basic' || meta.plan === 'pro') ? meta.plan : 'pro';
+      window.location.href = `checkout.html?plan=${plan}`;
+      return;
+    }
+
     const { data: agencies, error } = await sb
       .from('agencies')
       .select('id, name, public_token, logo_url')
