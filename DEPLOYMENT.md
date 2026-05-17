@@ -121,7 +121,92 @@ Sve SQL migracije su u `supabase/`. Trenutno primenjene migracije (potrebne za p
 
 Ako pravim novu Supabase instancu, primeniti redom kroz SQL editor.
 
-## 10. Production deploy checklist
+## 10. PayPal webhook (Vercel)
+
+Webhook (`api/paypal_webhook.py`) je FastAPI serverless funkcija. Vercel je automatski detektuje preko `api/` foldera. Routes (preko `vercel.json` rewrites):
+
+| URL | Šta radi | Ko zove |
+|---|---|---|
+| `POST /webhook/paypal` | Prima PayPal evente, ažurira pretplate, šalje email | PayPal |
+| `POST /admin/expire` | Reconciliation — markira stale trials kao expired | Cron / ručno |
+| `POST /admin/activate` | Ručna aktivacija pretplate na agency | Frontend nakon checkout-a |
+
+### 10a. Env varijable na Vercelu
+
+Idi na **Vercel Dashboard → Project Settings → Environment Variables** i dodaj:
+
+| Varijabla | Vrednost | Gde naći |
+|---|---|---|
+| `SUPABASE_URL` | `https://cesxmcbodcpfnpyusxhj.supabase.co` | Supabase → Settings → API |
+| `SUPABASE_KEY` | service-role key | Supabase → Settings → API |
+| `SMTP_HOST` | `smtp.resend.com` (ili Gmail) | tvoj SMTP provider |
+| `SMTP_PORT` | `587` | — |
+| `SMTP_USER` | `resend` (ili Gmail adresa) | — |
+| `SMTP_PASS` | Resend API key / Gmail App Password | — |
+| `EMAIL_FROM` | npr. `racuni@izvestaj.rs` | — |
+| `EMAIL_FROM_NAME` | npr. `Izveštaj` | — |
+| `SUPPORT_EMAIL` | npr. `hello@izvestaj.rs` | — |
+| `PAYPAL_CLIENT_ID` | REST API client id | PayPal Dashboard → Apps & Credentials |
+| `PAYPAL_SECRET` | REST API secret | isto |
+| `PAYPAL_API_BASE` | `https://api-m.paypal.com` (live) ili `https://api-m.sandbox.paypal.com` | — |
+| `PAYPAL_WEBHOOK_ID` | ID webhook-a iz PayPal Dashboarda | (popunjava se posle koraka 10c) |
+| `ADMIN_TOKEN` | bilo koji random string | — |
+
+Posle dodavanja varijabli pokreni novi deploy: `git commit --allow-empty -m "trigger redeploy" && git push`.
+
+### 10b. PayPal Business account setup
+
+1. Otvori **PayPal Business** nalog (https://www.paypal.com/business).
+2. Idi na **Developer Dashboard → Apps & Credentials** → "Create App" (live mode).
+3. Kopiraj **Client ID** i **Secret** → dodaj kao Vercel env varijable (`PAYPAL_CLIENT_ID`, `PAYPAL_SECRET`).
+4. **Kreiraj subscription plans** (Subscriptions → Products → Create Product, jedan po planu):
+   - **Basic**: Trial 30 dana @ 0€ → mesečno @ 29€ EUR
+   - **Pro**: Trial 30 dana @ 0€ → mesečno @ 79€ EUR
+5. Kopiraj **plan ID** za svaki (počinje sa `P-`) → uneti u `web/checkout.html` u `PAYPAL_PLAN_IDS` konstantu.
+6. U istoj fajli zameni `PAYPAL_CLIENT_ID = "sb"` sa tvojim live client ID-jem.
+
+### 10c. PayPal webhook konfiguracija
+
+1. PayPal Dashboard → **Apps & Credentials** → tvoja aplikacija → **Webhooks** → "Add Webhook".
+2. **Webhook URL**: `https://agencija-za-nekretnine-nine.vercel.app/webhook/paypal`
+3. **Event types** (selektuj samo ove):
+   - `BILLING.SUBSCRIPTION.ACTIVATED`
+   - `BILLING.SUBSCRIPTION.RE-ACTIVATED`
+   - `BILLING.SUBSCRIPTION.CANCELLED`
+   - `BILLING.SUBSCRIPTION.EXPIRED`
+   - `BILLING.SUBSCRIPTION.SUSPENDED`
+   - `BILLING.SUBSCRIPTION.PAYMENT.FAILED`
+   - `PAYMENT.SALE.COMPLETED`
+   - `PAYMENT.SALE.DENIED`
+4. Posle kreiranja, kopiraj **Webhook ID** → dodaj kao `PAYPAL_WEBHOOK_ID` u Vercel env.
+5. Triggeruj redeploy.
+
+### 10d. Test posle deploy-a
+
+```bash
+# 1. Health check (treba 404 — endpoint nije implementiran, ali server živi)
+curl https://agencija-za-nekretnine-nine.vercel.app/webhook/paypal
+
+# 2. Test webhook bez verifikacije (samo dok PAYPAL_WEBHOOK_ID nije setovan):
+curl -X POST https://agencija-za-nekretnine-nine.vercel.app/webhook/paypal \
+  -H "Content-Type: application/json" \
+  -d '{"event_type":"BILLING.SUBSCRIPTION.ACTIVATED","resource":{"id":"I-TEST123"}}'
+
+# 3. Real-life test: registruj testni nalog, prođi PayPal checkout (sandbox plan IDs),
+#    proveri logove u Vercel Dashboard → tvoja funkcija → Logs.
+#    Email "Pretplata aktivirana" treba da stigne na test email.
+```
+
+### 10e. Sanity checklist
+
+- [ ] Vercel env varijable popunjene (sve iz tabele 10a)
+- [ ] PayPal app kreirana, plan ID-ovi dobijeni
+- [ ] `web/checkout.html` ima pravi `PAYPAL_CLIENT_ID` i plan ID-ove
+- [ ] PayPal webhook URL podešen + Webhook ID upisan u Vercel env
+- [ ] Sandbox test prošao (email stigao)
+- [ ] Live test (mali iznos, sa svojom karticom)
+
+## 11. Production deploy checklist
 
 Pre prvog real run-a:
 
@@ -131,5 +216,8 @@ Pre prvog real run-a:
 - [ ] `python -X utf8 admin/check_env.py` → sve zeleno
 - [ ] GitHub Secrets postavljeni
 - [ ] Vercel alias pokazuje na najnoviji deploy
+- [ ] Vercel env varijable za PayPal popunjene (vidi 10a)
+- [ ] PayPal Business app + plan ID-ovi + webhook konfigurisani (10b–10c)
 - [ ] Probni run sa svojim mejlom: `python -X utf8 main.py` — mejl stiže u inbox
 - [ ] Ručno triggeruje GHA workflow: `gh workflow run weekly_report.yml` — green
+- [ ] Sandbox PayPal checkout prošao end-to-end (email aktivacije stigao)

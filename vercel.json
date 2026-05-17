@@ -1,5 +1,16 @@
 {
   "buildCommand": null,
   "outputDirectory": "web",
-  "framework": null
+  "framework": null,
+  "functions": {
+    "api/paypal_webhook.py": {
+      "includeFiles": "{data,mailer,templates}/**,plans.py,config.py",
+      "maxDuration": 30
+    }
+  },
+  "rewrites": [
+    { "source": "/webhook/paypal",   "destination": "/api/paypal_webhook/webhook/paypal" },
+    { "source": "/admin/expire",     "destination": "/api/paypal_webhook/admin/expire" },
+    { "source": "/admin/activate",   "destination": "/api/paypal_webhook/admin/activate" }
+  ]
 }
