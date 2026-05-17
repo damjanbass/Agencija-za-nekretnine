@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Panel — Nekretnine</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="plan-gate.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: system-ui, -apple-system, sans-serif; background: #f4f6f9; color: #1a1a1a; min-height: 100vh; }
@@ -156,6 +157,15 @@
     .btn-print:hover { background: #16a34a; color: white; }
     #report-iframe { flex: 1; width: 100%; border: none; }
 
+    /* ── Plan banner ── */
+    .plan-banner {
+      border-radius: 10px; padding: 12px 18px; margin-bottom: 14px;
+      font-size: 0.93rem; box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+    .plan-banner.info { background: #eff6ff; color: #1e3a8a; border: 1px solid #bfdbfe; }
+    .plan-banner.warn { background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; }
+    .plan-banner a    { color: inherit; font-weight: 600; text-decoration: underline; }
+
     @media (max-width: 520px) {
       .grid-2 { grid-template-columns: 1fr; }
       .agent-row, .agents-header { grid-template-columns: 2fr 1fr 1fr; }
@@ -200,6 +210,7 @@
     </div>
   </div>
 
+  <div id="plan-banner-host"></div>
   <div id="form-msg"></div>
 
   <!-- ── Unos tab ── -->
@@ -465,7 +476,7 @@
 
     const { data: agencies, error } = await sb
       .from('agencies')
-      .select('id, name, public_token, plan_id, logo_url, plans(id, name, max_agents, history_months, custom_branding)')
+      .select('id, name, public_token, logo_url')
       .eq('user_id', user.id)
       .limit(1);
 
@@ -476,11 +487,14 @@
     }
 
     agencyId   = agencies[0].id;
-    agencyPlan = agencies[0].plans || { id: 'free', name: 'Free', max_agents: 3, history_months: 1, custom_branding: false };
     agencyLogo = agencies[0].logo_url || null;
     document.getElementById('agency-name-header').textContent = agencies[0].name;
 
-    if (agencyPlan.custom_branding) {
+    await PlanGate.load(sb, agencyId);
+    agencyPlan = PlanGate.state.plan;
+    document.getElementById('plan-banner-host').innerHTML = PlanGate.statusBannerHtml();
+
+    if (PlanGate.allows('custom_branding')) {
       document.getElementById('tab-branding-btn').hidden = false;
     }
 
@@ -537,7 +551,7 @@
   function renderAgentsManage() {
     const list  = document.getElementById('agents-manage-list');
     const count = document.getElementById('agents-count');
-    const max   = agencyPlan?.max_agents ?? 0;
+    const { max } = PlanGate.limit('agents');
     if (count) {
       count.textContent = max === -1 ? `(${agentsList.length})` : `(${agentsList.length}/${max})`;
     }
@@ -561,6 +575,7 @@
       .eq('active', true)
       .order('name');
     agentsList = agents || [];
+    if (window.PlanGate?.refreshCounts) await PlanGate.refreshCounts();
     renderAgents();
     renderAgentsManage();
   }
@@ -576,16 +591,7 @@
       return;
     }
 
-    const max = agencyPlan?.max_agents ?? 0;
-    if (max !== -1 && agentsList.length >= max) {
-      const planName = agencyPlan?.name || 'Trenutni';
-      showMsg(
-        'agents-msg',
-        `${planName} plan dozvoljava do ${max} agenata. Za neograničen broj agenata, pređite na <a href="pricing.html" style="color:#2563eb;text-decoration:underline;">Premium</a>.`,
-        true
-      );
-      return;
-    }
+    if (!PlanGate.requireLimitOrUpgrade('agents', 'agents-msg')) return;
 
     btn.disabled    = true;
     btn.textContent = 'Dodavanje...';
@@ -598,9 +604,12 @@
     btn.textContent = 'Dodaj agenta';
 
     if (error) {
+      // Postgres trigger može vratiti LIMIT_EXCEEDED:agents:<max> ako je JS proverapromasena
+      if (PlanGate.handleDbError(error, 'agents-msg')) return;
       showMsg('agents-msg', `Greška: ${error.message}`, true);
       return;
     }
+    await PlanGate.refreshCounts();
 
     input.value = '';
     await reloadAgents();

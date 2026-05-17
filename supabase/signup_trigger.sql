@@ -52,9 +52,16 @@ BEGIN
     split_part(NEW.email, '@', 1)
   );
 
-  -- Idempotent: ako agencies email već postoji, samo poveži user_id
-  INSERT INTO public.agencies (name, email, user_id, plan_id, revenue_goal, active)
-  VALUES (v_agency_name, NEW.email, NEW.id, 'free', 5000, true)
+  -- Idempotent: ako agencies email već postoji, samo poveži user_id.
+  -- Novi nalozi startuju u 14-dnevnom trial-u (subscription_status='trial').
+  INSERT INTO public.agencies (
+    name, email, user_id, plan_id, revenue_goal, active,
+    subscription_status, trial_ends_at
+  )
+  VALUES (
+    v_agency_name, NEW.email, NEW.id, 'free', 5000, true,
+    'trial', now() + INTERVAL '14 days'
+  )
   ON CONFLICT (email) DO UPDATE
     SET user_id = EXCLUDED.user_id
     WHERE agencies.user_id IS NULL;

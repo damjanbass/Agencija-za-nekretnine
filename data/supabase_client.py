@@ -7,6 +7,18 @@ def get_client() -> Client:
     return create_client(config.SUPABASE_URL, config.SUPABASE_KEY)
 
 
+def _effective_plan(agency: dict) -> str:
+    """
+    Vraća plan_id koji se zaista primenjuje na agenciju.
+    Trial i active → izabrani plan; sve ostalo → 'free'.
+    Mora da prati logiku public.effective_plan_id() u Supabase-u.
+    """
+    status = (agency or {}).get("subscription_status") or "trial"
+    if status in ("trial", "active"):
+        return (agency or {}).get("plan_id") or "free"
+    return "free"
+
+
 def get_report_data(agency_id: str) -> dict:
     """
     Vuče sve podatke za nedeljni izveštaj iz Supabase.
@@ -27,7 +39,7 @@ def get_report_data(agency_id: str) -> dict:
     # --- Agencija ---
     agency = (
         sb.table("agencies")
-        .select("name, email, revenue_goal, plan_id, logo_url")
+        .select("name, email, revenue_goal, plan_id, logo_url, subscription_status, trial_ends_at, current_period_end")
         .eq("id", agency_id)
         .single()
         .execute()
@@ -91,7 +103,8 @@ def get_report_data(agency_id: str) -> dict:
     return {
         "agency_name":            agency["name"],
         "agency_email":           agency["email"],
-        "plan_id":                agency.get("plan_id", "basic"),
+        "plan_id":                _effective_plan(agency),
+        "subscription_status":    agency.get("subscription_status"),
         "logo_url":               agency.get("logo_url"),
         "week_start":             week_start.strftime("%d.%m.%Y"),
         "week_end":               week_end.strftime("%d.%m.%Y"),
@@ -131,7 +144,7 @@ def get_monthly_report_data(agency_id: str) -> dict:
 
     agency = (
         sb.table("agencies")
-        .select("name, email, revenue_goal, plan_id, logo_url")
+        .select("name, email, revenue_goal, plan_id, logo_url, subscription_status, trial_ends_at, current_period_end")
         .eq("id", agency_id)
         .single()
         .execute()
@@ -208,7 +221,8 @@ def get_monthly_report_data(agency_id: str) -> dict:
     return {
         "agency_name":          agency["name"],
         "agency_email":         agency["email"],
-        "plan_id":              agency.get("plan_id", "basic"),
+        "plan_id":              _effective_plan(agency),
+        "subscription_status":  agency.get("subscription_status"),
         "logo_url":             agency.get("logo_url"),
         "month_name":           f"{MONTHS_SR[month_start.month]} {month_start.year}",
         "month_start":          month_start.strftime("%d.%m.%Y"),
@@ -259,12 +273,22 @@ def get_benchmark_data(week_start_iso: str) -> dict | None:
 
 
 def get_all_active_clients() -> list[dict]:
-    """Vraća sve aktivne agencije sa UUID-ovima i planovima."""
+    """Vraća sve aktivne agencije sa UUID-ovima i efektivnim planom."""
     sb = get_client()
-    return (
+    rows = (
         sb.table("agencies")
-        .select("id, name, email, plan_id")
+        .select("id, name, email, plan_id, subscription_status")
         .eq("active", True)
         .execute()
         .data
     )
+    for r in rows:
+        r["plan_id"] = _effective_plan(r)
+    return rows
+
+
+def expire_stale_trials() -> int:
+    """Pokreće reconciliation funkciju u Postgres-u. Vraća broj promenjenih redova."""
+    sb = get_client()
+    res = sb.rpc("expire_stale_trials").execute()
+    return res.data if isinstance(res.data, int) else 0

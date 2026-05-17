@@ -182,7 +182,7 @@
     <div class="plans">
 
       <!-- Basic -->
-      <div class="plan">
+      <div class="plan" data-plan="basic">
         <div class="plan-name">Basic</div>
         <div>
           <span class="plan-price">29€</span>
@@ -204,7 +204,7 @@
       </div>
 
       <!-- Pro (featured) -->
-      <div class="plan plan-featured">
+      <div class="plan plan-featured" data-plan="pro">
         <span class="plan-badge">Najpopularniji</span>
         <div class="plan-name">Pro</div>
         <div>
@@ -225,7 +225,7 @@
       </div>
 
       <!-- Premium -->
-      <div class="plan">
+      <div class="plan" data-plan="premium">
         <div class="plan-name">Premium</div>
         <div>
           <span class="plan-price">149€</span>
@@ -338,5 +338,41 @@
     </div>
   </footer>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    // Označi trenutni plan ako je korisnik ulogovan.
+    (async () => {
+      const { createClient } = supabase;
+      const sb = createClient(
+        'https://cesxmcbodcpfnpyusxhj.supabase.co',
+        'sb_publishable_uMe0x5mYYyTI707MbRLzag_6NIDIE_K'
+      );
+      const { data: { user } } = await sb.auth.getUser();
+      if (!user) return;
+
+      const { data: agency } = await sb
+        .from('agencies')
+        .select('plan_id, subscription_status')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (!agency) return;
+
+      const planId = agency.plan_id;
+      const status = agency.subscription_status;
+      // Aktivnim/trial korisnicima — markiraj trenutni plan
+      const card = document.querySelector(`.plan[data-plan="${planId}"]`);
+      if (!card) return;
+
+      const cta = card.querySelector('a.btn');
+      if (cta && (status === 'trial' || status === 'active')) {
+        cta.textContent = 'Trenutni plan';
+        cta.classList.add('btn-outline');
+        cta.classList.remove('btn-primary');
+        cta.style.opacity = '0.6';
+        cta.style.pointerEvents = 'none';
+        cta.removeAttribute('href');
+      }
+    })();
+  </script>
 </body>
 </html>
