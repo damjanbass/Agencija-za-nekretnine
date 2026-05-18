@@ -47,26 +47,28 @@ def get_report_data(agency_id: str) -> dict:
     )
 
     # --- Ovonedeljni KPI ---
-    kpi = (
+    kpi_resp = (
         sb.table("weekly_kpis")
         .select("*")
         .eq("agency_id", agency_id)
         .eq("week_start", ws)
-        .single()
+        .maybe_single()
         .execute()
-        .data
     )
+    kpi = kpi_resp.data if kpi_resp else None
+    if not kpi:
+        raise LookupError(f"Nema weekly_kpis za agency_id={agency_id} week_start={ws}")
 
     # --- Prošlonedeljni KPI (za % upiti) ---
-    prev_kpi = (
+    prev_kpi_resp = (
         sb.table("weekly_kpis")
         .select("inquiries")
         .eq("agency_id", agency_id)
         .eq("week_start", pws)
         .maybe_single()
         .execute()
-        .data
     )
+    prev_kpi = prev_kpi_resp.data if prev_kpi_resp else None
 
     # --- Upiti po izvoru ---
     sources_raw = (

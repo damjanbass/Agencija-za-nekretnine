@@ -114,7 +114,12 @@ def run(preview: bool = False, use_mock: bool = False, city: str = "beograd"):
     else:
         from data.supabase_client import get_all_active_clients, get_report_data, save_report
         clients_raw  = get_all_active_clients()
-        clients_data = [(c["id"], get_report_data(c["id"])) for c in clients_raw]
+        clients_data = []
+        for c in clients_raw:
+            try:
+                clients_data.append((c["id"], get_report_data(c["id"])))
+            except LookupError as e:
+                print(f"[!] Preskačem klijenta {c.get('id')}: {e}")
 
     for agency_id, data in clients_data:
         plan = get_plan(data.get("plan_id", "basic"))

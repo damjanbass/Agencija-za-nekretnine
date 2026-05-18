@@ -384,6 +384,23 @@
   <!-- ═══ PODEŠAVANJA / R-1 RAČUN ═══ -->
   <div id="tab-settings" hidden>
 
+    <!-- ─── Prihod: nedeljni cilj ─── -->
+    <div class="card">
+      <h2>Nedeljni cilj prihoda</h2>
+      <p style="font-size:0.9rem;color:#666;margin-bottom:16px;">
+        Postavite nedeljni cilj prihoda koji se prikazuje u izveštajima kao referentna vrednost.
+        Mesečni izveštaj automatski množi ovaj broj brojem nedelja u mesecu.
+      </p>
+      <div id="revenue-goal-msg"></div>
+      <form id="revenue-goal-form" onsubmit="saveRevenueGoal(event)">
+        <div class="form-group">
+          <label for="settings-revenue-goal">Nedeljni cilj (€)</label>
+          <input type="number" id="settings-revenue-goal" min="0" step="100" placeholder="npr. 5000">
+        </div>
+        <button type="submit" class="btn-primary" id="revenue-goal-save-btn">Sačuvaj cilj</button>
+      </form>
+    </div>
+
     <!-- ─── Praćenje tržišta ─── -->
     <div class="card">
       <h2>Praćenje tržišta</h2>
@@ -1216,7 +1233,7 @@
 
     const { data, error } = await sb
       .from('agencies')
-      .select('pib, maticni_broj, legal_address, legal_city, billing_email, plan_id, subscription_status, current_period_end, trial_ends_at, tracks_sale, tracks_rent')
+      .select('pib, maticni_broj, legal_address, legal_city, billing_email, plan_id, subscription_status, current_period_end, trial_ends_at, tracks_sale, tracks_rent, revenue_goal')
       .eq('id', agencyId)
       .single();
 
@@ -1230,6 +1247,7 @@
     document.getElementById('settings-address').value       = data?.legal_address  || '';
     document.getElementById('settings-city').value          = data?.legal_city     || '';
     document.getElementById('settings-billing-email').value = data?.billing_email  || '';
+    document.getElementById('settings-revenue-goal').value  = data?.revenue_goal != null ? data.revenue_goal : '';
 
     document.getElementById('tracks-sale').checked = data?.tracks_sale !== false;  // default true
     document.getElementById('tracks-rent').checked = data?.tracks_rent === true;   // default false
@@ -1304,6 +1322,41 @@
       btn.style.cursor = 'pointer';
       btn.textContent = 'Otkaži pretplatu';
     }
+  }
+
+  async function saveRevenueGoal(event) {
+    event.preventDefault();
+    if (!agencyId) return;
+
+    const btn = document.getElementById('revenue-goal-save-btn');
+    btn.disabled    = true;
+    btn.textContent = 'Čuvam...';
+    document.getElementById('revenue-goal-msg').innerHTML = '';
+
+    const raw = document.getElementById('settings-revenue-goal').value.trim();
+    const val = raw === '' ? null : parseFloat(raw);
+
+    if (val !== null && (isNaN(val) || val < 0)) {
+      showMsg('revenue-goal-msg', 'Unesite validan iznos (0 ili veći).', true);
+      btn.disabled    = false;
+      btn.textContent = 'Sačuvaj cilj';
+      return;
+    }
+
+    const { error } = await sb
+      .from('agencies')
+      .update({ revenue_goal: val })
+      .eq('id', agencyId);
+
+    btn.disabled    = false;
+    btn.textContent = 'Sačuvaj cilj';
+
+    if (error) {
+      showMsg('revenue-goal-msg', `Greška: ${error.message}`, true);
+      return;
+    }
+
+    showMsg('revenue-goal-msg', 'Cilj prihoda je sačuvan. Sledeći izveštaj će prikazivati novu vrednost.');
   }
 
   async function cancelSubscription() {

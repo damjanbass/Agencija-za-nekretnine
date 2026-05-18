@@ -10,6 +10,7 @@ EMAIL_FROM_NAME = os.getenv("EMAIL_FROM_NAME", "Nekretnine Izveštaji")
 SUPPORT_EMAIL   = os.getenv("SUPPORT_EMAIL", EMAIL_FROM)
 
 CLAUDE_MODEL = "claude-sonnet-4-6"
+CLAUDE_AGENT_MODEL = "claude-haiku-4-5"
 
 SUPABASE_URL = os.getenv("SUPABASE_URL", "https://cesxmcbodcpfnpyusxhj.supabase.co")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY", "")
