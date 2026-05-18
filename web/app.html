@@ -25,7 +25,9 @@
     input[type="email"], input[type="password"], input[type="date"], input[type="number"], input[type="text"] {
       width: 100%; padding: 10px 13px; border: 1.5px solid #e2e6ea; border-radius: 8px;
       font-size: 0.95rem; outline: none; transition: border-color 0.2s; background: #fafafa;
+      box-sizing: border-box; height: 42px;
     }
+    input[type="date"] { -webkit-appearance: none; appearance: none; }
     input:focus { border-color: #2563eb; background: white; }
     .form-group { margin-bottom: 16px; }
 
@@ -1116,7 +1118,7 @@
     document.getElementById('dashboard').hidden          = false;
 
     bindNavButtons();
-    handleHashRoute();
+    switchView('home');
 
     // Auto-pokreni tutorial za prvi put; sakrij dugmad ako je već završen
     if (localStorage.getItem('tutorial_completed') !== '1') {
