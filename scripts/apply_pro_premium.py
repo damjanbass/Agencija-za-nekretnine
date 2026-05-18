@@ -88,9 +88,9 @@ def main():
         else:
             sb.storage.create_bucket(
                 "agency-logos",
-                options={"public": True, "file_size_limit": 2 * 1024 * 1024},
+                options={"public": True, "file_size_limit": 5 * 1024 * 1024},
             )
-            print("    [OK] Bucket 'agency-logos' kreiran (public read, 2MB limit).")
+            print("    [OK] Bucket 'agency-logos' kreiran (public read, 5MB limit).")
     except Exception as e:
         print(f"    [X] Greška pri kreiranju bucket-a: {e}")
         print("        (Možda već postoji ili API ključ nema dovoljne privilegije.)")
