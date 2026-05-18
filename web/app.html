@@ -88,6 +88,18 @@
     .btn-outline { background: white; border: 1.5px solid #2563eb; color: #2563eb; padding: 10px 22px; border-radius: 9px; font-size: 0.92rem; font-weight: 600; cursor: pointer; transition: all 0.18s; display: inline-block; }
     .btn-outline:hover { background: #2563eb; color: white; }
 
+    /* ── Plan picker ── */
+    .plan-change-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 16px 0; }
+    .plan-change-card { border: 2px solid #e5e7eb; border-radius: 10px; padding: 16px; cursor: pointer; transition: border-color 0.18s, box-shadow 0.18s; }
+    .plan-change-card:hover:not(.plan-change-current) { border-color: #2563eb; box-shadow: 0 2px 12px rgba(37,99,235,0.12); }
+    .plan-change-current { border-color: #2563eb; background: #f8faff; cursor: default; }
+    .plan-change-badge { font-size: 0.72rem; font-weight: 700; padding: 3px 8px; border-radius: 4px; display: inline-block; margin-bottom: 8px; }
+    .plan-change-name { font-size: 1.1rem; font-weight: 800; color: #1a1a2e; }
+    .plan-change-price { font-size: 1.2rem; font-weight: 700; color: #2563eb; margin: 4px 0; }
+    .plan-change-features { list-style: none; font-size: 0.82rem; color: #4a5168; margin-top: 8px; }
+    .plan-change-features li { padding: 3px 0; }
+    @media (max-width: 600px) { .plan-change-grid { grid-template-columns: 1fr; } }
+
     /* ── Javni link ── */
     .public-link-box { display: flex; align-items: center; gap: 10px; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 12px 14px; margin-top: 10px; }
     .public-link-text { font-size: 0.82rem; color: #1d4ed8; word-break: break-all; flex: 1; }
@@ -383,6 +395,25 @@
 
   <!-- ═══ PODEŠAVANJA / R-1 RAČUN ═══ -->
   <div id="tab-settings" hidden>
+
+    <!-- ─── Upravljanje planom ─── -->
+    <div class="card">
+      <h2>Pretplata</h2>
+      <div id="plan-management-info" style="margin-bottom:16px;">Učitavanje...</div>
+      <div id="plan-picker" hidden>
+        <div class="plan-change-grid" id="plan-change-grid"></div>
+      </div>
+      <div id="plan-change-msg"></div>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+        <button type="button" class="btn-outline" id="change-plan-btn" onclick="togglePlanPicker()" hidden>
+          Promeni plan
+        </button>
+        <button type="button" class="btn-outline" id="cancel-plan-picker-btn" onclick="togglePlanPicker()" hidden
+                style="border-color:#8892a4;color:#8892a4;">
+          Odustani
+        </button>
+      </div>
+    </div>
 
     <!-- ─── Prihod: nedeljni cilj ─── -->
     <div class="card">
@@ -1223,12 +1254,119 @@
     showMsg('branding-msg', 'Logo je uklonjen.');
   }
 
+  // ── Upravljanje planom ─────────────────────────────────────────────────────
+
+  const PLAN_NAMES  = { free: 'Free', basic: 'Basic', pro: 'Pro', premium: 'Premium' };
+  const PLAN_PRICES = { free: 0, basic: 29, pro: 79, premium: 149 };
+  const PLAN_ORDER  = ['free', 'basic', 'pro', 'premium'];
+  const PLAN_CATALOG = [
+    { id: 'basic',   name: 'Basic',   price: 29,  features: ['Do 3 agenta', 'Nedeljni izveštaj sa AI', '1 mesec istorije'] },
+    { id: 'pro',     name: 'Pro',     price: 79,  features: ['Do 10 agenata', 'Mesečni izveštaj + PDF', 'Benchmark', '6 meseci istorije'] },
+    { id: 'premium', name: 'Premium', price: 149, features: ['Neograničeni agenti', 'Custom branding', '12 meseci istorije', 'Sva ostala funkcionalnost'] },
+  ];
+
+  let _currentPlanId = 'free';
+
+  function renderPlanManagement(data) {
+    _currentPlanId = data?.plan_id || 'free';
+    const status   = data?.subscription_status || 'trial';
+    const planName = PLAN_NAMES[_currentPlanId] || _currentPlanId;
+    const planPrice = PLAN_PRICES[_currentPlanId] || 0;
+
+    const statusLabels = {
+      trial: 'Probni period', active: 'Aktivna',
+      past_due: 'Plaćanje nije prošlo', canceled: 'Otkazana', expired: 'Istekla',
+    };
+    let endInfo = '';
+    if (status === 'trial' && data?.trial_ends_at) {
+      endInfo = ` &middot; do ${fmtDate(data.trial_ends_at.split('T')[0])}`;
+    } else if (status === 'active' && data?.current_period_end) {
+      endInfo = ` &middot; obnova ${fmtDate(data.current_period_end.split('T')[0])}`;
+    }
+
+    document.getElementById('plan-management-info').innerHTML = `
+      <div style="display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap;">
+        <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:12px 20px;min-width:140px;">
+          <div style="font-size:0.72rem;color:#2563eb;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;margin-bottom:4px;">Trenutni plan</div>
+          <div style="font-size:1.5rem;font-weight:800;color:#1a1a2e;">${planName}</div>
+          <div style="font-size:0.88rem;color:#4a5168;">${planPrice > 0 ? planPrice + '€/mes.' : 'Besplatno'}</div>
+        </div>
+        <div style="font-size:0.92rem;color:#4a5168;padding-top:4px;">
+          <div><strong>Status:</strong> ${statusLabels[status] || status}${endInfo}</div>
+        </div>
+      </div>
+    `;
+
+    const canChange = (status === 'trial' || status === 'active');
+    document.getElementById('change-plan-btn').hidden = !canChange;
+    document.getElementById('cancel-plan-picker-btn').hidden = true;
+    document.getElementById('plan-picker').hidden = true;
+  }
+
+  function renderPlanPickerCards() {
+    const currentTier = PLAN_ORDER.indexOf(_currentPlanId);
+    const html = PLAN_CATALOG.map(p => {
+      const tier      = PLAN_ORDER.indexOf(p.id);
+      const isCurrent = p.id === _currentPlanId;
+      const isUpgrade = tier > currentTier;
+
+      const badgeText  = isCurrent ? 'Trenutni plan' : (isUpgrade ? 'Nadogradnja ↑' : 'Snižavanje ↓');
+      const badgeBg    = isCurrent ? '#eff6ff' : (isUpgrade ? '#f0fdf4' : '#fef3c7');
+      const badgeColor = isCurrent ? '#2563eb' : (isUpgrade ? '#16a34a' : '#92400e');
+
+      return `
+        <div class="plan-change-card ${isCurrent ? 'plan-change-current' : ''}"
+             onclick="${isCurrent ? '' : `confirmPlanChange('${p.id}')`}">
+          <span class="plan-change-badge" style="background:${badgeBg};color:${badgeColor};">${badgeText}</span>
+          <div class="plan-change-name">${p.name}</div>
+          <div class="plan-change-price">${p.price}€<span style="font-size:0.8rem;font-weight:500;color:#8892a4;">/mes.</span></div>
+          <ul class="plan-change-features">
+            ${p.features.map(f => `<li>✓ ${f}</li>`).join('')}
+          </ul>
+        </div>`;
+    }).join('');
+    document.getElementById('plan-change-grid').innerHTML = html;
+  }
+
+  function togglePlanPicker() {
+    const picker    = document.getElementById('plan-picker');
+    const changeBtn = document.getElementById('change-plan-btn');
+    const cancelBtn = document.getElementById('cancel-plan-picker-btn');
+    document.getElementById('plan-change-msg').innerHTML = '';
+
+    if (picker.hidden) {
+      renderPlanPickerCards();
+      picker.hidden  = false;
+      changeBtn.hidden = true;
+      cancelBtn.hidden = false;
+    } else {
+      picker.hidden  = true;
+      changeBtn.hidden = false;
+      cancelBtn.hidden = true;
+    }
+  }
+
+  function confirmPlanChange(newPlanId) {
+    const currentName = PLAN_NAMES[_currentPlanId] || _currentPlanId;
+    const newName     = PLAN_NAMES[newPlanId] || newPlanId;
+    const newPrice    = PLAN_PRICES[newPlanId] || 0;
+    const isUpgrade   = PLAN_ORDER.indexOf(newPlanId) > PLAN_ORDER.indexOf(_currentPlanId);
+
+    const msg = isUpgrade
+      ? `Nadogradnja: ${currentName} → ${newName} (${newPrice}€/mes.)\n\nNova pretplata kreće odmah. Stara pretplata će biti automatski otkazana.`
+      : `Snižavanje: ${currentName} → ${newName} (${newPrice}€/mes.)\n\nNova pretplata kreće odmah. Stara pretplata će biti automatski otkazana.`;
+
+    if (!confirm(msg)) return;
+    window.location.href = `checkout.html?plan=${newPlanId}&change=1`;
+  }
+
   // ── Podešavanja / R-1 račun ────────────────────────────────────────────────
 
   async function renderSettings() {
     document.getElementById('settings-msg').innerHTML = '';
     document.getElementById('cancel-msg').innerHTML = '';
     document.getElementById('tracking-msg').innerHTML = '';
+    document.getElementById('plan-change-msg').innerHTML = '';
     if (!agencyId) return;
 
     const { data, error } = await sb
@@ -1252,6 +1390,7 @@
     document.getElementById('tracks-sale').checked = data?.tracks_sale !== false;  // default true
     document.getElementById('tracks-rent').checked = data?.tracks_rent === true;   // default false
 
+    renderPlanManagement(data);
     renderSubscriptionInfo(data);
   }
 

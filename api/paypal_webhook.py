@@ -99,14 +99,30 @@ def _get_agency_by_subscription(sub_id: str) -> dict | None:
     res = (
         sb.table("agencies")
         .select("id, name, email, billing_email, plan_id, trial_ends_at, "
-                "current_period_end, paypal_subscription_id, pib, maticni_broj, "
-                "legal_address, legal_city")
+                "current_period_end, paypal_subscription_id, previous_paypal_subscription_id, "
+                "pib, maticni_broj, legal_address, legal_city")
         .eq("paypal_subscription_id", sub_id)
         .limit(1)
         .execute()
     )
     rows = res.data or []
     return rows[0] if rows else None
+
+
+def _cancel_paypal_subscription(sub_id: str) -> bool:
+    """Otkazuje PayPal pretplatu via REST API. Vraća True ako uspešno."""
+    try:
+        token = _paypal_access_token()
+        r = requests.post(
+            f"{PAYPAL_API_BASE}/v1/billing/subscriptions/{sub_id}/cancel",
+            headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
+            json={"reason": "Plan changed by subscriber"},
+            timeout=10,
+        )
+        return r.status_code in (200, 204)
+    except Exception as e:
+        print(f"[paypal] greška pri otkazivanju sub {sub_id}: {e}")
+        return False
 
 
 def _set_subscription_on_agency(agency_id: str, sub_id: str, plan_id: str | None = None) -> None:
@@ -139,9 +155,24 @@ def _handle_event(event: dict) -> None:
         })
         print(f"[paypal] {et} sub={sub_id} updated={n}")
 
-        # Email: aktivacija pretplate (početak probnog perioda)
+        agency = _get_agency_by_subscription(sub_id)
+
+        # Promena plana: otkaži staru pretplatu ako postoji
+        if agency:
+            try:
+                old_sub = agency.get("previous_paypal_subscription_id")
+                if old_sub and old_sub != sub_id:
+                    ok = _cancel_paypal_subscription(old_sub)
+                    print(f"[paypal] otkazujem stari sub {old_sub}: {'OK' if ok else 'NEUSPEH'}")
+                    if ok:
+                        get_client().table("agencies").update(
+                            {"previous_paypal_subscription_id": None}
+                        ).eq("id", agency["id"]).execute()
+            except Exception as e:
+                print(f"[paypal] greška pri otkazivanju stare pretplate: {e}")
+
+        # Email: aktivacija pretplate (početak probnog perioda ili promene plana)
         try:
-            agency = _get_agency_by_subscription(sub_id)
             if agency:
                 send_subscription_activated(
                     agency        = agency,

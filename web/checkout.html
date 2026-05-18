@@ -227,10 +227,10 @@
       <!-- Header -->
       <div class="checkout-header">
         <div>
-          <h1>Odaberite plan i platite</h1>
-          <div class="step">30 dana besplatno — kartica se ne naplaćuje odmah</div>
+          <h1 id="checkout-header-title">Odaberite plan i platite</h1>
+          <div class="step" id="checkout-header-sub">30 dana besplatno — kartica se ne naplaćuje odmah</div>
         </div>
-        <a href="register.html" class="change-link">← Nazad na registraciju</a>
+        <a id="checkout-back-link" href="register.html" class="change-link">← Nazad na registraciju</a>
       </div>
 
       <!-- Steps bar -->
@@ -246,7 +246,7 @@
         </div>
       </div>
 
-      <!-- Success screen (shown after payment) -->
+      <!-- Success screen: novi korisnik (trial) -->
       <div class="success-screen" id="success-screen">
         <div class="success-icon">🎉</div>
         <h2>Pretplata aktivirana!</h2>
@@ -258,6 +258,14 @@
         <button class="btn-go-app" onclick="window.location.href='app.html'">Idi na panel →</button>
       </div>
 
+      <!-- Success screen: promena plana -->
+      <div class="success-screen" id="success-screen-change">
+        <div class="success-icon">✅</div>
+        <h2 id="success-change-title">Plan promenjen!</h2>
+        <p class="success-sub">Vaša nova pretplata je aktivna. Stara pretplata će biti automatski otkazana u roku od 24h.</p>
+        <button class="btn-go-app" onclick="window.location.href='app.html'">Idi na panel →</button>
+      </div>
+
       <!-- Body (2 columns) -->
       <div class="checkout-body" id="checkout-body">
 
@@ -265,8 +273,8 @@
         <div class="plan-summary">
           <div class="plan-name">Plan</div>
           <div class="plan-title" id="plan-title">Pro</div>
-          <div class="plan-trial">30 dana besplatno</div>
-          <div class="plan-then">Zatim <span id="plan-price-display">79</span>€ / mesečno</div>
+          <div class="plan-trial" id="plan-trial-text">30 dana besplatno</div>
+          <div class="plan-then" id="plan-then-text">Zatim <span id="plan-price-display">79</span>€ / mesečno</div>
 
           <ul class="plan-features" id="plan-features">
             <!-- Populated by JS -->
@@ -287,13 +295,13 @@
 
         <!-- Right: Payment -->
         <div class="payment-column">
-          <div class="trial-badge">
+          <div class="trial-badge" id="trial-badge-box">
             <div class="label">Probni period</div>
             <div class="text">30 dana</div>
           </div>
 
-          <div class="charge-date">
-            <div class="label">Prva naplata</div>
+          <div class="charge-date" id="charge-date-box">
+            <div class="label" id="charge-date-label">Prva naplata</div>
             <div class="date" id="charge-date">16.06.2026</div>
           </div>
 
@@ -386,6 +394,7 @@
   let hasSession = false;
   let pendingSignup = null;
   let paypalInstance = null;
+  let isChangePlan = false;
   const { createClient } = supabase;
   const sb = createClient(
     'https://cesxmcbodcpfnpyusxhj.supabase.co',
@@ -411,13 +420,26 @@
       `<li><span class="check">✓</span> <span>${f}</span></li>`
     ).join('');
 
-    // Update charge date
-    const today = new Date();
-    const chargeDate = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
-    const dd = String(chargeDate.getDate()).padStart(2, '0');
-    const mm = String(chargeDate.getMonth() + 1).padStart(2, '0');
-    const yyyy = chargeDate.getFullYear();
-    document.getElementById('charge-date').textContent = `${dd}.${mm}.${yyyy}`;
+    if (isChangePlan) {
+      // U change modu: bez trial messaginga, direktna naplata
+      document.getElementById('plan-trial-text').textContent = 'Promena plana — bez probnog perioda';
+      document.getElementById('plan-then-text').innerHTML =
+        `Naplaćuje se odmah: <span id="plan-price-display">${plan.price}</span>€ / mesečno`;
+      document.getElementById('trial-badge-box').style.display = 'none';
+      document.getElementById('charge-date-label').textContent = 'Naplaćuje se odmah';
+      document.getElementById('charge-date').textContent = (() => {
+        const d = new Date();
+        return `${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')}.${d.getFullYear()}`;
+      })();
+    } else {
+      // Novi korisnik: trial flow
+      const today = new Date();
+      const chargeDate = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
+      const dd = String(chargeDate.getDate()).padStart(2, '0');
+      const mm = String(chargeDate.getMonth() + 1).padStart(2, '0');
+      const yyyy = chargeDate.getFullYear();
+      document.getElementById('charge-date').textContent = `${dd}.${mm}.${yyyy}`;
+    }
 
     // Update toggle buttons
     document.querySelectorAll('.plan-btn').forEach(btn => {
@@ -452,6 +474,17 @@
       paypalInstance = null;
     }
     container.innerHTML = '';
+
+    // Block payment if email not yet confirmed (no session)
+    if (!hasSession && pendingSignup?.needs_confirmation) {
+      container.innerHTML =
+        `<div style="background:#fffbeb;border:1.5px solid #f59e0b;border-radius:10px;padding:18px 20px;font-size:0.9rem;color:#92400e;line-height:1.6;">
+          <strong>Potvrdite email da biste nastavili.</strong><br>
+          Poslali smo vam link na <strong>${pendingSignup.email || 'vašu adresu'}</strong>.
+          Kliknite na link u emailu, pa će se ova stranica automatski ažurirati.
+        </div>`;
+      return;
+    }
 
     if (typeof paypal === 'undefined') {
       container.innerHTML =
@@ -490,43 +523,80 @@
 
   async function saveSubscriptionAndRedirect(subscriptionId) {
     try {
-      const today = new Date();
-      const trialEndsAt = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString();
-
       const { data: { user }, error: userErr } = await sb.auth.getUser();
       if (userErr || !user) {
         showMsg('Sesija nije pronađena. Prijavite se ponovo.', 'error');
         return;
       }
 
-      await sb.auth.updateUser({
-        data: {
-          plan: currentPlan,
-          plan_status: 'trialing',
-          trial_ends_at: trialEndsAt,
-          paypal_subscription_id: subscriptionId,
-        },
-      });
+      if (isChangePlan) {
+        // Promena plana: sačuvaj stari sub_id pre nego što ga prebrišemo
+        const { data: agencyRow } = await sb
+          .from('agencies')
+          .select('paypal_subscription_id')
+          .eq('user_id', user.id)
+          .single();
+        const oldSubId = agencyRow?.paypal_subscription_id || null;
 
-      const { error: agencyErr } = await sb
-        .from('agencies')
-        .update({
-          plan_id: currentPlan,
-          subscription_status: 'trial',
-          trial_ends_at: trialEndsAt,
-          paypal_subscription_id: subscriptionId,
-        })
-        .eq('user_id', user.id);
+        const { error: agencyErr } = await sb
+          .from('agencies')
+          .update({
+            plan_id: currentPlan,
+            subscription_status: 'active',
+            paypal_subscription_id: subscriptionId,
+            previous_paypal_subscription_id: oldSubId,
+          })
+          .eq('user_id', user.id);
 
-      if (agencyErr) {
-        showMsg('Greška pri aktivaciji plana: ' + agencyErr.message, 'error');
-        return;
+        if (agencyErr) {
+          showMsg('Greška pri promeni plana: ' + agencyErr.message, 'error');
+          return;
+        }
+
+        showChangePlanSuccess();
+      } else {
+        // Novi korisnik: trial flow
+        const today = new Date();
+        const trialEndsAt = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString();
+
+        await sb.auth.updateUser({
+          data: {
+            plan: currentPlan,
+            plan_status: 'trialing',
+            trial_ends_at: trialEndsAt,
+            paypal_subscription_id: subscriptionId,
+          },
+        });
+
+        const { error: agencyErr } = await sb
+          .from('agencies')
+          .update({
+            plan_id: currentPlan,
+            subscription_status: 'trial',
+            trial_ends_at: trialEndsAt,
+            paypal_subscription_id: subscriptionId,
+          })
+          .eq('user_id', user.id);
+
+        if (agencyErr) {
+          showMsg('Greška pri aktivaciji plana: ' + agencyErr.message, 'error');
+          return;
+        }
+
+        showSuccessScreen(user.email, trialEndsAt);
       }
-
-      showSuccessScreen(user.email, trialEndsAt);
     } catch (err) {
       showMsg('Greška: ' + err.message, 'error');
     }
+  }
+
+  function showChangePlanSuccess() {
+    const planNames = { basic: 'Basic', pro: 'Pro', premium: 'Premium' };
+    document.getElementById('success-change-title').textContent =
+      `Plan promenjen na ${planNames[currentPlan] || currentPlan}!`;
+    document.getElementById('checkout-body').style.display = 'none';
+    document.getElementById('trust-strip').style.display = 'none';
+    document.getElementById('success-screen-change').classList.add('visible');
   }
 
   function showSuccessScreen(email, trialEndsAt) {
@@ -555,8 +625,31 @@
       if (raw) pendingSignup = JSON.parse(raw);
     } catch (_) {}
 
+    // When user clicks email confirmation link, Supabase redirects back here with
+    // a token in the URL hash. The SDK auto-processes it and fires SIGNED_IN.
+    sb.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session && !hasSession) {
+        hasSession = true;
+        renderPayPalButton();
+      }
+    });
+
     const { data } = await sb.auth.getSession();
     hasSession = !!(data && data.session);
+
+    // Detekcija change moda
+    const params = new URLSearchParams(window.location.search);
+    isChangePlan = params.get('change') === '1';
+
+    if (isChangePlan) {
+      document.getElementById('checkout-header-title').textContent = 'Promena plana';
+      document.getElementById('checkout-header-sub').textContent   = 'Odaberite novi plan — pretplata kreće odmah';
+      document.getElementById('checkout-back-link').href           = 'app.html';
+      document.getElementById('checkout-back-link').textContent    = '← Nazad na panel';
+      // Sakrij steps bar koji kaže "Nalog kreiran / Odabir plana"
+      const stepsBar = document.querySelector('.steps-bar');
+      if (stepsBar) stepsBar.style.display = 'none';
+    }
 
     // Pick plan from URL param (plan picker on this page handles the rest)
     const urlPlan = getPlanFromUrl();
