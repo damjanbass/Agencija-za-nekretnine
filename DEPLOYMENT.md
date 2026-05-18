@@ -160,9 +160,9 @@ Posle dodavanja varijabli pokreni novi deploy: `git commit --allow-empty -m "tri
 2. Idi na **Developer Dashboard → Apps & Credentials** → "Create App" (live mode).
 3. Kopiraj **Client ID** i **Secret** → dodaj kao Vercel env varijable (`PAYPAL_CLIENT_ID`, `PAYPAL_SECRET`).
 4. **Kreiraj subscription plans** (Subscriptions → Products → Create Product, jedan po planu):
-   - **Basic**: Trial 30 dana @ 0€ → mesečno @ 29€ EUR
-   - **Pro**: Trial 30 dana @ 0€ → mesečno @ 79€ EUR
-   - **Premium**: Trial 30 dana @ 0€ → mesečno @ 149€ EUR
+   - **Basic**: Trial 14 dana @ 0€ → mesečno @ 29€ EUR
+   - **Pro**: Trial 14 dana @ 0€ → mesečno @ 79€ EUR
+   - **Premium**: Trial 14 dana @ 0€ → mesečno @ 149€ EUR
 5. Kopiraj **plan ID** za svaki (počinje sa `P-`) → uneti u `web/checkout.html` u `PAYPAL_PLAN_IDS` konstantu (basic, pro, premium).
 6. U istoj fajli zameni `PAYPAL_CLIENT_ID = "sb"` sa tvojim live client ID-jem.
 

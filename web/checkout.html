@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <link rel="stylesheet" href="css/responsive.css">
   <title>Plaćanje — Izveštaj</title>
-  <meta name="description" content="Aktivirajte probni period od 30 dana. Unesite karticu — nećemo naplatiti ništa narednih 30 dana.">
+  <meta name="description" content="Aktivirajte probni period od 14 dana. Unesite karticu — nećemo naplatiti ništa narednih 14 dana.">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://www.paypal.com/sdk/js?client-id=ASl69D8oJFvQnJWxTDimH0Se9ku-fYFoH3EHc2ie3COw7kqqnI0L3OwN20_e-iL7LOj567jUKIrg4hzo&vault=true&intent=subscription&currency=EUR"></script>
   <style>
@@ -234,7 +234,7 @@
       <div class="checkout-header">
         <div>
           <h1 id="checkout-header-title">Odaberite plan i platite</h1>
-          <div class="step" id="checkout-header-sub">30 dana besplatno — kartica se ne naplaćuje odmah</div>
+          <div class="step" id="checkout-header-sub">14 dana besplatno — kartica se ne naplaćuje odmah</div>
         </div>
         <a id="checkout-back-link" href="register.html" class="change-link">← Nazad na registraciju</a>
       </div>
@@ -261,7 +261,7 @@
       <div class="success-screen" id="success-screen">
         <div class="success-icon">🎉</div>
         <h2>Plaćanje uspešno!</h2>
-        <p class="success-sub">Vaš probni period od 30 dana je aktivan. Kartica neće biti naplaćena do <strong id="success-charge-date"></strong>.</p>
+        <p class="success-sub">Vaš probni period od 14 dana je aktivan. Kartica neće biti naplaćena do <strong id="success-charge-date"></strong>.</p>
         <div class="email-reminder">
           <strong>📧 Poslednji korak — potvrdite email</strong>
           <p>Poslali smo link na <strong id="success-email"></strong>.<br>
@@ -284,7 +284,7 @@
         <div class="plan-summary">
           <div class="plan-name">Plan</div>
           <div class="plan-title" id="plan-title">Pro</div>
-          <div class="plan-trial" id="plan-trial-text">30 dana besplatno</div>
+          <div class="plan-trial" id="plan-trial-text">14 dana besplatno</div>
           <div class="plan-then" id="plan-then-text">Zatim <span id="plan-price-display">79</span>€ / mesečno</div>
 
           <ul class="plan-features" id="plan-features">
@@ -308,7 +308,7 @@
         <div class="payment-column">
           <div class="trial-badge" id="trial-badge-box">
             <div class="label">Probni period</div>
-            <div class="text">30 dana</div>
+            <div class="text">14 dana</div>
           </div>
 
           <div class="charge-date" id="charge-date-box">
@@ -322,7 +322,7 @@
 
           <div class="paypal-note">
             <strong>💳 Kako to funkcioniše</strong><br>
-            Kartica se samo povezuje. Nećemo ništa naplatiti narednih 30 dana. Nakon toga, PayPal će naplatiti <span id="charge-amount">79€</span> na dan aktivacije, pa svaki mesec.
+            Kartica se samo povezuje. Nećemo ništa naplatiti narednih 14 dana. Nakon toga, PayPal će naplatiti <span id="charge-amount">79€</span> na dan aktivacije, pa svaki mesec.
           </div>
 
           <div id="checkout-msg"></div>
@@ -356,9 +356,9 @@
   const PAYPAL_CURRENCY  = "EUR";
   const PAYPAL_MODE      = "subscription";
   const PAYPAL_PLAN_IDS = {
-    basic:   "P-5WL46779EE353592MNIFCF2I",
-    pro:     "P-57P38024HH908405XNIFCF2Y",
-    premium: "P-78T289589V882241MNIFCF3I",
+    basic:   "P-6N249299J4384142VNIFZEBQ",
+    pro:     "P-91025667GU594852BNIFZECA",
+    premium: "P-2SA12380U3282343LNIFZECQ",
   };
 
   const PLAN_DATA = {
@@ -445,7 +445,7 @@
     } else {
       // Novi korisnik: trial flow
       const today = new Date();
-      const chargeDate = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
+      const chargeDate = new Date(today.getTime() + 14 * 24 * 60 * 60 * 1000);
       const dd = String(chargeDate.getDate()).padStart(2, '0');
       const mm = String(chargeDate.getMonth() + 1).padStart(2, '0');
       const yyyy = chargeDate.getFullYear();
@@ -561,7 +561,7 @@
       } else {
         // Novi korisnik: trial flow
         const today = new Date();
-        const trialEndsAt = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString();
+        const trialEndsAt = new Date(today.getTime() + 14 * 24 * 60 * 60 * 1000).toISOString();
 
         await sb.auth.updateUser({
           data: {

@@ -65,7 +65,7 @@ def create_product(token: str, name: str, description: str) -> str:
 
 
 def create_billing_plan(token: str, product_id: str, name: str, price: str) -> str:
-    """Trial 30 dana @ 0€ → mesečno @ price EUR, neograničeno."""
+    """Trial 14 dana @ 0€ → mesečno @ price EUR, neograničeno."""
     r = requests.post(
         f"{API_BASE}/v1/billing/plans",
         headers={
@@ -75,10 +75,10 @@ def create_billing_plan(token: str, product_id: str, name: str, price: str) -> s
         json={
             "product_id": product_id,
             "name":        name,
-            "description": f"{name} — 30 dana besplatno, zatim {price} EUR/mesečno",
+            "description": f"{name} — 14 dana besplatno, zatim {price} EUR/mesečno",
             "billing_cycles": [
                 {
-                    "frequency":      {"interval_unit": "DAY",   "interval_count": 30},
+                    "frequency":      {"interval_unit": "DAY",   "interval_count": 14},
                     "tenure_type":    "TRIAL",
                     "sequence":       1,
                     "total_cycles":   1,
@@ -125,7 +125,7 @@ def main():
         product_id = create_product(token, plan["name"], plan["description"])
         print(f"  Product ID: {product_id}")
 
-        print(f"  Kreiram billing plan (30d trial → {plan['price']}€/mes)...")
+        print(f"  Kreiram billing plan (14d trial → {plan['price']}€/mes)...")
         plan_id = create_billing_plan(token, product_id, plan["name"], plan["price"])
         print(f"  Plan ID: {plan_id}\n")
 
