@@ -242,20 +242,25 @@
         <span class="step-sep">›</span>
         <div class="step-item active">
           <div class="step-num">2</div>
-          <span>Odabir plana &amp; plaćanje</span>
+          <span>Plaćanje</span>
+        </div>
+        <span class="step-sep">›</span>
+        <div class="step-item">
+          <div class="step-num">3</div>
+          <span>Potvrda emaila</span>
         </div>
       </div>
 
       <!-- Success screen: novi korisnik (trial) -->
       <div class="success-screen" id="success-screen">
         <div class="success-icon">🎉</div>
-        <h2>Pretplata aktivirana!</h2>
+        <h2>Plaćanje uspešno!</h2>
         <p class="success-sub">Vaš probni period od 30 dana je aktivan. Kartica neće biti naplaćena do <strong id="success-charge-date"></strong>.</p>
         <div class="email-reminder">
-          <strong>📧 Potvrdite email adresu</strong>
-          <p>Poslali smo email na <strong id="success-email"></strong>.<br>Kliknite na link u email-u da biste aktivirali punu funkcionalnost naloga.</p>
+          <strong>📧 Poslednji korak — potvrdite email</strong>
+          <p>Poslali smo link na <strong id="success-email"></strong>.<br>
+          Kliknite na link u emailu — odvešće vas direktno na panel.</p>
         </div>
-        <button class="btn-go-app" onclick="window.location.href='app.html'">Idi na panel →</button>
       </div>
 
       <!-- Success screen: promena plana -->
@@ -475,17 +480,6 @@
     }
     container.innerHTML = '';
 
-    // Block payment if email not yet confirmed (no session)
-    if (!hasSession && pendingSignup?.needs_confirmation) {
-      container.innerHTML =
-        `<div style="background:#fffbeb;border:1.5px solid #f59e0b;border-radius:10px;padding:18px 20px;font-size:0.9rem;color:#92400e;line-height:1.6;">
-          <strong>Potvrdite email da biste nastavili.</strong><br>
-          Poslali smo vam link na <strong>${pendingSignup.email || 'vašu adresu'}</strong>.
-          Kliknite na link u emailu, pa će se ova stranica automatski ažurirati.
-        </div>`;
-      return;
-    }
-
     if (typeof paypal === 'undefined') {
       container.innerHTML =
         `<div style="text-align:center;padding:24px 16px;color:#4a5168;font-size:0.88rem;line-height:1.6;">
@@ -624,15 +618,6 @@
       const raw = localStorage.getItem('pending_signup');
       if (raw) pendingSignup = JSON.parse(raw);
     } catch (_) {}
-
-    // When user clicks email confirmation link, Supabase redirects back here with
-    // a token in the URL hash. The SDK auto-processes it and fires SIGNED_IN.
-    sb.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_IN' && session && !hasSession) {
-        hasSession = true;
-        renderPayPalButton();
-      }
-    });
 
     const { data } = await sb.auth.getSession();
     hasSession = !!(data && data.session);
