@@ -65,6 +65,139 @@
   .conv-bar-fill-you  { height: 8px; border-radius: 4px; background: linear-gradient(90deg, #2563eb, #7c3aed); }
   .conv-bar-fill-team { height: 8px; border-radius: 4px; background: #d1d5db; }
 
+  .plan-badge {
+    display: inline-block; font-size: 10px; font-weight: 700;
+    letter-spacing: 0.8px; text-transform: uppercase;
+    padding: 3px 9px; border-radius: 10px; margin-top: 8px;
+  }
+  .plan-basic   { background: #1d4ed8; color: #bfdbfe; }
+  .plan-pro     { background: #7c3aed; color: #ede9fe; }
+  .plan-premium { background: #b45309; color: #fde68a; }
+
+  /* SECTION TITLE (reusable) */
+  .section-title {
+    font-size: 12px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.8px; color: #8892a4; margin-bottom: 12px;
+  }
+
+  /* TREND CHART */
+  .trend-section { margin-bottom: 28px; }
+  .trend-card {
+    background: #f8f9fc; border: 1px solid #eaedf3;
+    border-radius: 12px; padding: 16px 18px;
+  }
+  .trend-head {
+    display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px;
+  }
+  .trend-latest { font-size: 22px; font-weight: 700; color: #0f3460; }
+  .trend-latest-lbl { font-size: 11px; color: #8892a4; }
+  .trend-badges { display: flex; gap: 8px; margin-top: 4px; flex-wrap: wrap; }
+  .trend-badge {
+    font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 10px;
+  }
+  .badge-pos { background: #dcfce7; color: #166534; }
+  .badge-neg { background: #fee2e2; color: #991b1b; }
+  .badge-neu-trend { background: #f3f4f6; color: #6b7280; }
+  .trend-chart-wrap { margin-top: 10px; }
+  .trend-chart-wrap svg { width: 100%; height: 60px; display: block; }
+  .trend-chart-wrap .trend-line { fill: none; stroke: #0f3460; stroke-width: 2; }
+  .trend-chart-wrap .trend-area { fill: rgba(15, 52, 96, 0.10); stroke: none; }
+  .trend-chart-wrap .trend-dot { fill: #0f3460; }
+
+  /* LISTINGS BENCHMARK TABLE */
+  .pb-section { margin-bottom: 28px; }
+  .pb-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .pb-table thead th {
+    text-align: left; padding: 8px 8px; font-size: 10px;
+    text-transform: uppercase; letter-spacing: 0.6px; color: #8892a4;
+    border-bottom: 2px solid #eaedf3;
+  }
+  .pb-table tbody td { padding: 10px 8px; border-bottom: 1px solid #f0f2f5; vertical-align: top; }
+  .pb-table tbody tr:last-child td { border-bottom: none; }
+  .pb-title { font-weight: 600; color: #1a1a2e; }
+  .pb-meta { font-size: 11px; color: #6b7280; margin-top: 2px; }
+  .pb-num  { font-weight: 600; color: #1a1a2e; white-space: nowrap; }
+  .pb-delta-over  { color: #dc2626; font-weight: 700; }
+  .pb-delta-under { color: #2563eb; font-weight: 700; }
+  .pb-delta-fair  { color: #16a34a; font-weight: 600; }
+  .pb-flag {
+    display: inline-block; font-size: 10px; font-weight: 700;
+    padding: 2px 7px; border-radius: 10px; margin-left: 6px;
+  }
+  .pb-flag-over  { background: #fee2e2; color: #991b1b; }
+  .pb-flag-under { background: #dbeafe; color: #1e3a8a; }
+  .pb-row-over   { background: #fff5f5; }
+  .pb-row-under  { background: #f0f5ff; }
+
+  /* HOT ZONES */
+  .hot-section { margin-bottom: 28px; }
+  .hot-grid {
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;
+  }
+  .hot-card {
+    background: linear-gradient(135deg, #fff7ed 0%, #fed7aa 100%);
+    border: 1px solid #fbbf24; border-radius: 10px; padding: 12px 14px;
+  }
+  .hot-rank { font-size: 10px; font-weight: 700; color: #92400e; text-transform: uppercase; letter-spacing: 0.6px; }
+  .hot-name { font-size: 15px; font-weight: 700; color: #1a1a2e; margin: 2px 0 6px; }
+  .hot-stat { display: flex; justify-content: space-between; font-size: 11px; color: #6b7280; margin-bottom: 2px; }
+  .hot-stat strong { color: #b45309; font-weight: 700; }
+
+  /* AI ANALIZA (Premium) */
+  .ai-section {
+    background: #f8f9fc; border-radius: 12px;
+    padding: 18px 20px; border: 1px solid #eaedf3; margin-bottom: 28px;
+  }
+  .ai-title {
+    font-size: 12px; font-weight: 700; color: #8892a4;
+    text-transform: uppercase; letter-spacing: 0.8px;
+    margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+  }
+  .ai-row { display: flex; gap: 10px; margin-bottom: 10px; align-items: flex-start; }
+  .ai-row:last-child { margin-bottom: 0; }
+  .ai-badge {
+    display: inline-block; font-size: 10px; font-weight: 700;
+    padding: 3px 9px; border-radius: 10px; white-space: nowrap;
+    flex-shrink: 0; margin-top: 1px;
+  }
+  .badge-dobro    { background: #dcfce7; color: #166534; }
+  .badge-paznja   { background: #fef9c3; color: #854d0e; }
+  .badge-predlog  { background: #dbeafe; color: #1e40af; }
+  .ai-text { font-size: 13px; color: #374151; line-height: 1.5; }
+
+  /* PRICING RECOMMENDATIONS (Premium) */
+  .rec-section { margin-bottom: 28px; }
+  .rec-card {
+    background: #fff; border: 1px solid #eaedf3;
+    border-left: 4px solid #dc2626; border-radius: 10px;
+    padding: 14px 16px; margin-bottom: 10px;
+  }
+  .rec-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; gap: 8px; }
+  .rec-title { font-size: 14px; font-weight: 700; color: #1a1a2e; }
+  .rec-conf {
+    font-size: 9px; font-weight: 700; text-transform: uppercase;
+    padding: 2px 7px; border-radius: 10px; letter-spacing: 0.6px;
+  }
+  .rec-conf-high   { background: #dcfce7; color: #166534; }
+  .rec-conf-medium { background: #fef9c3; color: #854d0e; }
+  .rec-conf-low    { background: #f3f4f6; color: #6b7280; }
+  .rec-prices { display: flex; align-items: center; gap: 12px; font-size: 13px; margin-bottom: 6px; flex-wrap: wrap; }
+  .rec-price-cur { color: #dc2626; font-weight: 700; text-decoration: line-through; }
+  .rec-price-new { color: #16a34a; font-weight: 700; font-size: 15px; }
+  .rec-arrow { color: #9ca3af; }
+  .rec-save { color: #16a34a; font-size: 12px; font-weight: 600; }
+  .rec-rationale { font-size: 12px; color: #4b5563; line-height: 1.5; }
+  .rec-meta { font-size: 11px; color: #8892a4; margin-top: 4px; }
+
+  /* UPGRADE PROMPT */
+  .upgrade-prompt {
+    background: #f8f9fc; border: 1px dashed #d1d5db;
+    border-radius: 12px; padding: 20px 22px;
+    text-align: center; margin-bottom: 28px;
+  }
+  .upgrade-prompt-title { font-weight: 700; color: #1a1a2e; margin-bottom: 6px; }
+  .upgrade-prompt-body  { font-size: 12px; color: #6b7280; }
+
   .footer { background: #f8f9fc; padding: 16px 36px; border-top: 1px solid #eaedf3; text-align: center; font-size: 11px; color: #9ca3af; }
 
   @media print {
@@ -86,23 +219,25 @@
       <span class="header-pill">{{ week_start }} – {{ week_end }}</span>
       <span class="header-pill">{{ agency_name }}</span>
     </div>
+    {% if plan %}<span class="plan-badge plan-{{ plan.id }}">{{ plan.name }}</span>{% endif %}
     <div class="header-divider"></div>
   </div>
 
   <div class="body">
 
     <!-- KPI kartice -->
+    {% set first_name = agent_name.split()[0] %}
     <div class="kpi-grid">
       <div class="kpi-card">
-        <div class="kpi-label">Vaši upiti</div>
+        <div class="kpi-label">Upiti</div>
         <div class="kpi-value">{{ agent_inquiries }}</div>
       </div>
       <div class="kpi-card">
-        <div class="kpi-label">Vaši ugovori</div>
+        <div class="kpi-label">Ugovori</div>
         <div class="kpi-value">{{ agent_contracts }}</div>
       </div>
       <div class="kpi-card">
-        <div class="kpi-label">Vaša konverzija</div>
+        <div class="kpi-label">Konverzija</div>
         <div class="kpi-value">{{ agent_conversion }}%</div>
         <div class="kpi-sub
           {% if agent_conversion >= team_conversion %}kpi-better{% else %}kpi-worse{% endif %}">
@@ -110,7 +245,7 @@
         </div>
       </div>
       <div class="kpi-card">
-        <div class="kpi-label">Nedeljni prihod tima</div>
+        <div class="kpi-label">Prihod tima</div>
         <div class="kpi-value">{{ revenue }}€</div>
         <div class="kpi-sub kpi-neutral">cilj: {{ revenue_goal }}€</div>
       </div>
@@ -128,10 +263,10 @@
     <!-- Poređenje konverzije -->
     {% set max_conv = [agent_conversion, team_conversion] | max %}
     <div class="conv-compare">
-      <div class="conv-title">Konverzija — vi vs. tim</div>
+      <div class="conv-title">Konverzija — {{ first_name }} vs. tim</div>
       <div class="conv-bar-row">
         <div class="conv-bar-label">
-          <span>Vi</span><span>{{ agent_conversion }}%</span>
+          <span>{{ first_name }}</span><span>{{ agent_conversion }}%</span>
         </div>
         <div class="conv-bar-bg">
           <div class="conv-bar-fill-you" style="width:{{ ((agent_conversion / [max_conv, 0.01] | max) * 100) | int }}%"></div>
@@ -147,21 +282,192 @@
       </div>
     </div>
 
-    <!-- Poruka -->
+    <!-- Komentar (Basic — hardcoded; Premium dobija AI ispod) -->
+    {% if not ai_analysis %}
     <div class="message-card">
       <div class="message-title">Komentar nedelje</div>
       <div class="message-text">
         {% if agent_contracts == 0 and agent_inquiries > 5 %}
-          Imali ste {{ agent_inquiries }} upita ove nedelje bez zaključenog ugovora. Fokusirajte se na aktivne kupce koji čekaju odgovor i pokušajte da zakažete razgledanje do petka.
+          {{ first_name }} je imao/la {{ agent_inquiries }} upita ove nedelje bez zaključenog ugovora. Potreban je fokus na aktivne kupce i zakazivanje razgledanja.
         {% elif agent_conversion >= team_conversion %}
-          Odličan rad! Sa konverzijom od {{ agent_conversion }}% ste iznad proseka tima ({{ team_conversion }}%). Nastavite istim tempom i podelite pristup sa kolegama.
+          {{ first_name }} je iznad proseka tima — konverzija od {{ agent_conversion }}% vs. timski prosek od {{ team_conversion }}%. Dobar rezultat.
         {% elif agent_rank == 1 %}
-          Prvo mesto u timu ove nedelje — {{ agent_contracts }} {{ "ugovora" if agent_contracts != 1 else "ugovor" }}. Odličan rezultat!
+          Prvo mesto u timu ove nedelje — {{ agent_contracts }} {{ "ugovora" if agent_contracts != 1 else "ugovor" }}. Odličan rezultat.
         {% else %}
-          Ove nedelje: {{ agent_inquiries }} upita, {{ agent_contracts }} {{ "ugovora" if agent_contracts != 1 else "ugovor" }}, konverzija {{ agent_conversion }}%. Prosek tima je {{ team_conversion }}% — ima prostora za rast.
+          Ove nedelje: {{ agent_inquiries }} upita, {{ agent_contracts }} {{ "ugovora" if agent_contracts != 1 else "ugovor" }}, konverzija {{ agent_conversion }}%. Prosek tima je {{ team_conversion }}%.
         {% endif %}
       </div>
     </div>
+    {% endif %}
+
+    {# ============================ PRO+ SEKCIJE ============================ #}
+    {% if plan and plan.id in ('pro', 'premium') %}
+
+      {# --- TREND --- #}
+      {% if trend_chart_points and trend_chart_points | length >= 4 %}
+      <div class="trend-section">
+        <div class="section-title">Trend konverzije — {{ first_name }} ({{ agent_history | length }} nedelja)</div>
+        <div class="trend-card">
+          <div class="trend-head">
+            <div>
+              {% set last4 = agent_history[-4:] %}
+              {% set prev4 = agent_history[-8:-4] if agent_history | length >= 8 else [] %}
+              {% set avg_last  = (last4 | map(attribute='conversion') | sum / (last4 | length)) | round(1) %}
+              <div class="trend-latest">{{ avg_last }}%</div>
+              <div class="trend-latest-lbl">prosek poslednje 4 nedelje</div>
+            </div>
+            <div class="trend-badges">
+              {% if prev4 %}
+                {% set avg_prev = (prev4 | map(attribute='conversion') | sum / (prev4 | length)) | round(1) %}
+                {% set delta = (avg_last - avg_prev) | round(1) %}
+                <span class="trend-badge {% if delta > 0.5 %}badge-pos{% elif delta < -0.5 %}badge-neg{% else %}badge-neu-trend{% endif %}">
+                  vs prethodne 4: {{ '+' if delta > 0 else '' }}{{ delta }}pp
+                </span>
+              {% endif %}
+            </div>
+          </div>
+          <div class="trend-chart-wrap">
+            <svg viewBox="0 0 200 60" preserveAspectRatio="none">
+              <polygon class="trend-area" points="0,60 {% for p in trend_chart_points %}{{ p.x }},{{ p.y }} {% endfor %}200,60" />
+              <polyline class="trend-line" points="{% for p in trend_chart_points %}{{ p.x }},{{ p.y }} {% endfor %}" />
+              <circle class="trend-dot" cx="{{ trend_chart_points[-1].x }}" cy="{{ trend_chart_points[-1].y }}" r="2.5" />
+            </svg>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      {# --- LIČNI OGLASI + PRICING BENCHMARK --- #}
+      {% if listings_benchmark and listings_benchmark | length > 0 %}
+      <div class="pb-section">
+        <div class="section-title">Oglasi agenta vs tržište</div>
+        <table class="pb-table">
+          <thead>
+            <tr>
+              <th>Oglas</th>
+              <th style="text-align:right">Cena agenta €/m²</th>
+              <th style="text-align:right">Medijana</th>
+              <th style="text-align:right">Δ</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in listings_benchmark %}
+            <tr class="{% if row.overpriced_flag %}pb-row-over{% elif row.underpriced_flag %}pb-row-under{% endif %}">
+              <td>
+                <div class="pb-title">
+                  {{ row.title }}
+                  {% if row.overpriced_flag %}<span class="pb-flag pb-flag-over">iznad</span>{% endif %}
+                  {% if row.underpriced_flag %}<span class="pb-flag pb-flag-under">ispod</span>{% endif %}
+                </div>
+                <div class="pb-meta">
+                  {% if row.ref_number %}{{ row.ref_number }} · {% endif %}
+                  {{ row.neighborhood or '—' }} · {{ row.area_m2 }}m²
+                  {% if row.rooms %} · {{ row.rooms }} soba{% endif %}
+                </div>
+              </td>
+              <td class="pb-num" style="text-align:right">{{ row.own_eur_m2 }} €</td>
+              <td class="pb-num" style="text-align:right">{{ row.market_median_eur_m2 }} €</td>
+              <td style="text-align:right">
+                <span class="{% if row.overpriced_flag %}pb-delta-over{% elif row.underpriced_flag %}pb-delta-under{% else %}pb-delta-fair{% endif %}">
+                  {{ '+' if row.delta_pct > 0 else '' }}{{ row.delta_pct }}%
+                </span>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% endif %}
+
+      {# --- HOT ZONES (filtered to agent neighborhoods) --- #}
+      {% if hot_zones and hot_zones | length > 0 %}
+      <div class="hot-section">
+        <div class="section-title">Aktivnost u vašim kvartovima</div>
+        <div class="hot-grid">
+          {% for h in hot_zones[:4] %}
+          <div class="hot-card">
+            <div class="hot-rank">hot zone</div>
+            <div class="hot-name">{{ h.neighborhood }}</div>
+            <div class="hot-stat"><span>Medijana</span><strong>{{ h.median_eur_m2 }} €/m²</strong></div>
+            <div class="hot-stat"><span>Promena (15d)</span><strong>{{ '+' if h.price_change_pct > 0 else '' }}{{ h.price_change_pct }}%</strong></div>
+            <div class="hot-stat"><span>Novi (7d)</span><strong>+{{ h.new_this_week }}</strong></div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+    {% endif %}
+
+    {# ============================ PREMIUM SEKCIJE ============================ #}
+    {% if plan and plan.id == 'premium' %}
+
+      {# --- AI ANALIZA --- #}
+      {% if ai_analysis %}
+      <div class="ai-section">
+        <div class="ai-title"><span>🤖</span> AI analiza — {{ first_name }}</div>
+        <div class="ai-row">
+          <span class="ai-badge badge-dobro">Dobro</span>
+          <span class="ai-text">{{ ai_analysis.dobro }}</span>
+        </div>
+        <div class="ai-row">
+          <span class="ai-badge badge-paznja">Pažnja</span>
+          <span class="ai-text">{{ ai_analysis.paznja }}</span>
+        </div>
+        <div class="ai-row">
+          <span class="ai-badge badge-predlog">Predlog</span>
+          <span class="ai-text">{{ ai_analysis.predlog }}</span>
+        </div>
+      </div>
+      {% endif %}
+
+      {# --- PRICING PREPORUKE --- #}
+      {% if pricing_recommendations and pricing_recommendations | length > 0 %}
+      <div class="rec-section">
+        <div class="section-title">Preporuke korekcije cena</div>
+        {% for r in pricing_recommendations %}
+        <div class="rec-card">
+          <div class="rec-head">
+            <div class="rec-title">
+              {{ r.title or r.ref_number or r.listing_id }}
+              <span style="font-weight:400;color:#8892a4;font-size:12px;">
+                · {{ r.neighborhood or '—' }} · {{ r.area_m2 }}m²
+              </span>
+            </div>
+            <span class="rec-conf rec-conf-{{ r.confidence }}">{{ r.confidence }}</span>
+          </div>
+          <div class="rec-prices">
+            <span class="rec-price-cur">{{ '{:,}'.format(r.own_price_eur).replace(',', '.') }}€</span>
+            <span class="rec-arrow">→</span>
+            <span class="rec-price-new">{{ '{:,}'.format(r.target_price_eur).replace(',', '.') }}€</span>
+            <span class="rec-save">−{{ r.delta_pct }}% ({{ '{:,}'.format(r.delta_amount_eur).replace(',', '.') }}€)</span>
+          </div>
+          <div class="rec-rationale">{{ r.rationale }}</div>
+          <div class="rec-meta">Uzorak: {{ r.sample_size }} oglasa{% if r.scope == 'city' %} (grad){% else %} (kvart){% endif %}</div>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+    {% endif %}
+
+    {# ============================ UPGRADE PROMPTS ============================ #}
+    {% if plan and plan.id == 'basic' %}
+    <div class="upgrade-prompt">
+      <div class="upgrade-prompt-title">Detaljan pregled po agentu dostupan od Pro plana</div>
+      <div class="upgrade-prompt-body">
+        Pro plan dodaje trend konverzije kroz vreme, tabelu oglasa agenta vs medijana tržišta i aktivnost u kvartovima.
+        Premium dodaje AI analizu i konkretne preporuke korekcije cena za precenjene oglase.
+      </div>
+    </div>
+    {% elif plan and plan.id == 'pro' %}
+    <div class="upgrade-prompt">
+      <div class="upgrade-prompt-title">Premium intelligence dostupno</div>
+      <div class="upgrade-prompt-body">
+        Premium dodaje AI analizu prilagođenu svakom agentu, konkretne predloge target cena za precenjene oglase i PDF export.
+      </div>
+    </div>
+    {% endif %}
 
   </div>
 

@@ -317,6 +317,13 @@
         <p class="archive-empty">Učitavanje...</p>
       </div>
     </div>
+
+    <div class="card" id="agent-reports-card">
+      <h2>Izveštaji po agentu</h2>
+      <div id="agent-reports-list">
+        <p class="archive-empty">Učitavanje...</p>
+      </div>
+    </div>
   </div>
 
   <!-- ── Uvoz tab ── -->
@@ -375,6 +382,33 @@
 
   <!-- ═══ PODEŠAVANJA / R-1 RAČUN ═══ -->
   <div id="tab-settings" hidden>
+
+    <!-- ─── Praćenje tržišta ─── -->
+    <div class="card">
+      <h2>Praćenje tržišta</h2>
+      <p style="font-size:0.9rem;color:#666;margin-bottom:16px;">
+        Označite segmente koje vaša agencija prati. Pricing benchmark i analiza tržišta u izveštajima koriste samo izabrane segmente.
+      </p>
+      <div id="tracking-msg"></div>
+      <form id="tracking-form" onsubmit="saveTracking(event)">
+        <div class="form-group" style="display:flex;align-items:center;gap:10px;text-transform:none;">
+          <input type="checkbox" id="tracks-sale" style="width:18px;height:18px;margin:0;cursor:pointer;">
+          <label for="tracks-sale" style="margin:0;text-transform:none;letter-spacing:0;font-weight:500;color:#1a1a2e;cursor:pointer;">
+            Pratim prodaju stanova
+          </label>
+        </div>
+        <div class="form-group" style="display:flex;align-items:center;gap:10px;text-transform:none;">
+          <input type="checkbox" id="tracks-rent" style="width:18px;height:18px;margin:0;cursor:pointer;">
+          <label for="tracks-rent" style="margin:0;text-transform:none;letter-spacing:0;font-weight:500;color:#1a1a2e;cursor:pointer;">
+            Pratim zakup stanova
+          </label>
+        </div>
+        <button type="submit" class="btn-primary" id="tracking-save-btn" style="margin-top:8px;">
+          Sačuvaj preferencije
+        </button>
+      </form>
+    </div>
+
     <div class="card">
       <h2>Podaci za R-1 račun</h2>
       <p style="font-size:0.9rem;color:#666;margin-bottom:16px;">
@@ -412,6 +446,20 @@
 
         <button type="submit" class="btn-primary" id="settings-save-btn">Sačuvaj podatke</button>
       </form>
+    </div>
+
+    <div class="card" style="margin-top:20px;border:1px solid #fecaca;">
+      <h2 style="color:#991b1b;">Otkazivanje pretplate</h2>
+      <div id="subscription-info" style="font-size:0.92rem;color:#4a5168;margin:8px 0 16px;">
+        Učitavanje statusa pretplate...
+      </div>
+      <div id="cancel-msg"></div>
+      <button type="button" class="btn-outline" id="cancel-sub-btn" onclick="cancelSubscription()" style="border-color:#dc2626;color:#dc2626;">
+        Otkaži pretplatu
+      </button>
+      <p style="font-size:0.82rem;color:#8892a4;margin-top:10px;">
+        Otkazivanje je trenutno — nalog odmah prelazi na Free plan. Kasnije možete ponovo aktivirati plan u sekciji <a href="pricing.html" style="color:#2563eb;">Cene</a>.
+      </p>
     </div>
   </div>
 
@@ -484,7 +532,7 @@
     document.getElementById('tab-settings-btn').classList.toggle('active', tab === 'settings');
 
     if (tab === 'archive')  loadArchive();
-    if (tab === 'agents')   renderAgentsManage();
+    if (tab === 'agents')   { renderAgentsManage(); loadAgentReports(); }
     if (tab === 'branding') renderBranding();
     if (tab === 'settings') renderSettings();
   }
@@ -634,6 +682,88 @@
     if (window.PlanGate?.refreshCounts) await PlanGate.refreshCounts();
     renderAgents();
     renderAgentsManage();
+  }
+
+  // ── Per-agent izveštaji ─────────────────────────────────────────────────────
+
+  async function loadAgentReports() {
+    const card = document.getElementById('agent-reports-card');
+    const list = document.getElementById('agent-reports-list');
+    if (!card || !list) return;
+
+    if (!PlanGate.allows('agent_reports')) {
+      card.style.display = 'none';
+      return;
+    }
+    card.style.display = '';
+    list.innerHTML = '<p class="archive-empty">Učitavanje...</p>';
+
+    const { data: rows, error } = await sb
+      .from('agent_reports')
+      .select('agent_id, week_start, generated_at, agents(name)')
+      .eq('agency_id', agencyId)
+      .order('week_start', { ascending: false })
+      .limit(50);
+
+    if (error) {
+      list.innerHTML = `<p class="archive-empty" style="color:#dc2626">Greška: ${error.message}</p>`;
+      return;
+    }
+
+    if (!rows?.length) {
+      list.innerHTML = '<p class="archive-empty">Nema sačuvanih agent izveštaja. Izveštaji se generišu nedeljno automatski.</p>';
+      return;
+    }
+
+    // Grupisati po agentu — prikaži poslednje 3 nedelje po agentu
+    const byAgent = {};
+    for (const r of rows) {
+      const id   = r.agent_id;
+      const name = r.agents?.name || '—';
+      if (!byAgent[id]) byAgent[id] = { name, weeks: [] };
+      if (byAgent[id].weeks.length < 3) byAgent[id].weeks.push(r.week_start);
+    }
+
+    list.innerHTML = Object.entries(byAgent).map(([agentId, { name, weeks }]) => `
+      <div class="report-row" style="flex-direction:column;align-items:flex-start;gap:8px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;width:100%;">
+          <div class="report-date">${escapeHtml(name)}</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            ${weeks.map(w => `
+              <button class="btn-view" onclick="viewAgentReport('${agentId}','${escapeHtml(name)}','${w}', this)">
+                ${fmtDate(w)}
+              </button>
+            `).join('')}
+          </div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  async function viewAgentReport(agentId, agentName, weekStart, btn) {
+    btn.disabled    = true;
+    btn.textContent = '...';
+
+    const { data, error } = await sb
+      .from('agent_reports')
+      .select('html')
+      .eq('agency_id', agencyId)
+      .eq('agent_id', agentId)
+      .eq('week_start', weekStart)
+      .single();
+
+    btn.disabled    = false;
+    btn.textContent = fmtDate(weekStart);
+
+    if (error || !data?.html) {
+      alert('Izveštaj nije pronađen.');
+      return;
+    }
+
+    document.getElementById('modal-title').textContent = `${agentName} — ${fmtDate(weekStart)}`;
+    document.getElementById('report-iframe').srcdoc    = data.html;
+    document.getElementById('report-modal').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
   }
 
   async function addAgent() {
@@ -1079,11 +1209,13 @@
 
   async function renderSettings() {
     document.getElementById('settings-msg').innerHTML = '';
+    document.getElementById('cancel-msg').innerHTML = '';
+    document.getElementById('tracking-msg').innerHTML = '';
     if (!agencyId) return;
 
     const { data, error } = await sb
       .from('agencies')
-      .select('pib, maticni_broj, legal_address, legal_city, billing_email')
+      .select('pib, maticni_broj, legal_address, legal_city, billing_email, plan_id, subscription_status, current_period_end, trial_ends_at, tracks_sale, tracks_rent')
       .eq('id', agencyId)
       .single();
 
@@ -1097,6 +1229,105 @@
     document.getElementById('settings-address').value       = data?.legal_address  || '';
     document.getElementById('settings-city').value          = data?.legal_city     || '';
     document.getElementById('settings-billing-email').value = data?.billing_email  || '';
+
+    document.getElementById('tracks-sale').checked = data?.tracks_sale !== false;  // default true
+    document.getElementById('tracks-rent').checked = data?.tracks_rent === true;   // default false
+
+    renderSubscriptionInfo(data);
+  }
+
+  async function saveTracking(event) {
+    event.preventDefault();
+    if (!agencyId) return;
+
+    const btn = document.getElementById('tracking-save-btn');
+    btn.disabled    = true;
+    btn.textContent = 'Čuvam...';
+    document.getElementById('tracking-msg').innerHTML = '';
+
+    const payload = {
+      tracks_sale: document.getElementById('tracks-sale').checked,
+      tracks_rent: document.getElementById('tracks-rent').checked,
+    };
+
+    const { error } = await sb
+      .from('agencies')
+      .update(payload)
+      .eq('id', agencyId);
+
+    btn.disabled    = false;
+    btn.textContent = 'Sačuvaj preferencije';
+
+    if (error) {
+      showMsg('tracking-msg', `Greška: ${error.message}`, true);
+      return;
+    }
+
+    showMsg('tracking-msg', 'Preferencije su sačuvane. Sledeći izveštaj će koristiti odabrane segmente.');
+  }
+
+  function renderSubscriptionInfo(data) {
+    const infoEl = document.getElementById('subscription-info');
+    const btn = document.getElementById('cancel-sub-btn');
+    const status = data?.subscription_status || 'trial';
+    const plan = data?.plan_id || '—';
+
+    const statusLabels = {
+      trial:    'Probni period',
+      active:   'Aktivna',
+      past_due: 'Plaćanje nije prošlo',
+      canceled: 'Otkazana',
+      expired:  'Istekla',
+    };
+
+    let endDate = '';
+    if (status === 'trial' && data?.trial_ends_at) {
+      endDate = ` (do ${fmtDate(data.trial_ends_at.split('T')[0])})`;
+    } else if (status === 'active' && data?.current_period_end) {
+      endDate = ` (obnova ${fmtDate(data.current_period_end.split('T')[0])})`;
+    }
+
+    infoEl.innerHTML = `
+      <div><strong>Trenutni plan:</strong> ${plan.charAt(0).toUpperCase() + plan.slice(1)}</div>
+      <div><strong>Status:</strong> ${statusLabels[status] || status}${endDate}</div>
+    `;
+
+    if (status === 'canceled' || status === 'expired') {
+      btn.disabled = true;
+      btn.style.opacity = '0.5';
+      btn.style.cursor = 'not-allowed';
+      btn.textContent = 'Pretplata je već otkazana';
+    } else {
+      btn.disabled = false;
+      btn.style.opacity = '1';
+      btn.style.cursor = 'pointer';
+      btn.textContent = 'Otkaži pretplatu';
+    }
+  }
+
+  async function cancelSubscription() {
+    if (!agencyId) return;
+    if (!confirm('Da li ste sigurni da želite da otkažete pretplatu? Nalog će odmah preći na Free plan.')) return;
+
+    const btn = document.getElementById('cancel-sub-btn');
+    btn.disabled = true;
+    btn.textContent = 'Otkazujem...';
+    document.getElementById('cancel-msg').innerHTML = '';
+
+    const { error } = await sb
+      .from('agencies')
+      .update({ subscription_status: 'canceled' })
+      .eq('id', agencyId);
+
+    if (error) {
+      showMsg('cancel-msg', `Greška: ${error.message}`, true);
+      btn.disabled = false;
+      btn.textContent = 'Otkaži pretplatu';
+      return;
+    }
+
+    showMsg('cancel-msg', 'Pretplata je otkazana. Nalog je prešao na Free plan.');
+    renderSettings();
   }
 
   async function saveSettings(event) {

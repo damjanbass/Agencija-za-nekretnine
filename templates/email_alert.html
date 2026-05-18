@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tržišni alert — {{ agency_name }}</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6f9; color: #1a1a2e; line-height: 1.55; }
+
+  .wrapper {
+    max-width: 600px; margin: 32px auto; background: #fff;
+    border-radius: 14px; overflow: hidden;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+  }
+
+  .header {
+    background: linear-gradient(135deg, #1a1a2e 0%, #0f3460 60%, #533483 100%);
+    padding: 28px 32px 24px; color: #fff;
+  }
+  .header h1 { font-size: 20px; font-weight: 700; letter-spacing: -0.2px; margin-bottom: 4px; }
+  .header .agency { font-size: 13px; opacity: 0.75; }
+  .header .date {
+    display: inline-block; font-size: 11px; background: rgba(255,255,255,0.12);
+    padding: 4px 10px; border-radius: 12px; margin-top: 10px;
+  }
+
+  .body { padding: 26px 32px; }
+
+  .lead {
+    font-size: 14px; color: #4b5563; margin-bottom: 20px;
+  }
+  .lead strong { color: #1a1a2e; }
+
+  .alert {
+    border-left: 4px solid #e2e6ea;
+    background: #f8f9fc;
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin-bottom: 12px;
+  }
+  .alert-high     { border-left-color: #dc2626; background: #fff5f5; }
+  .alert-medium   { border-left-color: #f59e0b; background: #fffbeb; }
+  .alert-info     { border-left-color: #2563eb; background: #eff6ff; }
+
+  .alert-type {
+    display: inline-block;
+    font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px;
+    padding: 2px 7px; border-radius: 10px; margin-bottom: 6px;
+  }
+  .type-pricing     { background: #fee2e2; color: #991b1b; }
+  .type-hot_zone    { background: #fef3c7; color: #92400e; }
+  .type-opportunity { background: #dbeafe; color: #1e3a8a; }
+
+  .alert h3 { font-size: 14px; font-weight: 700; color: #1a1a2e; margin-bottom: 6px; }
+  .alert p  { font-size: 12px; color: #4b5563; line-height: 1.55; }
+
+  .cta-wrap { margin-top: 22px; text-align: center; }
+  .cta {
+    display: inline-block; background: #2563eb; color: #fff !important;
+    padding: 12px 28px; border-radius: 9px;
+    font-size: 14px; font-weight: 600; text-decoration: none;
+  }
+
+  .footer {
+    background: #f8f9fc; border-top: 1px solid #eaedf3;
+    padding: 16px 32px; font-size: 11px; color: #9ca3af; text-align: center;
+    line-height: 1.6;
+  }
+  .footer a { color: #6b7280; }
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+  <div class="header">
+    <h1>Tržišni alert</h1>
+    <div class="agency">{{ agency_name }}</div>
+    <span class="date">{{ generated_at }}</span>
+  </div>
+
+  <div class="body">
+    {% if alerts and alerts | length > 0 %}
+    <p class="lead">
+      <strong>{{ alerts | length }} {{ 'alert' if (alerts | length) == 1 else 'alerta' }}</strong>
+      koji zaslužuju vašu pažnju u ponedeljak ujutru.
+    </p>
+
+    {% for a in alerts %}
+    <div class="alert alert-{{ a.severity }}">
+      <span class="alert-type type-{{ a.type }}">
+        {% if a.type == 'pricing' %}cena{% elif a.type == 'hot_zone' %}hot zone{% else %}prilika{% endif %}
+      </span>
+      <h3>{{ a.title }}</h3>
+      <p>{{ a.body }}</p>
+    </div>
+    {% endfor %}
+
+    {% if dashboard_url %}
+    <div class="cta-wrap">
+      <a href="{{ dashboard_url }}" class="cta">Otvori dashboard</a>
+    </div>
+    {% endif %}
+
+    {% else %}
+    <p class="lead">
+      Nema novih alerta danas — tržište je stabilno u vašim segmentima. Naredna provera sutra ujutru.
+    </p>
+    {% endif %}
+  </div>
+
+  <div class="footer">
+    Dnevni tržišni digest · Premium plan<br>
+    {% if support_email %}Za pitanja: <a href="mailto:{{ support_email }}">{{ support_email }}</a><br>{% endif %}
+    Da biste prilagodili ili ugasili alert-e, otvorite Podešavanja u dashboardu.
+  </div>
+
+</div>
+</body>
+</html>

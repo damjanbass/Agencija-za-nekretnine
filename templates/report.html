@@ -336,6 +336,188 @@
   .market-summary-val  { font-size: 18px; font-weight: 700; color: #0f3460; }
   .market-summary-lbl  { font-size: 10px; color: #8892a4; text-transform: uppercase; letter-spacing: 0.6px; margin-top: 2px; }
 
+  /* PRICING RECOMMENDATIONS, OPPORTUNITIES, COMPETITORS (Faza 3) */
+  .rec-section { margin-bottom: 32px; }
+  .rec-card {
+    background: #fff;
+    border: 1px solid #eaedf3;
+    border-left: 4px solid #dc2626;
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+  }
+  .rec-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; gap: 8px; }
+  .rec-title { font-size: 14px; font-weight: 700; color: #1a1a2e; }
+  .rec-conf {
+    font-size: 9px; font-weight: 700; text-transform: uppercase;
+    padding: 2px 7px; border-radius: 10px; letter-spacing: 0.6px;
+  }
+  .rec-conf-high   { background: #dcfce7; color: #166534; }
+  .rec-conf-medium { background: #fef9c3; color: #854d0e; }
+  .rec-conf-low    { background: #f3f4f6; color: #6b7280; }
+  .rec-prices { display: flex; align-items: center; gap: 12px; font-size: 13px; margin-bottom: 6px; }
+  .rec-price-cur { color: #dc2626; font-weight: 700; text-decoration: line-through; }
+  .rec-price-new { color: #16a34a; font-weight: 700; font-size: 15px; }
+  .rec-arrow { color: #9ca3af; }
+  .rec-save { color: #16a34a; font-size: 12px; font-weight: 600; }
+  .rec-rationale { font-size: 12px; color: #4b5563; line-height: 1.5; }
+  .rec-meta { font-size: 11px; color: #8892a4; margin-top: 4px; }
+
+  .opp-section { margin-bottom: 32px; }
+  .opp-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .opp-table thead th {
+    text-align: left; padding: 8px 8px; font-size: 10px;
+    text-transform: uppercase; letter-spacing: 0.6px; color: #8892a4;
+    border-bottom: 2px solid #eaedf3;
+  }
+  .opp-table tbody td { padding: 10px 8px; border-bottom: 1px solid #f0f2f5; vertical-align: top; }
+  .opp-table tbody tr:last-child td { border-bottom: none; }
+  .opp-days {
+    display: inline-block; font-size: 10px; font-weight: 700;
+    background: #fef3c7; color: #92400e; padding: 2px 7px; border-radius: 10px;
+  }
+  .opp-link {
+    font-size: 11px; color: #2563eb; text-decoration: none; word-break: break-all;
+  }
+  .opp-link:hover { text-decoration: underline; }
+
+  .comp-section { margin-bottom: 32px; }
+  .comp-summary { display: flex; gap: 12px; margin-bottom: 14px; font-size: 12px; color: #6b7280; }
+  .comp-summary strong { color: #1a1a2e; font-weight: 700; }
+  .comp-top-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 4px; border-bottom: 1px solid #f0f2f5; font-size: 13px;
+  }
+  .comp-top-row:last-child { border-bottom: none; }
+  .comp-rank { font-size: 10px; color: #8892a4; font-weight: 700; width: 24px; }
+  .comp-name { flex: 1; color: #1a1a2e; font-weight: 500; }
+  .comp-count { color: #1a1a2e; font-weight: 700; }
+  .comp-share { color: #8892a4; font-size: 11px; }
+  .comp-bar-track {
+    flex: 1; background: #eaedf3; height: 10px; border-radius: 5px;
+    overflow: hidden; margin-left: 10px; max-width: 140px;
+  }
+  .comp-bar-fill { background: linear-gradient(90deg, #0f3460, #533483); height: 100%; }
+  .comp-dist {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 14px;
+  }
+  .comp-dist-card {
+    background: #f8f9fc; border: 1px solid #eaedf3; border-radius: 8px;
+    padding: 10px; text-align: center;
+  }
+  .comp-dist-val { font-size: 18px; font-weight: 700; color: #1a1a2e; }
+  .comp-dist-lbl { font-size: 10px; color: #8892a4; text-transform: uppercase; letter-spacing: 0.6px; margin-top: 3px; }
+
+  /* TREND, DOM, HOT ZONES (Faza 2) */
+  .trend-section { margin-bottom: 24px; }
+  .trend-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 12px;
+  }
+  .trend-card, .dom-card {
+    background: #f8f9fc;
+    border: 1px solid #eaedf3;
+    border-radius: 12px;
+    padding: 16px 18px;
+  }
+  .trend-head {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin-bottom: 10px;
+  }
+  .trend-title { font-size: 11px; font-weight: 700; color: #8892a4; text-transform: uppercase; letter-spacing: 0.6px; }
+  .trend-latest { font-size: 22px; font-weight: 700; color: #0f3460; }
+  .trend-latest-lbl { font-size: 11px; color: #8892a4; }
+  .trend-badges { display: flex; gap: 8px; margin-top: 4px; }
+  .trend-badge {
+    font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 10px;
+  }
+  .badge-pos { background: #dcfce7; color: #166534; }
+  .badge-neg { background: #fee2e2; color: #991b1b; }
+  .badge-neu { background: #f3f4f6; color: #6b7280; }
+  .trend-chart-wrap { margin-top: 8px; }
+  .trend-chart-wrap svg { width: 100%; height: 60px; display: block; }
+  .trend-chart-wrap .trend-line { fill: none; stroke: #0f3460; stroke-width: 2; }
+  .trend-chart-wrap .trend-area { fill: rgba(15, 52, 96, 0.10); stroke: none; }
+  .trend-chart-wrap .trend-dot { fill: #0f3460; }
+
+  .dom-value { font-size: 30px; font-weight: 700; color: #0f3460; line-height: 1; }
+  .dom-unit  { font-size: 12px; color: #6b7280; margin-top: 4px; }
+  .dom-range { font-size: 11px; color: #8892a4; margin-top: 10px; padding-top: 8px; border-top: 1px solid #eaedf3; }
+
+  /* HOT ZONES */
+  .hot-section { margin-bottom: 32px; }
+  .hot-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+  .hot-card {
+    background: linear-gradient(135deg, #fff7ed 0%, #fed7aa 100%);
+    border: 1px solid #fbbf24;
+    border-radius: 10px;
+    padding: 12px 14px;
+  }
+  .hot-rank { font-size: 10px; font-weight: 700; color: #92400e; text-transform: uppercase; letter-spacing: 0.6px; }
+  .hot-name { font-size: 15px; font-weight: 700; color: #1a1a2e; margin: 2px 0 6px; }
+  .hot-stat { display: flex; justify-content: space-between; font-size: 11px; color: #6b7280; margin-bottom: 2px; }
+  .hot-stat strong { color: #b45309; font-weight: 700; }
+
+  @media (max-width: 520px) {
+    .trend-grid { grid-template-columns: 1fr; }
+    .hot-grid { grid-template-columns: 1fr; }
+  }
+
+  /* PRICING BENCHMARK — vaše cene vs tržište */
+  .pricing-bench-section { margin-bottom: 32px; }
+  .pb-summary {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .pb-summary-card {
+    background: #f8f9fc;
+    border: 1px solid #eaedf3;
+    border-radius: 10px;
+    padding: 12px 14px;
+    text-align: center;
+  }
+  .pb-summary-val { font-size: 22px; font-weight: 700; line-height: 1; }
+  .pb-summary-lbl { font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #8892a4; margin-top: 6px; }
+  .pb-over  .pb-summary-val { color: #dc2626; }
+  .pb-fair  .pb-summary-val { color: #16a34a; }
+  .pb-under .pb-summary-val { color: #2563eb; }
+
+  .pb-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .pb-table thead th {
+    text-align: left; padding: 8px 8px; font-size: 10px;
+    text-transform: uppercase; letter-spacing: 0.6px; color: #8892a4;
+    border-bottom: 2px solid #eaedf3;
+  }
+  .pb-table tbody td { padding: 10px 8px; border-bottom: 1px solid #f0f2f5; vertical-align: top; }
+  .pb-table tbody tr:last-child td { border-bottom: none; }
+  .pb-table .pb-title { font-weight: 600; color: #1a1a2e; }
+  .pb-table .pb-meta { font-size: 11px; color: #6b7280; margin-top: 2px; }
+  .pb-table .pb-num  { font-weight: 600; color: #1a1a2e; white-space: nowrap; }
+  .pb-table .pb-delta-over  { color: #dc2626; font-weight: 700; }
+  .pb-table .pb-delta-under { color: #2563eb; font-weight: 700; }
+  .pb-table .pb-delta-fair  { color: #16a34a; font-weight: 600; }
+  .pb-flag {
+    display: inline-block; font-size: 10px; font-weight: 700;
+    padding: 2px 7px; border-radius: 10px; margin-left: 6px;
+  }
+  .pb-flag-over  { background: #fee2e2; color: #991b1b; }
+  .pb-flag-under { background: #dbeafe; color: #1e3a8a; }
+  .pb-row-over   { background: #fff5f5; }
+  .pb-row-under  { background: #f0f5ff; }
+  .pb-empty {
+    background: #f8f9fc; border: 1px dashed #d1d5db;
+    border-radius: 10px; padding: 20px; text-align: center;
+    color: #6b7280; font-size: 12px;
+  }
+  .pb-scope-city { color: #8892a4; font-size: 10px; font-style: italic; }
+
   /* BENCHMARK */
   .benchmark-section { margin-bottom: 32px; }
   .bench-row {
@@ -549,7 +731,10 @@
           </div>
           {% if s.top_neighborhoods %}
           <div class="market-neighborhoods">
-            🏙 {{ s.top_neighborhoods | join(" · ") }}
+            🏙
+            {% for n in s.top_neighborhoods %}
+              {% if n is mapping %}{{ n.name }}{% else %}{{ n }}{% endif %}{% if not loop.last %} · {% endif %}
+            {% endfor %}
           </div>
           {% endif %}
         </div>
@@ -562,6 +747,298 @@
       <div style="font-weight:700; color:#1a1a2e; margin-bottom:6px;">Analiza tržišta nije dostupna</div>
       <div style="font-size:13px; color:#6b7280;">
         Praćenje Halo oglasi, 4zida, Nekretnine.rs i CityExpert dostupno od <strong>Basic</strong> plana (150€/mes).
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- TREND CENA + DOM (Faza 2) -->
+    {% if pricing_benchmark_available and (market_trend or dom_stats) %}
+    <div class="trend-section">
+      <div class="section-title">Trend tržišta i Days-on-Market</div>
+      <div class="trend-grid">
+
+        <div class="trend-card">
+          <div class="trend-head">
+            <span class="trend-title">Medijana €/m² (BG)</span>
+            <div style="text-align:right;">
+              <div class="trend-latest">{{ market_trend.latest_eur_m2 if market_trend else '—' }} €</div>
+              <div class="trend-latest-lbl">trenutna medijana</div>
+            </div>
+          </div>
+          {% if market_trend %}
+            <div class="trend-badges">
+              {% if market_trend.mom_pct is not none %}
+                <span class="trend-badge {% if market_trend.mom_pct > 0.5 %}badge-pos{% elif market_trend.mom_pct < -0.5 %}badge-neg{% else %}badge-neu{% endif %}">
+                  MoM {{ '+' if market_trend.mom_pct > 0 else '' }}{{ market_trend.mom_pct }}%
+                </span>
+              {% endif %}
+              {% if market_trend.yoy_pct is not none %}
+                <span class="trend-badge {% if market_trend.yoy_pct > 0.5 %}badge-pos{% elif market_trend.yoy_pct < -0.5 %}badge-neg{% else %}badge-neu{% endif %}">
+                  YoY {{ '+' if market_trend.yoy_pct > 0 else '' }}{{ market_trend.yoy_pct }}%
+                </span>
+              {% endif %}
+            </div>
+            {% if trend_chart_points %}
+            <div class="trend-chart-wrap">
+              <svg viewBox="0 0 200 60" preserveAspectRatio="none">
+                <polygon class="trend-area" points="0,60 {% for p in trend_chart_points %}{{ p.x }},{{ p.y }} {% endfor %}200,60" />
+                <polyline class="trend-line" points="{% for p in trend_chart_points %}{{ p.x }},{{ p.y }} {% endfor %}" />
+                <circle class="trend-dot" cx="{{ trend_chart_points[-1].x }}" cy="{{ trend_chart_points[-1].y }}" r="2.5" />
+              </svg>
+            </div>
+            {% endif %}
+          {% else %}
+            <div style="font-size:12px;color:#8892a4;margin-top:4px;">
+              Trend će biti dostupan nakon 14 dana praćenja.
+            </div>
+          {% endif %}
+        </div>
+
+        <div class="dom-card">
+          <div class="trend-title">Days-on-Market</div>
+          {% if dom_stats %}
+            <div class="dom-value">{{ dom_stats.median_dom_days }}</div>
+            <div class="dom-unit">dana medijana (prodato)</div>
+            <div class="dom-range">
+              P25–P75: {{ dom_stats.dom_p25 }}–{{ dom_stats.dom_p75 }} dana<br>
+              Uzorak: {{ dom_stats.sold_sample_size }} prodatih
+            </div>
+          {% else %}
+            <div style="font-size:12px;color:#8892a4;margin-top:8px;">
+              DOM se aktivira nakon 14 dana praćenja (treba istorija za detekciju prodatih).
+            </div>
+          {% endif %}
+        </div>
+
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- HOT ZONES (Faza 2) -->
+    {% if pricing_benchmark_available and hot_zones and hot_zones | length > 0 %}
+    <div class="hot-section">
+      <div class="section-title">Hot zones — gde se kreće tržište</div>
+      <div class="hot-grid">
+        {% for h in hot_zones[:3] %}
+        <div class="hot-card">
+          <div class="hot-rank">#{{ loop.index }} hot</div>
+          <div class="hot-name">{{ h.neighborhood }}</div>
+          <div class="hot-stat"><span>Medijana</span><strong>{{ h.median_eur_m2 }} €/m²</strong></div>
+          <div class="hot-stat"><span>Promena (15d)</span><strong>{{ '+' if h.price_change_pct > 0 else '' }}{{ h.price_change_pct }}%</strong></div>
+          <div class="hot-stat"><span>Novi (7d)</span><strong>+{{ h.new_this_week }}</strong></div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- VAŠE CENE vs TRŽIŠTE (Pricing benchmark — Faza 1) -->
+    {% if pricing_benchmark_available %}
+    <div class="pricing-bench-section">
+      <div class="section-title">Vaše cene vs tržište</div>
+
+      {% if pricing_benchmark and pricing_benchmark | length > 0 %}
+        {% set over_count  = pricing_benchmark | selectattr('overpriced_flag') | list | length %}
+        {% set under_count = pricing_benchmark | selectattr('underpriced_flag') | list | length %}
+        {% set fair_count  = (pricing_benchmark | length) - over_count - under_count %}
+
+        <div class="pb-summary">
+          <div class="pb-summary-card pb-over">
+            <div class="pb-summary-val">{{ over_count }}</div>
+            <div class="pb-summary-lbl">Iznad tržišta (&gt; +15%)</div>
+          </div>
+          <div class="pb-summary-card pb-fair">
+            <div class="pb-summary-val">{{ fair_count }}</div>
+            <div class="pb-summary-lbl">U opsegu tržišta</div>
+          </div>
+          <div class="pb-summary-card pb-under">
+            <div class="pb-summary-val">{{ under_count }}</div>
+            <div class="pb-summary-lbl">Ispod tržišta (&lt; -10%)</div>
+          </div>
+        </div>
+
+        <table class="pb-table">
+          <thead>
+            <tr>
+              <th>Oglas</th>
+              <th style="text-align:right">Vaše €/m²</th>
+              <th style="text-align:right">Tržište (medijana)</th>
+              <th style="text-align:right">Razlika</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in pricing_benchmark %}
+            <tr class="{% if row.overpriced_flag %}pb-row-over{% elif row.underpriced_flag %}pb-row-under{% endif %}">
+              <td>
+                <div class="pb-title">
+                  {{ row.title }}
+                  {% if row.overpriced_flag %}<span class="pb-flag pb-flag-over">iznad</span>{% endif %}
+                  {% if row.underpriced_flag %}<span class="pb-flag pb-flag-under">ispod</span>{% endif %}
+                </div>
+                <div class="pb-meta">
+                  {% if row.ref_number %}{{ row.ref_number }} · {% endif %}
+                  {{ row.neighborhood or '—' }} · {{ row.area_m2 }}m²
+                  {% if row.rooms %} · {{ row.rooms }} soba{% endif %}
+                  · {% if row.transaction == 'sale' %}prodaja{% else %}zakup{% endif %}
+                </div>
+              </td>
+              <td class="pb-num" style="text-align:right">{{ row.own_eur_m2 }} €</td>
+              <td class="pb-num" style="text-align:right">
+                {{ row.market_median_eur_m2 }} €
+                <div class="pb-scope-city">
+                  {% if row.scope == 'city' %}grad (uzorak: {{ row.sample_size }}){% else %}kvart (uzorak: {{ row.sample_size }}){% endif %}
+                </div>
+              </td>
+              <td style="text-align:right">
+                <span class="{% if row.overpriced_flag %}pb-delta-over{% elif row.underpriced_flag %}pb-delta-under{% else %}pb-delta-fair{% endif %}">
+                  {{ '+' if row.delta_pct > 0 else '' }}{{ row.delta_pct }}%
+                </span>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <div class="pb-empty">
+          Još uvek nemamo dovoljno tržišnih podataka za poređenje vaših oglasa.
+          Sistem skuplja podatke svakodnevno — pricing benchmark se aktivira nakon 7–14 dana praćenja.
+        </div>
+      {% endif %}
+    </div>
+    {% elif plan.allows_market() %}
+    <div class="market-upgrade">
+      <div style="font-size:28px; margin-bottom:10px;">💰</div>
+      <div style="font-weight:700; color:#1a1a2e; margin-bottom:6px;">Pricing Benchmark — koje vaše oglase precenjujete?</div>
+      <div style="font-size:13px; color:#6b7280;">
+        Poređenje cena vaših oglasa sa medijanom tržišta po kvartu i tipu nekretnine dostupno je od <strong>Pro</strong> plana.
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- PRICING RECOMMENDATIONS (Faza 3 — Premium) -->
+    {% if alerts_available and pricing_recommendations and pricing_recommendations | length > 0 %}
+    <div class="rec-section">
+      <div class="section-title">Preporuke korekcije cena</div>
+      {% for r in pricing_recommendations %}
+      <div class="rec-card">
+        <div class="rec-head">
+          <div class="rec-title">
+            {{ r.title or r.ref_number or r.listing_id }}
+            <span style="font-weight:400;color:#8892a4;font-size:12px;">
+              · {{ r.neighborhood or '—' }} · {{ r.area_m2 }}m²
+            </span>
+          </div>
+          <span class="rec-conf rec-conf-{{ r.confidence }}">{{ r.confidence }} confidence</span>
+        </div>
+        <div class="rec-prices">
+          <span class="rec-price-cur">{{ '{:,}'.format(r.own_price_eur).replace(',', '.') }}€</span>
+          <span class="rec-arrow">→</span>
+          <span class="rec-price-new">{{ '{:,}'.format(r.target_price_eur).replace(',', '.') }}€</span>
+          <span class="rec-save">ušteda kupcu {{ '{:,}'.format(r.delta_amount_eur).replace(',', '.') }}€ (−{{ r.delta_pct }}%)</span>
+        </div>
+        <div class="rec-rationale">{{ r.rationale }}</div>
+        <div class="rec-meta">Uzorak segmenta: {{ r.sample_size }} oglasa{% if r.scope == 'city' %} (grad){% else %} (kvart){% endif %}</div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- LISTING OPPORTUNITIES (Faza 3 — Premium) -->
+    {% if alerts_available and listing_opportunities and listing_opportunities | length > 0 %}
+    <div class="opp-section">
+      <div class="section-title">Listing opportunities — kandidati za ekskluzivu</div>
+      <p style="font-size:12px;color:#6b7280;margin-bottom:10px;">
+        Oglasi koji stoje na tržištu duže od 90 dana — vlasnici su verovatno otvoreni za korekciju cene ili prelazak na ekskluzivni ugovor.
+      </p>
+      <table class="opp-table">
+        <thead>
+          <tr>
+            <th>Oglas</th>
+            <th style="text-align:right">Cena</th>
+            <th style="text-align:right">Dana</th>
+            <th>Izvor</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for o in listing_opportunities %}
+          <tr>
+            <td>
+              <div style="font-weight:600;color:#1a1a2e;">
+                {{ o.title or 'Stan' }}
+              </div>
+              <div style="color:#6b7280;font-size:11px;margin-top:2px;">
+                {{ o.neighborhood or '—' }}
+                {% if o.area_m2 %} · {{ o.area_m2 }}m²{% endif %}
+                {% if o.rooms %} · {{ o.rooms }} soba{% endif %}
+                {% if o.publisher_type == 'private' %} · vlasnik{% elif o.publisher %} · {{ o.publisher }}{% endif %}
+              </div>
+              {% if o.url %}<a href="{{ o.url }}" class="opp-link" target="_blank">{{ o.url }}</a>{% endif %}
+            </td>
+            <td style="text-align:right;font-weight:700;color:#1a1a2e;white-space:nowrap;">
+              {{ '{:,}'.format(o.price_eur).replace(',', '.') if o.price_eur else '—' }}€
+              {% if o.price_eur_m2 %}<div style="font-weight:400;color:#8892a4;font-size:10px;">{{ o.price_eur_m2 | round | int }} €/m²</div>{% endif %}
+            </td>
+            <td style="text-align:right"><span class="opp-days">{{ o.days_listed }}d</span></td>
+            <td style="font-size:11px;color:#6b7280;">{{ o.site }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endif %}
+
+    <!-- COMPETITOR INVENTORY (Faza 3 — Premium, agregirano javno) -->
+    {% if alerts_available and competitor_inventory and competitor_inventory.total_listings > 0 %}
+    <div class="comp-section">
+      <div class="section-title">Konkurencija na tržištu (agregirano)</div>
+      <div class="comp-summary">
+        Praćeno <strong>{{ competitor_inventory.total_agencies }}</strong> agencija sa
+        ukupno <strong>{{ '{:,}'.format(competitor_inventory.total_listings).replace(',', '.') }}</strong> aktivnih oglasa.
+      </div>
+
+      {% if competitor_inventory.top and competitor_inventory.top | length > 0 %}
+        {% set max_count = competitor_inventory.top[0].listing_count %}
+        {% for c in competitor_inventory.top %}
+        <div class="comp-top-row">
+          <div class="comp-rank">#{{ loop.index }}</div>
+          <div class="comp-name">{{ c.publisher }}</div>
+          <div class="comp-bar-track"><div class="comp-bar-fill" style="width: {{ (c.listing_count / max_count * 100) | int }}%;"></div></div>
+          <div class="comp-count">{{ c.listing_count }}</div>
+          <div class="comp-share">{{ c.market_share_pct }}%</div>
+        </div>
+        {% endfor %}
+      {% endif %}
+
+      {% if competitor_inventory.distribution %}
+      <div class="comp-dist">
+        <div class="comp-dist-card">
+          <div class="comp-dist-val">{{ competitor_inventory.distribution['1-5'] }}</div>
+          <div class="comp-dist-lbl">1–5 oglasa</div>
+        </div>
+        <div class="comp-dist-card">
+          <div class="comp-dist-val">{{ competitor_inventory.distribution['6-20'] }}</div>
+          <div class="comp-dist-lbl">6–20 oglasa</div>
+        </div>
+        <div class="comp-dist-card">
+          <div class="comp-dist-val">{{ competitor_inventory.distribution['21-50'] }}</div>
+          <div class="comp-dist-lbl">21–50 oglasa</div>
+        </div>
+        <div class="comp-dist-card">
+          <div class="comp-dist-val">{{ competitor_inventory.distribution['50+'] }}</div>
+          <div class="comp-dist-lbl">50+ oglasa</div>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Premium upgrade banner (samo za Pro koji nemaju alerts) -->
+    {% if pricing_benchmark_available and not alerts_available %}
+    <div class="market-upgrade">
+      <div style="font-size:28px; margin-bottom:10px;">🚀</div>
+      <div style="font-weight:700; color:#1a1a2e; margin-bottom:6px;">Intelligence Pack — Premium</div>
+      <div style="font-size:13px; color:#6b7280;">
+        Pricing recommendations sa target cenama, lista stuck oglasa za prijem, agregirani competitor pregled i daily email alerti dostupni su od <strong>Premium</strong> plana.
       </div>
     </div>
     {% endif %}

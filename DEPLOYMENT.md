@@ -162,7 +162,8 @@ Posle dodavanja varijabli pokreni novi deploy: `git commit --allow-empty -m "tri
 4. **Kreiraj subscription plans** (Subscriptions → Products → Create Product, jedan po planu):
    - **Basic**: Trial 30 dana @ 0€ → mesečno @ 29€ EUR
    - **Pro**: Trial 30 dana @ 0€ → mesečno @ 79€ EUR
-5. Kopiraj **plan ID** za svaki (počinje sa `P-`) → uneti u `web/checkout.html` u `PAYPAL_PLAN_IDS` konstantu.
+   - **Premium**: Trial 30 dana @ 0€ → mesečno @ 149€ EUR
+5. Kopiraj **plan ID** za svaki (počinje sa `P-`) → uneti u `web/checkout.html` u `PAYPAL_PLAN_IDS` konstantu (basic, pro, premium).
 6. U istoj fajli zameni `PAYPAL_CLIENT_ID = "sb"` sa tvojim live client ID-jem.
 
 ### 10c. PayPal webhook konfiguracija

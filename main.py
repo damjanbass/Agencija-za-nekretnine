@@ -14,7 +14,12 @@ from pathlib import Path
 from jinja2 import Environment, FileSystemLoader
 
 import config
-from ai.analyze import generate_analysis, generate_analysis_fallback
+from ai.analyze import (
+    generate_agent_analysis,
+    generate_agent_analysis_fallback,
+    generate_analysis,
+    generate_analysis_fallback,
+)
 from mailer.sender import send_report_email
 from plans import get_plan
 from scrapers.market_data import fetch_market, market_summary
@@ -23,9 +28,38 @@ if sys.platform == "win32":
     sys.stdout.reconfigure(encoding="utf-8")
 
 
+def _build_trend_chart_points(series: list[dict], width: int = 200, height: int = 60,
+                              y_field: str = "median_eur_m2") -> list[dict]:
+    """Normalizuje series u SVG (x, y) tačke za polyline. y_field bira polje iz svake tačke."""
+    if not series or len(series) < 2:
+        return []
+    vals = [s[y_field] for s in series if s.get(y_field) is not None]
+    if len(vals) < 2:
+        return []
+    vmin, vmax = min(vals), max(vals)
+    span = max(vmax - vmin, 1)
+    n = len(series)
+    pad_top, pad_bot = 5, 5
+    inner_h = height - pad_top - pad_bot
+    points = []
+    for i, s in enumerate(series):
+        x = round(i * (width / (n - 1)), 2)
+        v = s.get(y_field) if s.get(y_field) is not None else vmin
+        y = round(pad_top + (1 - (v - vmin) / span) * inner_h, 2)
+        points.append({"x": x, "y": y})
+    return points
+
+
 def prepare_template_vars(data: dict, analysis: dict | None,
                            snapshots: list[dict], city: str,
-                           benchmark: dict | None = None) -> dict:
+                           benchmark: dict | None = None,
+                           pricing_benchmark: list[dict] | None = None,
+                           market_trend: dict | None = None,
+                           dom_stats: dict | None = None,
+                           hot_zones: list[dict] | None = None,
+                           pricing_recommendations: list[dict] | None = None,
+                           listing_opportunities: list[dict] | None = None,
+                           competitor_inventory: dict | None = None) -> dict:
     inquiries_change = data["inquiries"] - data["prev_inquiries"]
     safe_prev        = data["prev_inquiries"] or 1
     inquiries_pct    = round((inquiries_change / safe_prev) * 100)
@@ -51,6 +85,16 @@ def prepare_template_vars(data: dict, analysis: dict | None,
         "revenue_pct":          revenue_pct,
         "max_source_count":     max_source,
         "benchmark":            benchmark,
+        "pricing_benchmark":              pricing_benchmark or [],
+        "pricing_benchmark_available":    plan.allows_pricing_benchmark(),
+        "market_trend":                   market_trend,
+        "trend_chart_points":             _build_trend_chart_points(market_trend["series"]) if market_trend else [],
+        "dom_stats":                      dom_stats,
+        "hot_zones":                      hot_zones or [],
+        "pricing_recommendations":        pricing_recommendations or [],
+        "listing_opportunities":          listing_opportunities or [],
+        "competitor_inventory":           competitor_inventory or {},
+        "alerts_available":               plan.allows_alerts(),
     }
 
 
@@ -111,11 +155,93 @@ def run(preview: bool = False, use_mock: bool = False, city: str = "beograd"):
             else:
                 print("    [Benchmark] Nema dovoljno podataka za poređenje.")
 
+        # Pricing benchmark (Pro+) — vaše cene vs medijana tržišta po segmentu
+        pricing_benchmark: list[dict] = []
+        market_trend: dict | None = None
+        dom_stats: dict | None = None
+        hot_zones: list[dict] = []
+        if plan.allows_pricing_benchmark():
+            if use_mock or not config.SUPABASE_KEY:
+                from data.mock_data import (
+                    get_mock_pricing_benchmark, get_mock_market_trend,
+                    get_mock_dom_stats, get_mock_hot_zones,
+                )
+                pricing_benchmark = get_mock_pricing_benchmark()
+                market_trend = get_mock_market_trend()
+                dom_stats    = get_mock_dom_stats()
+                hot_zones    = get_mock_hot_zones()
+                print(f"    [PricingBench] Mock režim — "
+                      f"{len(pricing_benchmark)} oglasa, trend MoM {market_trend['mom_pct']}%, "
+                      f"DOM {dom_stats['median_dom_days']}d, {len(hot_zones)} hot zone.")
+            else:
+                from data.supabase_client import (
+                    compute_pricing_benchmark, get_market_trend,
+                    compute_dom_stats, compute_hot_zones,
+                )
+                pricing_benchmark = compute_pricing_benchmark(agency_id)
+                # Faza 2 trend/DOM/hot zones — gradski nivo (sale; rent dodajemo kad agencija aktivira)
+                market_trend = get_market_trend(transaction_type="sale", city=city)
+                dom_stats    = compute_dom_stats(transaction_type="sale", city=city)
+                hot_zones    = compute_hot_zones(transaction_type="sale", city=city)
+                over = sum(1 for r in pricing_benchmark if r.get("overpriced_flag"))
+                under = sum(1 for r in pricing_benchmark if r.get("underpriced_flag"))
+                trend_str = f"MoM {market_trend['mom_pct']}%" if market_trend else "trend —"
+                dom_str   = f"DOM {dom_stats['median_dom_days']}d" if dom_stats else "DOM —"
+                print(f"    [PricingBench] {len(pricing_benchmark)} oglasa "
+                      f"({over} iznad, {under} ispod), {trend_str}, {dom_str}, "
+                      f"{len(hot_zones)} hot zone.")
+        else:
+            print(f"    [PricingBench] Nije dostupno na {plan.name} planu.")
+
+        # Faza 3 Intelligence Pack (Premium only)
+        pricing_recommendations: list[dict] = []
+        listing_opportunities:   list[dict] = []
+        competitor_inventory:    dict       = {}
+        if plan.allows_alerts():
+            if use_mock or not config.SUPABASE_KEY:
+                from data.mock_data import (
+                    get_mock_pricing_recommendations,
+                    get_mock_listing_opportunities,
+                    get_mock_competitor_inventory,
+                )
+                pricing_recommendations = get_mock_pricing_recommendations()
+                listing_opportunities   = get_mock_listing_opportunities()
+                competitor_inventory    = get_mock_competitor_inventory()
+                print(f"    [Intel] Mock režim — "
+                      f"{len(pricing_recommendations)} recs, "
+                      f"{len(listing_opportunities)} opps, "
+                      f"{competitor_inventory.get('total_agencies', 0)} agencija.")
+            else:
+                from data.supabase_client import (
+                    compute_pricing_recommendations,
+                    compute_listing_opportunities,
+                    compute_competitor_inventory,
+                )
+                pricing_recommendations = compute_pricing_recommendations(agency_id)
+                listing_opportunities   = compute_listing_opportunities(city=city)
+                competitor_inventory    = compute_competitor_inventory(city=city)
+                print(f"    [Intel] {len(pricing_recommendations)} recs, "
+                      f"{len(listing_opportunities)} opps, "
+                      f"{competitor_inventory.get('total_agencies', 0)} agencija.")
+        elif plan.allows_pricing_benchmark():
+            print(f"    [Intel] Nije dostupno na {plan.name} planu (Premium only).")
+
         # AI analiza
         market_for_ai = snapshots if snapshots else None
+        ai_kwargs = dict(
+            market=market_for_ai,
+            pricing_benchmark=pricing_benchmark or None,
+            dom_stats=dom_stats,
+            trend=market_trend,
+            hot_zones=hot_zones or None,
+        )
         if plan.allows_ai() and config.ANTHROPIC_API_KEY:
             print("    [AI] Pozivam Claude...")
-            analysis = generate_analysis(data, market=market_for_ai)
+            try:
+                analysis = generate_analysis(data, **ai_kwargs)
+            except Exception as e:
+                print(f"    [AI] Claude poziv neuspešan ({type(e).__name__}) — fallback.")
+                analysis = generate_analysis_fallback(data, market=market_for_ai)
         elif plan.allows_ai():
             print("    [AI] Nema ANTHROPIC_API_KEY — fallback analiza.")
             analysis = generate_analysis_fallback(data, market=market_for_ai)
@@ -130,7 +256,16 @@ def run(preview: bool = False, use_mock: bool = False, city: str = "beograd"):
             print(f"    [~] Prognoza: {analysis.get('prognoza', '—')}")
 
         # Render
-        html = render_report(prepare_template_vars(data, analysis, snapshots, city, benchmark))
+        html = render_report(prepare_template_vars(
+            data, analysis, snapshots, city, benchmark,
+            pricing_benchmark=pricing_benchmark,
+            market_trend=market_trend,
+            dom_stats=dom_stats,
+            hot_zones=hot_zones,
+            pricing_recommendations=pricing_recommendations,
+            listing_opportunities=listing_opportunities,
+            competitor_inventory=competitor_inventory,
+        ))
 
         slug = re.sub(r"[^\w]", "_", data["agency_name"].lower()).strip("_")
         out  = Path(__file__).parent / f"izvestaj_{slug}.html"
@@ -273,10 +408,54 @@ def run_monthly(preview: bool = False, use_mock: bool = False):
     print("\n[✓] Mesečni izveštaji gotovi.")
 
 
-def run_agent_reports(preview: bool = False, use_mock: bool = False):
+def _gather_agent_extras(agency_id: str, agent: dict, plan, use_mock: bool) -> dict:
+    """Vraća per-agent dodatne podatke (history, listings, hot_zones, pricing_recs) zavisno od plana."""
+    extras = {
+        "history":             [],
+        "listings_benchmark":  [],
+        "hot_zones_for_agent": [],
+        "pricing_recommendations": [],
+    }
+
+    if plan.id not in ("pro", "premium"):
+        return extras
+
+    weeks = 26 if plan.id == "pro" else 52
+    agent_id = agent.get("id")
+
+    if use_mock or not config.SUPABASE_KEY or not agent_id:
+        from data.mock_data import (
+            get_mock_agent_history,
+            get_mock_agent_listings_benchmark,
+            get_mock_agent_hot_zones,
+            get_mock_agent_pricing_recommendations,
+        )
+        extras["history"]             = get_mock_agent_history(agent_id or "", weeks=weeks)
+        extras["listings_benchmark"]  = get_mock_agent_listings_benchmark(agent_id or "")
+        extras["hot_zones_for_agent"] = get_mock_agent_hot_zones(agent_id or "")
+        if plan.id == "premium":
+            extras["pricing_recommendations"] = get_mock_agent_pricing_recommendations(agent_id or "")
+        return extras
+
+    from data.supabase_client import (
+        get_agent_history,
+        get_agent_listings_with_benchmark,
+        get_agent_hot_zones,
+        compute_agent_pricing_recommendations,
+    )
+    extras["history"]             = get_agent_history(agent_id, weeks=weeks)
+    extras["listings_benchmark"]  = get_agent_listings_with_benchmark(agency_id, agent_id)
+    extras["hot_zones_for_agent"] = get_agent_hot_zones(agency_id, agent_id)
+    if plan.id == "premium":
+        extras["pricing_recommendations"] = compute_agent_pricing_recommendations(agency_id, agent_id)
+    return extras
+
+
+def run_agent_reports(preview: bool = False, use_mock: bool = False, plan_override: str | None = None):
     if use_mock or not config.SUPABASE_KEY:
         from data.mock_data import get_mock_report_data
-        clients_data = [("mock", get_mock_report_data())]
+        mock_plan = plan_override or "pro"
+        clients_data = [("mock", get_mock_report_data(plan_id=mock_plan))]
     else:
         from data.supabase_client import get_all_active_clients, get_report_data
         clients_raw  = get_all_active_clients()
@@ -294,16 +473,54 @@ def run_agent_reports(preview: bool = False, use_mock: bool = False):
         team_contracts = sum(a["contracts"] for a in agents)
         team_conv      = round(team_contracts / max(team_inquiries, 1) * 100, 1)
 
-        print(f"\n[→] Agent izveštaji: {data['agency_name']}  ({data['week_start']} – {data['week_end']})")
+        print(f"\n[→] Agent izveštaji: {data['agency_name']}  ({data['week_start']} – {data['week_end']})  [{plan.name}]")
+
+        # ISO week_start za Supabase (DD.MM.YYYY → YYYY-MM-DD)
+        try:
+            from datetime import datetime
+            week_start_iso = datetime.strptime(data["week_start"], "%d.%m.%Y").strftime("%Y-%m-%d")
+        except Exception:
+            week_start_iso = data["week_start"]
 
         for rank, agent in enumerate(agents_sorted, start=1):
-            if not agent.get("email"):
-                print(f"    [skip] {agent['name']} — nema email adrese")
-                continue
-
+            agent_id   = agent.get("id")
             agent_conv = round(agent["contracts"] / max(agent["inquiries"], 1) * 100, 1)
-            vars = {
+
+            extras = _gather_agent_extras(agency_id, agent, plan, use_mock=use_mock)
+
+            ai_analysis = None
+            if plan.id == "premium":
+                try:
+                    if config.ANTHROPIC_API_KEY:
+                        ai_analysis = generate_agent_analysis(
+                            agent=agent,
+                            team_conversion=team_conv,
+                            team_size=len(agents_sorted),
+                            agent_rank=rank,
+                            agent_listings_benchmark=extras["listings_benchmark"],
+                            agent_pricing_recs=extras["pricing_recommendations"],
+                            history=extras["history"],
+                        )
+                    else:
+                        raise RuntimeError("nema ANTHROPIC_API_KEY")
+                except Exception as e:
+                    print(f"    [warn] AI analiza pala za {agent['name']}: {e} — koristim fallback")
+                    ai_analysis = generate_agent_analysis_fallback(
+                        agent=agent,
+                        team_conversion=team_conv,
+                        team_size=len(agents_sorted),
+                        agent_rank=rank,
+                        agent_listings_benchmark=extras["listings_benchmark"],
+                        agent_pricing_recs=extras["pricing_recommendations"],
+                        history=extras["history"],
+                    )
+
+            history      = extras["history"]
+            trend_points = _build_trend_chart_points(history, y_field="conversion") if len(history) >= 4 else []
+
+            report_vars = {
                 **data,
+                "plan":             plan,
                 "agent_name":       agent["name"],
                 "agent_conversion": agent_conv,
                 "agent_inquiries":  agent["inquiries"],
@@ -312,24 +529,62 @@ def run_agent_reports(preview: bool = False, use_mock: bool = False):
                 "team_size":        len(agents_sorted),
                 "team_conversion":  team_conv,
                 "agency_logo":      data.get("logo_url") if plan.allows_branding() else None,
+                "agent_history":          history,
+                "trend_chart_points":     trend_points,
+                "listings_benchmark":     extras["listings_benchmark"],
+                "hot_zones":              extras["hot_zones_for_agent"],
+                "ai_analysis":            ai_analysis,
+                "pricing_recommendations": extras["pricing_recommendations"],
             }
 
-            html = render_report(vars, template="agent_report.html")
+            html = render_report(report_vars, template="agent_report.html")
+
+            # Čuvamo HTML u Supabase (pristup kroz web app → Agenti tab)
+            if not use_mock and config.SUPABASE_KEY and agent_id:
+                try:
+                    from data.supabase_client import save_agent_report_html
+                    saved = save_agent_report_html(agency_id, agent_id, week_start_iso, html)
+                    if not saved:
+                        print(f"    [warn] Supabase save nije uspeo za {agent['name']}")
+                except Exception as e:
+                    print(f"    [warn] Supabase save pao za {agent['name']}: {e}")
+
+            # PDF za Premium (opt-in email ili preview)
+            pdf_bytes    = None
+            pdf_filename = None
+            if plan.id == "premium":
+                try:
+                    from pdf.generator import generate_pdf
+                    pdf_bytes    = generate_pdf(html)
+                    slug         = re.sub(r"[^a-z0-9]+", "_", agent["name"].lower()).strip("_")
+                    pdf_filename = f"izvestaj_{slug}_{week_start_iso}.pdf"
+                except Exception as e:
+                    print(f"    [warn] PDF generisanje palo za {agent['name']}: {e}")
 
             if preview:
-                slug = agent["name"].lower().replace(" ", "_")
+                slug = re.sub(r"[^a-z0-9]+", "_", agent["name"].lower()).strip("_")
                 out  = Path(__file__).parent / f"agent_{slug}.html"
                 out.write_text(html, encoding="utf-8")
-                print(f"    [preview] {agent['name']} → {out.name}")
+                print(f"    [preview] {agent['name']} → {out.name}"
+                      + (f"  (+ PDF {len(pdf_bytes)} B)" if pdf_bytes else ""))
+                if pdf_bytes and pdf_filename:
+                    (Path(__file__).parent / pdf_filename).write_bytes(pdf_bytes)
             else:
-                subject = f"Vaš nedeljni izveštaj — {data['week_start']}"
-                send_report_email(
-                    to_email=agent["email"],
-                    to_name=agent["name"],
-                    subject=subject,
-                    html_body=html,
-                )
-                print(f"    [✓] {agent['name']} ({agent['email']})")
+                # Bulk email — samo ako agent ima email (opt-in, vlasnik može pozvati i ručno)
+                if agent.get("email"):
+                    subject = f"Nedeljni izveštaj agencije — {data['week_start']}"
+                    send_report_email(
+                        to_email=agent["email"],
+                        to_name=agent["name"],
+                        subject=subject,
+                        html_body=html,
+                        pdf_bytes=pdf_bytes,
+                        pdf_filename=pdf_filename or "izvestaj.pdf",
+                    )
+                    print(f"    [email] {agent['name']} ({agent['email']})"
+                          + (" + PDF" if pdf_bytes else ""))
+                else:
+                    print(f"    [saved] {agent['name']} — sačuvan u Supabase (nema email)")
 
     print("\n[✓] Agent izveštaji gotovi.")
 
@@ -340,11 +595,12 @@ if __name__ == "__main__":
     parser.add_argument("--mock",          action="store_true", help="Koristi mock podatke")
     parser.add_argument("--monthly",       action="store_true", help="Mesečni izveštaj umesto nedeljnog")
     parser.add_argument("--agent-reports", action="store_true", help="Pošalji personalne izveštaje agentima")
+    parser.add_argument("--plan",          default=None,        help="Override plan_id za mock testiranje (basic/pro/premium)")
     parser.add_argument("--city",          default="beograd",   help="Grad za tržišnu analizu")
     args = parser.parse_args()
     if args.monthly:
         run_monthly(preview=args.preview, use_mock=args.mock)
     elif args.agent_reports:
-        run_agent_reports(preview=args.preview, use_mock=args.mock)
+        run_agent_reports(preview=args.preview, use_mock=args.mock, plan_override=args.plan)
     else:
         run(preview=args.preview, use_mock=args.mock, city=args.city)

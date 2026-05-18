@@ -122,7 +122,10 @@ def _set_subscription_on_agency(agency_id: str, sub_id: str, plan_id: str | None
 def _handle_event(event: dict) -> None:
     et = event.get("event_type", "")
     resource = event.get("resource", {}) or {}
-    sub_id = resource.get("id") or resource.get("billing_agreement_id") or ""
+    # For PAYMENT.SALE.* events, resource.id is the sale/transaction ID — the
+    # subscription ID is in billing_agreement_id. For BILLING.SUBSCRIPTION.*
+    # events, resource.id IS the subscription ID.
+    sub_id = resource.get("billing_agreement_id") or resource.get("id") or ""
 
     if not sub_id:
         print(f"[paypal] {et} — nedostaje subscription id, preskačem")
