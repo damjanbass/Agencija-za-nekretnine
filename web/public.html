@@ -2,6 +2,7 @@
 <html lang="sr">
 <head>
   <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Javni dashboard — Agencija za nekretnine</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -248,11 +249,14 @@
     document.getElementById('rev-left').innerHTML   = `<strong style="color:#16a34a">${(d.revenue || 0).toLocaleString('sr')}€</strong> ostvareno`;
     document.getElementById('rev-right').textContent = `Cilj: ${(d.revenue_goal || 0).toLocaleString('sr')}€`;
 
-    // Week-over-week deltas (available once SQL function is updated)
-    renderDelta('k-listings-delta',  d.active_listings, d.prev_listings);
-    renderDelta('k-inquiries-delta', d.inquiries,       d.prev_inquiries);
-    renderDelta('k-contracts-delta', contracts,         prevContr);
-    renderDelta('k-revenue-delta',   d.revenue,         d.prev_revenue);
+    // Week-over-week deltas — only show if there is actual previous-week data
+    const hasPrevWeek = d.prev_inquiries != null || d.prev_listings != null || d.prev_revenue != null;
+    if (hasPrevWeek) {
+      renderDelta('k-listings-delta',  d.active_listings, d.prev_listings);
+      renderDelta('k-inquiries-delta', d.inquiries,       d.prev_inquiries);
+      renderDelta('k-contracts-delta', contracts,         prevContr);
+      renderDelta('k-revenue-delta',   d.revenue,         d.prev_revenue);
+    }
 
     document.getElementById('loading').hidden   = true;
     document.getElementById('dashboard').hidden = false;
