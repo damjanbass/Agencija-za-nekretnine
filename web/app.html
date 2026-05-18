@@ -1055,9 +1055,12 @@
     bindNavButtons();
     handleHashRoute();
 
-    // Auto-pokreni tutorial za prvi put
+    // Auto-pokreni tutorial za prvi put; sakrij dugmad ako je već završen
     if (localStorage.getItem('tutorial_completed') !== '1') {
       setTimeout(() => startTutorial(), 600);
+    } else {
+      document.getElementById('tutorial-launch-btn').hidden = true;
+      document.getElementById('topbar-help-btn').hidden = true;
     }
   }
 
@@ -2269,6 +2272,8 @@
     document.getElementById('tutorial-overlay').classList.remove('active');
     document.body.style.overflow = '';
     localStorage.setItem('tutorial_completed', '1');
+    document.getElementById('tutorial-launch-btn').hidden = true;
+    document.getElementById('topbar-help-btn').hidden = true;
   }
 
   function nextTutorialStep() {
