@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <link rel="stylesheet" href="css/responsive.css">
   <title>Registracija — Izveštaj</title>
   <meta name="description" content="Kreirajte nalog za vašu agenciju nekretnina. Postavka za 5 minuta, 30 dana besplatno.">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -119,9 +120,13 @@
     .step-sep { color: #d1d5db; }
 
     @media (max-width: 500px) {
-      .card { padding: 32px 24px; }
+      .card { padding: 28px 20px; }
       .card h1 { font-size: 1.35rem; }
+      .card .sub { font-size: 0.9rem; margin-bottom: 22px; }
+      label { font-size: 0.85rem; }
+      input[type="text"], input[type="email"], input[type="password"] { font-size: 16px; padding: 12px 14px; }
       .nav-link { display: none; }
+      .trust-strip { padding: 14px 18px; }
     }
   </style>
 </head>

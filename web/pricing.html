@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <link rel="stylesheet" href="css/responsive.css">
   <title>Cene — Izveštaj</title>
   <meta name="description" content="Basic, Pro i Premium plan za agencije nekretnina. Od 29€/mes. Bez ugovora. Otkazivanje u jednom kliku.">
   <style>
@@ -136,23 +137,42 @@
     .footer-links a:hover { color: white; }
     .footer-copy { font-size: 0.82rem; }
 
-    /* ── Responsive ── */
-    @media (max-width: 960px) {
-      .plans { grid-template-columns: 1fr; gap: 28px; }
+    /* ── Tablet i telefon — fluid tipografija ── */
+    .pricing-header h1 { font-size: clamp(1.9rem, 5vw, 2.6rem); }
+    .plan-price { font-size: clamp(2rem, 5vw, 2.6rem); }
+    .compare-wrap h2 { font-size: clamp(1.3rem, 3.5vw, 1.6rem); }
+
+    /* Tabela uvek može da skroluje horizontalno na uskim ekranima */
+    .compare-scroll {
+      width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch;
+      border-radius: 14px;
     }
-    @media (max-width: 720px) {
-      .pricing-header { padding: 56px 22px 48px; }
-      .pricing-header h1 { font-size: 2rem; }
-      .pricing-header p { font-size: 1rem; }
-      .compare-table th, .compare-table td { padding: 11px 14px; font-size: 0.86rem; }
-      .compare-table th:first-child, .compare-table td:first-child { padding-left: 16px; }
-      .cta-band h2 { font-size: 1.55rem; }
-      .cta-secondary { display: block; margin: 16px 0 0 0; }
-      .footer-inner { flex-direction: column; text-align: center; }
+    .compare-scroll > .compare-table { min-width: 640px; }
+
+    /* ── Responsive ── */
+    @media (max-width: 1024px) {
+      .plans { grid-template-columns: 1fr; gap: 24px; max-width: 520px; margin-left: auto; margin-right: auto; }
     }
     @media (max-width: 780px) {
       .nav-link { display: none; }
-      .nav-links .btn { padding: 9px 16px; font-size: 0.88rem; }
+      .nav-links .btn { padding: 10px 16px; font-size: 0.88rem; min-height: 44px; display: inline-flex; align-items: center; }
+    }
+    @media (max-width: 720px) {
+      .pricing-header { padding: 56px 22px 48px; }
+      .pricing-header p { font-size: 1rem; }
+      .compare-wrap { padding: 0 16px; margin-top: 56px; }
+      .compare-table th, .compare-table td { padding: 11px 12px; font-size: 0.86rem; }
+      .compare-table th:first-child, .compare-table td:first-child { padding-left: 14px; }
+      .cta-band h2 { font-size: clamp(1.3rem, 4.5vw, 1.55rem); }
+      .cta-secondary { display: block; margin: 16px 0 0 0; }
+      .footer-inner { flex-direction: column; text-align: center; }
+      .footer-links { flex-wrap: wrap; justify-content: center; }
+    }
+    @media (max-width: 480px) {
+      .pricing-header { padding: 44px 18px 36px; }
+      .plan { padding: 26px 22px; }
+      .plan-name { font-size: 1.05rem; }
+      .cta-band { padding: 40px 18px; }
     }
   </style>
 </head>
@@ -251,6 +271,7 @@
     <h2>Detaljno poređenje</h2>
     <p class="compare-sub">Sve što je uključeno u svakom planu.</p>
 
+    <div class="compare-scroll">
     <table class="compare-table">
       <thead>
         <tr>
@@ -276,6 +297,7 @@
         <tr><td class="feat">Prioritetna podrška</td><td class="dash-cell">−</td><td class="pro-col check-cell">✓</td><td class="premium-col check-cell">✓</td></tr>
       </tbody>
     </table>
+    </div>
   </section>
 
   <!-- ── FAQ ── -->

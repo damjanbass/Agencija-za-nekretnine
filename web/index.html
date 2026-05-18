@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <link rel="stylesheet" href="css/responsive.css">
   <title>Izveštaj — AI nedeljni izveštaj za agencije nekretnina</title>
   <meta name="description" content="Za vlasnike agencija sa 3–25+ agenata: automatski AI nedeljni izveštaj svakog ponedeljka u 08:00. Bez Excel-a. Bez nagađanja. 30 dana besplatno.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -426,24 +427,41 @@
       .founder-inner { flex-direction: column; align-items: flex-start; gap: 28px; }
     }
     @media (max-width: 600px) {
-      .hero { padding: 56px 22px 72px; }
-      .hero h1 { font-size: 1.95rem; }
+      .hero { padding: 48px 20px 64px; }
+      .hero h1 { font-size: clamp(1.7rem, 7vw, 1.95rem); }
       .hero-sub { font-size: 1rem; }
+      .hero-cta-row { flex-direction: column; align-items: stretch; }
       .hero-cta-row .btn-lg { width: 100%; min-height: 52px; text-align: center; }
       .hero-risk { flex-direction: column; gap: 14px; align-items: flex-start; }
       .hero-inner .mockup { display: none; }
-      .section { padding: 60px 22px; }
-      .section h2 { font-size: 1.7rem; }
+      .section { padding: 56px 20px; }
+      .section h2 { font-size: clamp(1.4rem, 5.5vw, 1.7rem); }
       .strip-inner { grid-template-columns: 1fr; gap: 18px; }
-      .trust-strip-inner { grid-template-columns: 1fr 1fr; gap: 20px; }
-      .cta-band h2 { font-size: 1.55rem; }
+      .cta-band { padding: 44px 20px; }
+      .cta-band h2 { font-size: clamp(1.25rem, 5vw, 1.55rem); }
       .cta-secondary { display: block; margin: 16px 0 0 0; }
       .footer-inner { flex-direction: column; text-align: center; }
+      .footer-links { flex-wrap: wrap; justify-content: center; }
       .comp-table { display: none; }
       .comp-mobile { display: block; }
       .comp-table th, .comp-table td { padding: 11px 12px; font-size: 0.85rem; }
       .trust-sep { display: none; }
     }
+    @media (max-width: 480px) {
+      .trust-strip-inner { grid-template-columns: 1fr; gap: 18px; text-align: left; }
+      .hero { padding: 40px 18px 56px; }
+      .section { padding: 44px 18px; }
+    }
+
+    /* Hamburger X animacija kada je meni otvoren */
+    .hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+    .hamburger.open span:nth-child(2) { opacity: 0; }
+    .hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+    .hamburger { transition: transform 0.15s; }
+    .hamburger span { transform-origin: center; }
+
+    /* Mobilni meni — backdrop + lock scrolla */
+    body.menu-open { overflow: hidden; }
   </style>
 </head>
 <body>
@@ -889,10 +907,16 @@
     const btn  = document.getElementById('hamburger-btn');
     const menu = document.getElementById('mobile-menu');
     btn.addEventListener('click', () => {
-      menu.classList.toggle('open');
+      const isOpen = menu.classList.toggle('open');
+      btn.classList.toggle('open', isOpen);
+      document.body.classList.toggle('menu-open', isOpen);
     });
     menu.querySelectorAll('a').forEach(a => {
-      a.addEventListener('click', () => menu.classList.remove('open'));
+      a.addEventListener('click', () => {
+        menu.classList.remove('open');
+        btn.classList.remove('open');
+        document.body.classList.remove('menu-open');
+      });
     });
 
     // Testimonials carousel dots

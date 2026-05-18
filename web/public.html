@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <link rel="stylesheet" href="css/responsive.css">
   <title>Javni dashboard — Agencija za nekretnine</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
@@ -31,7 +32,7 @@
     .kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 20px; }
     .kpi-card { background: #f8f9fc; border-radius: 12px; padding: 16px 18px; border: 1px solid #eaedf3; }
     .kpi-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.8px; color: #8892a4; margin-bottom: 6px; }
-    .kpi-value { font-size: 28px; font-weight: 700; color: #1a1a2e; line-height: 1; }
+    .kpi-value { font-size: clamp(22px, 6vw, 28px); font-weight: 700; color: #1a1a2e; line-height: 1; word-break: break-word; }
     .kpi-sub   { font-size: 12px; margin-top: 5px; }
     .kpi-delta { font-size: 12px; font-weight: 600; margin-top: 4px; display: inline-block; }
     .badge-up   { color: #16a34a; font-weight: 600; }
@@ -48,6 +49,7 @@
       display: flex; align-items: center; justify-content: space-between;
       padding: 10px 14px; border-radius: 8px; margin-bottom: 8px;
       background: #f8f9fc; border: 1px solid #eaedf3;
+      flex-wrap: wrap; gap: 8px;
     }
     .bench-row:last-child { margin-bottom: 0; }
     .bench-label  { font-size: 13px; color: #374151; }
@@ -85,10 +87,16 @@
     .footer { text-align: center; font-size: 11px; color: #9ca3af; margin-top: 24px; }
 
     @media (max-width: 520px) {
-      .kpi-grid { grid-template-columns: 1fr 1fr; }
-      .wrapper  { padding: 0 12px 32px; }
+      .kpi-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+      .kpi-card { padding: 14px 14px; }
+      .wrapper  { padding: 0 14px 32px; }
       .header   { padding: 24px 20px 18px; }
       .cta-signup { padding: 28px 22px; }
+      .cta-signup h3 { font-size: 17px; }
+      .cta-signup a { display: block; }
+    }
+    @media (max-width: 380px) {
+      .kpi-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>

@@ -1,0 +1,83 @@
+/* responsive.css — globalni sloj za telefon i tablet
+ * Breakpointi:
+ *   --bp-phone:  640px
+ *   --bp-tablet: 900px
+ *   --bp-desk:   1180px
+ * Linkuje se PRE inline <style> tagova u svakoj HTML, da inline pravila imaju prednost gde treba.
+ */
+
+:root {
+  --bp-phone: 640px;
+  --bp-tablet: 900px;
+  --bp-desk: 1180px;
+  --tap: 44px;
+  --nav-h: 64px;
+}
+
+/* Sprečava Safari da uveća font na rotaciji u landscape */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* Globalni tampon protiv horizontalnog "šetanja" */
+html, body {
+  max-width: 100%;
+  overflow-x: clip;
+}
+
+/* Sva media automatski responsive */
+img, video, iframe, svg {
+  max-width: 100%;
+}
+img, video {
+  height: auto;
+}
+
+/* Najčešći uzrok overflow-a: flex/grid item sa dugim tekstom ne ume da se skupi.
+ * Postavlja se min-width: 0 na direktne potomke flex/grid kontejnera. */
+.flex > *, .grid > *,
+[style*="display: flex"] > *,
+[style*="display:flex"] > * {
+  min-width: 0;
+}
+
+/* Fluid tipografija — koristi se opciono, dodavanjem klase */
+.h1-fluid { font-size: clamp(1.9rem, 5.5vw, 2.85rem); line-height: 1.15; }
+.h2-fluid { font-size: clamp(1.45rem, 4.2vw, 2.1rem); line-height: 1.2; }
+.h3-fluid { font-size: clamp(1.15rem, 3.2vw, 1.5rem); line-height: 1.3; }
+
+/* Wrapper za tabele — sprečava horizontalni scroll celog ekrana */
+.table-scroll {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: 12px;
+}
+.table-scroll > table {
+  min-width: 640px;
+}
+
+/* Tap target minimum na telefonu */
+@media (max-width: 640px) {
+  .btn, button, a.btn, .cta, .primary, .nav-link, .plan-btn, .toggle-btn {
+    min-height: var(--tap);
+  }
+  /* Forme — minimalna visina inputa */
+  input:not([type="checkbox"]):not([type="radio"]),
+  select, textarea {
+    min-height: var(--tap);
+    font-size: 16px; /* sprečava iOS zoom na fokus */
+  }
+}
+
+/* Sigurni okviri za iPhone notch — primenjuju ih elementi sa klasom .safe-bottom */
+.safe-bottom {
+  padding-bottom: max(16px, env(safe-area-inset-bottom));
+}
+
+/* Utility: ne dozvoli da dugačka reč razbije layout */
+.wrap-anywhere {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
