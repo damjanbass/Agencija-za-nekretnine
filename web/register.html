@@ -204,7 +204,8 @@
   const { createClient } = supabase;
   const sb = createClient(
     'https://cesxmcbodcpfnpyusxhj.supabase.co',
-    'sb_publishable_uMe0x5mYYyTI707MbRLzag_6NIDIE_K'
+    'sb_publishable_uMe0x5mYYyTI707MbRLzag_6NIDIE_K',
+    { auth: { flowType: 'implicit' } }
   );
 
   function showMsg(text, type) {

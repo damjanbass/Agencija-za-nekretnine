@@ -142,11 +142,12 @@
     .topbar-help:hover { background: #eff6ff; border-color: #bfdbfe; color: #2563eb; }
     .topbar-help svg { width: 16px; height: 16px; }
     .logout-nav {
-      display: flex; align-items: center; gap: 11px;
+      display: flex; align-items: center; gap: 10px;
       padding: 9px 12px; border-radius: 8px; border: none;
-      background: transparent; color: #c8d0e0; font-size: 0.93rem; font-weight: 500;
+      background: transparent; color: #c8d0e0; font-size: 0.85rem; font-weight: 500;
       cursor: pointer; text-align: left; width: 100%; transition: background 0.15s, color 0.15s;
     }
+    .logout-nav .nav-icon { width: 16px; height: 16px; }
     .logout-nav:hover { background: rgba(220,38,38,0.12); color: #fca5a5; }
 
     .page-body { padding: 24px 28px 60px; max-width: 1080px; }
@@ -857,7 +858,8 @@
   const { createClient } = supabase;
   const sb = createClient(
     'https://cesxmcbodcpfnpyusxhj.supabase.co',
-    'sb_publishable_uMe0x5mYYyTI707MbRLzag_6NIDIE_K'
+    'sb_publishable_uMe0x5mYYyTI707MbRLzag_6NIDIE_K',
+    { auth: { flowType: 'implicit' } }
   );
 
   let agencyId    = null;
@@ -935,7 +937,9 @@
   }
 
   function handleHashRoute() {
-    const r = (location.hash || '').replace(/^#\//, '');
+    const hash = location.hash || '';
+    if (hash.includes('access_token=') || hash.includes('refresh_token=')) return;
+    const r = hash.replace(/^#\//, '');
     switchView(r || 'home');
   }
   window.addEventListener('hashchange', handleHashRoute);
@@ -1034,7 +1038,7 @@
 
     const token = agencies[0].public_token;
     if (token) {
-      const link = `${window.location.origin}/public.html?token=${token}`;
+      const link = `${window.location.origin}/public.html#${token}`;
       document.getElementById('public-link-text').textContent = link;
       document.getElementById('public-link-card').style.display = 'block';
     }

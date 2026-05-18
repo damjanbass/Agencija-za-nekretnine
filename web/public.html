@@ -213,11 +213,10 @@
   }
 
   async function loadDashboard() {
-    const params = new URLSearchParams(window.location.search);
-    const token  = params.get('token');
+    const token = window.location.hash.slice(1) || new URLSearchParams(window.location.search).get('token');
 
     if (!token) {
-      showError('Link nije ispravan', 'URL mora da sadrži ?token= parametar.');
+      showError('Link nije ispravan', 'URL nije ispravan.');
       return;
     }
 
