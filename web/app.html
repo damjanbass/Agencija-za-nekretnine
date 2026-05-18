@@ -5,19 +5,20 @@
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Panel — Nekretnine</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="plan-gate.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: system-ui, -apple-system, sans-serif; background: #f4f6f9; color: #1a1a1a; min-height: 100vh; }
+    body { font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; background: #f4f6f9; color: #1a1a2e; min-height: 100vh; }
 
-    /* ── Login ── */
+    /* ─── Login ─── */
     #login-view { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; }
     .login-card { background: white; border-radius: 14px; padding: 44px 40px; width: 100%; max-width: 400px; box-shadow: 0 4px 32px rgba(0,0,0,0.09); }
     .login-card h1 { font-size: 1.5rem; margin-bottom: 6px; }
     .login-card p { color: #666; margin-bottom: 28px; font-size: 0.95rem; }
 
-    /* ── Forms ── */
+    /* ─── Forms ─── */
     label { display: block; font-size: 0.82rem; font-weight: 600; color: #444; margin-bottom: 5px; letter-spacing: 0.02em; text-transform: uppercase; }
     input[type="email"], input[type="password"], input[type="date"], input[type="number"], input[type="text"] {
       width: 100%; padding: 10px 13px; border: 1.5px solid #e2e6ea; border-radius: 8px;
@@ -26,7 +27,7 @@
     input:focus { border-color: #2563eb; background: white; }
     .form-group { margin-bottom: 16px; }
 
-    /* ── Buttons ── */
+    /* ─── Buttons ─── */
     .btn { width: 100%; padding: 12px; border: none; border-radius: 9px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: background 0.2s; }
     .btn-primary { background: #2563eb; color: white; }
     .btn-primary:hover { background: #1d4ed8; }
@@ -34,50 +35,221 @@
     .btn-success { background: #16a34a; color: white; margin-top: 8px; }
     .btn-success:hover { background: #15803d; }
     .btn-success:disabled { background: #86efac; cursor: not-allowed; }
+    .btn-outline { background: white; border: 1.5px solid #2563eb; color: #2563eb; padding: 10px 22px; border-radius: 9px; font-size: 0.92rem; font-weight: 600; cursor: pointer; transition: all 0.18s; display: inline-block; }
+    .btn-outline:hover { background: #2563eb; color: white; }
 
-    /* ── Dashboard wrapper ── */
-    #dashboard { max-width: 740px; margin: 0 auto; padding: 28px 20px 60px; }
+    /* ─── App shell ─── */
+    #dashboard { display: flex; min-height: 100vh; }
 
-    /* ── Page header ── */
-    .page-header {
-      background: white; border-radius: 12px; padding: 18px 24px;
-      margin-bottom: 18px; box-shadow: 0 2px 10px rgba(0,0,0,0.06);
-      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    /* ─── Sidebar ─── */
+    .sidebar {
+      width: 248px; background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+      color: #e4e8f0; display: flex; flex-direction: column;
+      position: fixed; inset: 0 auto 0 0; z-index: 50;
+      box-shadow: 2px 0 16px rgba(15,23,42,0.08);
     }
-    .page-header h1 { font-size: 1.2rem; }
-    .header-right { display: flex; align-items: center; gap: 10px; }
+    .sidebar-header {
+      padding: 22px 20px 18px; border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .sidebar-brand {
+      display: flex; align-items: center; gap: 10px; margin-bottom: 6px;
+    }
+    .sidebar-brand-mark {
+      width: 32px; height: 32px; border-radius: 8px;
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+      display: grid; place-items: center; color: white; font-weight: 800; font-size: 0.95rem;
+      box-shadow: 0 2px 8px rgba(37,99,235,0.35);
+    }
+    .sidebar-brand-name { font-size: 0.95rem; font-weight: 700; color: white; letter-spacing: 0.01em; }
+    .sidebar-agency { font-size: 0.78rem; color: #93a3b8; line-height: 1.35; word-break: break-word; }
 
-    /* ── Tabs ── */
-    .tab-nav { display: flex; gap: 4px; background: #f4f6f9; border-radius: 8px; padding: 3px; }
-    .tab-btn {
-      padding: 6px 16px; border: none; border-radius: 6px; font-size: 0.85rem;
-      font-weight: 600; cursor: pointer; background: transparent; color: #666;
+    .sidebar-nav {
+      flex: 1; overflow-y: auto; padding: 14px 12px;
+      display: flex; flex-direction: column; gap: 2px;
+    }
+    .sidebar-nav-eyebrow {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.68rem; color: #6b7a92; text-transform: uppercase; letter-spacing: 0.12em;
+      padding: 10px 12px 6px;
+    }
+    .nav-item {
+      display: flex; align-items: center; gap: 11px;
+      padding: 9px 12px; border-radius: 8px;
+      background: transparent; border: none; color: #c8d0e0;
+      font-size: 0.93rem; font-weight: 500; cursor: pointer;
+      text-align: left; width: 100%; transition: background 0.15s, color 0.15s;
+    }
+    .nav-item:hover { background: rgba(255,255,255,0.06); color: white; }
+    .nav-item.active {
+      background: linear-gradient(135deg, rgba(37,99,235,0.22), rgba(37,99,235,0.10));
+      color: white;
+      box-shadow: inset 3px 0 0 #60a5fa;
+    }
+    .nav-item .nav-icon { width: 18px; height: 18px; flex-shrink: 0; }
+    .nav-item .nav-lock { margin-left: auto; width: 14px; height: 14px; color: #94a3b8; }
+
+    .sidebar-footer {
+      padding: 12px; border-top: 1px solid rgba(255,255,255,0.08);
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .upgrade-cta {
+      display: flex; align-items: center; gap: 10px;
+      padding: 12px 14px; border-radius: 10px; border: none;
+      background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+      color: white; font-weight: 700; font-size: 0.9rem; cursor: pointer;
+      text-align: left; transition: transform 0.15s, box-shadow 0.15s;
+      box-shadow: 0 4px 14px rgba(37,99,235,0.35);
+    }
+    .upgrade-cta:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(37,99,235,0.45); }
+    .upgrade-cta .nav-icon { width: 18px; height: 18px; flex-shrink: 0; }
+    .upgrade-cta-text { display: flex; flex-direction: column; line-height: 1.2; }
+    .upgrade-cta-text small { font-weight: 500; font-size: 0.74rem; opacity: 0.85; }
+    .upgrade-cta[hidden] { display: none; }
+
+    .tutorial-btn {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 12px; border-radius: 8px; border: none;
+      background: rgba(255,255,255,0.04); color: #c8d0e0;
+      font-size: 0.85rem; font-weight: 500; cursor: pointer;
+      text-align: left; transition: background 0.15s;
+    }
+    .tutorial-btn:hover { background: rgba(255,255,255,0.10); color: white; }
+    .tutorial-btn .nav-icon { width: 16px; height: 16px; }
+
+    /* ─── Main content ─── */
+    .main-content {
+      flex: 1; margin-left: 248px; min-width: 0;
+      display: flex; flex-direction: column;
+    }
+    .topbar {
+      background: white; border-bottom: 1px solid #eaedf3;
+      padding: 14px 28px; display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 20;
+    }
+    .topbar-left { display: flex; align-items: center; gap: 12px; min-width: 0; }
+    .mobile-menu-btn {
+      display: none; background: none; border: 1px solid #e2e6ea;
+      width: 36px; height: 36px; border-radius: 8px; cursor: pointer;
+      align-items: center; justify-content: center; color: #1a1a2e; flex-shrink: 0;
+    }
+    .mobile-menu-btn svg { width: 18px; height: 18px; }
+    .topbar-title { font-size: 1.05rem; font-weight: 700; color: #1a1a2e; }
+    .topbar-actions { display: flex; align-items: center; gap: 8px; }
+    .topbar-help {
+      background: none; border: 1px solid #e2e6ea; color: #4a5168;
+      width: 36px; height: 36px; border-radius: 8px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
       transition: all 0.18s;
     }
-    .tab-btn.active { background: white; color: #2563eb; box-shadow: 0 1px 4px rgba(0,0,0,0.10); }
-    .tab-btn:hover:not(.active) { background: #eaecef; }
+    .topbar-help:hover { background: #eff6ff; border-color: #bfdbfe; color: #2563eb; }
+    .topbar-help svg { width: 16px; height: 16px; }
+    .logout-btn { background: none; border: 1px solid #e2e6ea; color: #555; cursor: pointer; font-size: 0.85rem; padding: 8px 14px; border-radius: 8px; transition: all 0.2s; white-space: nowrap; font-weight: 500; }
+    .logout-btn:hover { background: #f4f6f9; }
 
-    /* ── Cards ── */
-    .card { background: white; border-radius: 12px; padding: 26px; margin-bottom: 16px; box-shadow: 0 2px 10px rgba(0,0,0,0.06); }
-    .card h2 { font-size: 0.9rem; color: #2563eb; font-weight: 700; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid #eff6ff; text-transform: uppercase; letter-spacing: 0.05em; }
+    .page-body { padding: 24px 28px 60px; max-width: 1080px; }
+
+    /* ─── Views ─── */
+    .view { display: none; }
+    .view.active { display: block; }
+
+    /* ─── Početna ─── */
+    .home-hero {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 60%, #0f3460 100%);
+      color: white; border-radius: 14px; padding: 22px 26px; margin-bottom: 18px;
+      position: relative; overflow: hidden;
+    }
+    .home-hero::after {
+      content: ''; position: absolute; top: -40px; right: -40px;
+      width: 180px; height: 180px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(96,165,250,0.18) 0%, rgba(96,165,250,0) 70%);
+    }
+    .home-hero-eyebrow {
+      font-family: 'JetBrains Mono', monospace; font-size: 0.72rem;
+      color: #93c5fd; text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 6px;
+    }
+    .home-hero h2 { font-size: 1.35rem; font-weight: 700; margin-bottom: 4px; }
+    .home-hero p { font-size: 0.9rem; color: #c8d0e0; }
+
+    .kpi-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 18px;
+    }
+    .kpi-card {
+      background: white; border-radius: 12px; padding: 18px 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+      display: flex; flex-direction: column; gap: 6px;
+      border-top: 3px solid #2563eb;
+    }
+    .kpi-card.green { border-top-color: #16a34a; }
+    .kpi-card.amber { border-top-color: #f59e0b; }
+    .kpi-eyebrow {
+      font-family: 'JetBrains Mono', monospace; font-size: 0.68rem;
+      color: #2563eb; text-transform: uppercase; letter-spacing: 0.12em;
+    }
+    .kpi-value { font-size: 1.6rem; font-weight: 800; color: #1a1a2e; line-height: 1.1; }
+    .kpi-sub { font-size: 0.82rem; color: #6b7280; }
+    .kpi-delta { font-size: 0.82rem; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; }
+    .kpi-delta.up { color: #16a34a; }
+    .kpi-delta.down { color: #dc2626; }
+    .kpi-delta.flat { color: #8892a4; }
+    .kpi-progress {
+      height: 6px; background: #eef2f7; border-radius: 999px; overflow: hidden; margin-top: 4px;
+    }
+    .kpi-progress-bar {
+      height: 100%; background: linear-gradient(90deg, #2563eb, #60a5fa); border-radius: 999px;
+      transition: width 0.4s ease;
+    }
+    .kpi-sparkline { margin-top: 4px; height: 28px; }
+
+    .home-empty {
+      background: white; border-radius: 12px; padding: 32px 28px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05); text-align: center;
+      border: 1.5px dashed #c8d0e0; margin-bottom: 18px;
+    }
+    .home-empty h3 { font-size: 1.05rem; color: #1a1a2e; margin-bottom: 8px; }
+    .home-empty p { color: #6b7280; font-size: 0.9rem; margin-bottom: 16px; }
+
+    .quick-actions {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 18px;
+    }
+    .quick-action {
+      background: white; border: 1.5px solid #e2e6ea; border-radius: 12px;
+      padding: 18px 20px; cursor: pointer; transition: all 0.18s;
+      display: flex; align-items: center; gap: 14px; text-align: left;
+      font-family: inherit;
+    }
+    .quick-action:hover { border-color: #2563eb; box-shadow: 0 4px 14px rgba(37,99,235,0.12); transform: translateY(-1px); }
+    .quick-action.primary {
+      background: linear-gradient(135deg, #2563eb, #1d4ed8); color: white; border-color: transparent;
+      box-shadow: 0 4px 14px rgba(37,99,235,0.25);
+    }
+    .quick-action.primary:hover { box-shadow: 0 6px 20px rgba(37,99,235,0.35); }
+    .quick-action-icon {
+      width: 42px; height: 42px; border-radius: 10px; flex-shrink: 0;
+      display: grid; place-items: center; background: #eff6ff; color: #2563eb;
+    }
+    .quick-action.primary .quick-action-icon { background: rgba(255,255,255,0.18); color: white; }
+    .quick-action-icon svg { width: 20px; height: 20px; }
+    .quick-action-title { font-weight: 700; font-size: 0.98rem; margin-bottom: 2px; }
+    .quick-action-sub { font-size: 0.82rem; opacity: 0.85; }
+
+    /* ─── Cards (shared) ─── */
+    .card { background: white; border-radius: 12px; padding: 24px; margin-bottom: 16px; box-shadow: 0 2px 10px rgba(0,0,0,0.06); }
+    .card h2 { font-size: 0.85rem; color: #2563eb; font-weight: 700; margin-bottom: 18px; padding-bottom: 10px; border-bottom: 2px solid #eff6ff; text-transform: uppercase; letter-spacing: 0.06em; }
 
     .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 
-    /* ── Agent rows ── */
+    /* ─── Agent rows ─── */
     .agents-header { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 12px; margin-bottom: 8px; }
     .agents-header span { font-size: 0.78rem; color: #999; font-weight: 600; text-transform: uppercase; }
     .agent-row { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 12px; align-items: center; margin-bottom: 10px; }
     .agent-name { font-size: 0.92rem; font-weight: 500; }
 
-    /* ── Messages ── */
+    /* ─── Messages ─── */
     .msg { padding: 13px 16px; border-radius: 9px; margin-bottom: 16px; font-size: 0.9rem; }
     .msg-error   { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
     .msg-success { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
 
-    .logout-btn { background: none; border: 1px solid #e2e6ea; color: #555; cursor: pointer; font-size: 0.82rem; padding: 6px 12px; border-radius: 6px; transition: all 0.2s; white-space: nowrap; }
-    .logout-btn:hover { background: #f4f6f9; }
-
-    /* ── CSV import ── */
+    /* ─── CSV import ─── */
     textarea { width: 100%; padding: 10px 13px; border: 1.5px solid #e2e6ea; border-radius: 8px; font-size: 0.82rem; font-family: monospace; resize: vertical; background: #fafafa; outline: none; transition: border-color 0.2s; }
     textarea:focus { border-color: #2563eb; background: white; }
     input[type="file"] { width: 100%; padding: 6px 0; font-size: 0.88rem; color: #555; cursor: pointer; }
@@ -85,10 +257,8 @@
     .csv-table th { background: #f4f6f9; padding: 8px 10px; text-align: left; font-size: 0.75rem; text-transform: uppercase; color: #666; border-bottom: 2px solid #e2e6ea; }
     .csv-table td { padding: 8px 10px; border-bottom: 1px solid #f0f2f5; }
     .csv-table tr:last-child td { border-bottom: none; }
-    .btn-outline { background: white; border: 1.5px solid #2563eb; color: #2563eb; padding: 10px 22px; border-radius: 9px; font-size: 0.92rem; font-weight: 600; cursor: pointer; transition: all 0.18s; display: inline-block; }
-    .btn-outline:hover { background: #2563eb; color: white; }
 
-    /* ── Plan picker ── */
+    /* ─── Plan picker ─── */
     .plan-change-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 16px 0; }
     .plan-change-card { border: 2px solid #e5e7eb; border-radius: 10px; padding: 16px; cursor: pointer; transition: border-color 0.18s, box-shadow 0.18s; }
     .plan-change-card:hover:not(.plan-change-current) { border-color: #2563eb; box-shadow: 0 2px 12px rgba(37,99,235,0.12); }
@@ -98,15 +268,14 @@
     .plan-change-price { font-size: 1.2rem; font-weight: 700; color: #2563eb; margin: 4px 0; }
     .plan-change-features { list-style: none; font-size: 0.82rem; color: #4a5168; margin-top: 8px; }
     .plan-change-features li { padding: 3px 0; }
-    @media (max-width: 600px) { .plan-change-grid { grid-template-columns: 1fr; } }
 
-    /* ── Javni link ── */
+    /* ─── Javni link ─── */
     .public-link-box { display: flex; align-items: center; gap: 10px; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 12px 14px; margin-top: 10px; }
     .public-link-text { font-size: 0.82rem; color: #1d4ed8; word-break: break-all; flex: 1; }
     .btn-copy { background: #eff6ff; border: 1.5px solid #2563eb; color: #2563eb; padding: 7px 14px; border-radius: 6px; font-size: 0.82rem; font-weight: 600; cursor: pointer; white-space: nowrap; transition: all 0.18s; flex-shrink: 0; }
     .btn-copy:hover { background: #2563eb; color: white; }
 
-    /* ── Archive list ── */
+    /* ─── Archive list ─── */
     .archive-empty { color: #aaa; font-size: 0.9rem; padding: 8px 0; }
     .report-row {
       display: flex; align-items: center; justify-content: space-between;
@@ -128,8 +297,6 @@
     }
     .btn-view:hover { background: #2563eb; color: white; }
     .btn-view:disabled { border-color: #bfdbfe; color: #93c5fd; cursor: not-allowed; }
-
-    /* ── Remove agent button ── */
     .btn-remove {
       padding: 7px 16px; border: 1.5px solid #dc2626; border-radius: 7px;
       background: white; color: #dc2626; font-size: 0.85rem; font-weight: 600;
@@ -138,14 +305,12 @@
     .btn-remove:hover { background: #dc2626; color: white; }
     .btn-remove:disabled { border-color: #fecaca; color: #fca5a5; cursor: not-allowed; }
 
-    /* ── Report modal ── */
+    /* ─── Report modal ─── */
     #report-modal {
       display: none; position: fixed; inset: 0; z-index: 1000;
       align-items: center; justify-content: center;
     }
-    .modal-backdrop {
-      position: absolute; inset: 0; background: rgba(0,0,0,0.55);
-    }
+    .modal-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.55); }
     .modal-wrapper {
       position: relative; z-index: 1; width: 94vw; max-width: 720px;
       height: 88vh; background: white; border-radius: 14px;
@@ -170,7 +335,7 @@
     .btn-print:hover { background: #16a34a; color: white; }
     #report-iframe { flex: 1; width: 100%; border: none; }
 
-    /* ── Plan banner ── */
+    /* ─── Plan banner ─── */
     .plan-banner {
       border-radius: 10px; padding: 12px 18px; margin-bottom: 14px;
       font-size: 0.93rem; box-shadow: 0 2px 8px rgba(0,0,0,0.04);
@@ -179,15 +344,102 @@
     .plan-banner.warn { background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; }
     .plan-banner a    { color: inherit; font-weight: 600; text-decoration: underline; }
 
+    /* ─── Brending upgrade landing ─── */
+    .upgrade-landing {
+      background: white; border-radius: 14px; padding: 32px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.06); text-align: center;
+    }
+    .upgrade-landing-icon {
+      width: 64px; height: 64px; margin: 0 auto 16px; border-radius: 16px;
+      background: linear-gradient(135deg, #2563eb, #1d4ed8); display: grid; place-items: center;
+      color: white; box-shadow: 0 6px 20px rgba(37,99,235,0.3);
+    }
+    .upgrade-landing-icon svg { width: 32px; height: 32px; }
+    .upgrade-landing h3 { font-size: 1.3rem; color: #1a1a2e; margin-bottom: 8px; }
+    .upgrade-landing p { color: #6b7280; font-size: 0.95rem; margin-bottom: 20px; max-width: 480px; margin-left: auto; margin-right: auto; }
+    .upgrade-landing .btn-primary { display: inline-block; width: auto; padding: 12px 26px; }
+
+    /* ─── Tutorial overlay ─── */
+    #tutorial-overlay {
+      display: none; position: fixed; inset: 0; z-index: 2000;
+      pointer-events: none;
+    }
+    #tutorial-overlay.active { display: block; pointer-events: auto; }
+    .tutorial-spotlight {
+      position: absolute; border-radius: 10px;
+      box-shadow: 0 0 0 9999px rgba(15,23,42,0.65);
+      transition: top 0.25s, left 0.25s, width 0.25s, height 0.25s;
+      pointer-events: none;
+    }
+    .tutorial-tooltip {
+      position: absolute; background: white; border-radius: 12px;
+      padding: 18px 20px; max-width: 320px;
+      box-shadow: 0 20px 60px rgba(15,23,42,0.4);
+      transition: top 0.25s, left 0.25s;
+    }
+    .tutorial-step { font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; color: #2563eb; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px; }
+    .tutorial-title { font-size: 1.05rem; font-weight: 700; color: #1a1a2e; margin-bottom: 6px; }
+    .tutorial-body { font-size: 0.9rem; color: #4a5168; line-height: 1.5; margin-bottom: 14px; }
+    .tutorial-actions { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .tutorial-skip { background: none; border: none; color: #8892a4; font-size: 0.85rem; cursor: pointer; padding: 6px 8px; }
+    .tutorial-skip:hover { color: #4a5168; }
+    .tutorial-next {
+      background: #2563eb; color: white; border: none; padding: 8px 18px;
+      border-radius: 8px; font-size: 0.88rem; font-weight: 600; cursor: pointer;
+    }
+    .tutorial-next:hover { background: #1d4ed8; }
+    .tutorial-prev {
+      background: white; color: #4a5168; border: 1.5px solid #e2e6ea;
+      padding: 8px 14px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; cursor: pointer;
+    }
+    .tutorial-prev:hover { background: #f4f6f9; }
+
+    /* ─── Mobile ─── */
+    @media (max-width: 880px) {
+      .sidebar { transform: translateX(-100%); transition: transform 0.25s; width: 280px; }
+      .sidebar.open { transform: translateX(0); }
+      .main-content { margin-left: 0; }
+      .mobile-menu-btn { display: inline-flex; }
+      .page-body { padding: 18px 16px 60px; }
+      .kpi-grid { grid-template-columns: 1fr; }
+      .quick-actions { grid-template-columns: 1fr; }
+      .plan-change-grid { grid-template-columns: 1fr; }
+      .sidebar-backdrop {
+        display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.55); z-index: 49;
+      }
+      .sidebar-backdrop.open { display: block; }
+    }
     @media (max-width: 520px) {
       .grid-2 { grid-template-columns: 1fr; }
       .agent-row, .agents-header { grid-template-columns: 2fr 1fr 1fr; }
       .login-card { padding: 32px 24px; }
       .modal-wrapper { width: 100vw; height: 100vh; border-radius: 0; }
+      .topbar { padding: 12px 14px; }
+      .topbar-title { font-size: 0.95rem; }
     }
   </style>
 </head>
 <body>
+
+<!-- ═══ SVG ICONS ═══ -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="icon-home" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1V9.5z"/></symbol>
+    <symbol id="icon-edit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></symbol>
+    <symbol id="icon-users" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+    <symbol id="icon-archive" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8v13H3V8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></symbol>
+    <symbol id="icon-upload" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></symbol>
+    <symbol id="icon-sparkles" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/></symbol>
+    <symbol id="icon-settings" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></symbol>
+    <symbol id="icon-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
+    <symbol id="icon-star" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></symbol>
+    <symbol id="icon-help" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></symbol>
+    <symbol id="icon-menu" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></symbol>
+    <symbol id="icon-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="icon-arrow-up" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 14l5-5 5 5"/></symbol>
+    <symbol id="icon-arrow-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 10l5 5 5-5"/></symbol>
+  </defs>
+</svg>
 
 <!-- ═══ LOGIN ═══ -->
 <div id="login-view">
@@ -209,309 +461,362 @@
 
 <!-- ═══ DASHBOARD ═══ -->
 <div id="dashboard" hidden>
-  <div class="page-header">
-    <h1 id="agency-name-header">Unos podataka</h1>
-    <div class="header-right">
-      <div class="tab-nav">
-        <button class="tab-btn active" id="tab-form-btn"     onclick="switchTab('form')">Unos</button>
-        <button class="tab-btn"        id="tab-agents-btn"   onclick="switchTab('agents')">Agenti</button>
-        <button class="tab-btn"        id="tab-import-btn"   onclick="switchTab('import')">Uvoz</button>
-        <button class="tab-btn"        id="tab-archive-btn"  onclick="switchTab('archive')">Arhiva</button>
-        <button class="tab-btn"        id="tab-branding-btn" onclick="switchTab('branding')" hidden>Brending</button>
-        <button class="tab-btn"        id="tab-settings-btn" onclick="switchTab('settings')">Podešavanja</button>
+
+  <!-- ─── Sidebar ─── -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-brand">
+        <div class="sidebar-brand-mark">I</div>
+        <div class="sidebar-brand-name">Izveštaj</div>
       </div>
-      <button class="logout-btn" onclick="doLogout()">Odjavi se</button>
+      <div class="sidebar-agency" id="sidebar-agency-name">—</div>
     </div>
-  </div>
 
-  <div id="plan-banner-host"></div>
-  <div id="form-msg"></div>
-
-  <!-- ── Unos tab ── -->
-  <div id="tab-form">
-    <form id="report-form" onsubmit="submitForm(event)">
-
-      <div class="card">
-        <h2>Osnovi KPI-evi</h2>
-        <div class="form-group">
-          <label>Datum početka nedelje (ponedeljak)</label>
-          <input type="date" id="week_start" required>
-        </div>
-        <div class="grid-2">
-          <div class="form-group">
-            <label>Aktivni oglasi</label>
-            <input type="number" id="active_listings" min="0" placeholder="0" required>
-          </div>
-          <div class="form-group">
-            <label>Novi oglasi ove nedelje</label>
-            <input type="number" id="new_listings" min="0" placeholder="0" required>
-          </div>
-          <div class="form-group">
-            <label>Upiti ove nedelje</label>
-            <input type="number" id="inquiries" min="0" placeholder="0" required>
-          </div>
-          <div class="form-group">
-            <label>Ugovori — prodaja</label>
-            <input type="number" id="contracts_sale" min="0" placeholder="0" required>
-          </div>
-          <div class="form-group">
-            <label>Ugovori — zakup</label>
-            <input type="number" id="contracts_rent" min="0" placeholder="0" required>
-          </div>
-          <div class="form-group">
-            <label>Prihod (€)</label>
-            <input type="number" id="revenue" min="0" placeholder="0" required>
-          </div>
-        </div>
-      </div>
-
-      <div class="card">
-        <h2>Upiti po izvoru</h2>
-        <div class="grid-2">
-          <div class="form-group">
-            <label>Halo oglasi</label>
-            <input type="number" id="src_halo" min="0" value="0">
-          </div>
-          <div class="form-group">
-            <label>4zida</label>
-            <input type="number" id="src_4zida" min="0" value="0">
-          </div>
-          <div class="form-group">
-            <label>Sajt agencije</label>
-            <input type="number" id="src_sajt" min="0" value="0">
-          </div>
-          <div class="form-group">
-            <label>Instagram / ostalo</label>
-            <input type="number" id="src_insta" min="0" value="0">
-          </div>
-        </div>
-      </div>
-
-      <div class="card">
-        <h2>Performanse agenata</h2>
-        <div id="agents-container">
-          <p style="color:#aaa; font-size:0.9rem;">Učitavanje agenata...</p>
-        </div>
-      </div>
-
-      <button type="submit" class="btn btn-success" id="submit-btn">
-        Sačuvaj nedeljni izveštaj
+    <nav class="sidebar-nav">
+      <div class="sidebar-nav-eyebrow">Rad</div>
+      <button class="nav-item" data-route="home" id="nav-home">
+        <svg class="nav-icon"><use href="#icon-home"/></svg> Početna
       </button>
-    </form>
+      <button class="nav-item" data-route="unos" id="nav-unos">
+        <svg class="nav-icon"><use href="#icon-edit"/></svg> Unos
+      </button>
+      <button class="nav-item" data-route="agenti" id="nav-agenti">
+        <svg class="nav-icon"><use href="#icon-users"/></svg> Agenti
+      </button>
 
-    <!-- Javni link -->
-    <div class="card" id="public-link-card" style="display:none">
-      <h2>Javni link</h2>
-      <p style="font-size:0.88rem;color:#666;margin-bottom:4px;">Podelite sa investitorima ili franšizodavcem — prikazuje KPI-eve bez logina.</p>
-      <div class="public-link-box">
-        <span class="public-link-text" id="public-link-text"></span>
-        <button class="btn-copy" onclick="copyPublicLink(this)">Kopiraj</button>
-      </div>
-    </div>
-  </div>
+      <div class="sidebar-nav-eyebrow">Podaci</div>
+      <button class="nav-item" data-route="arhiva" id="nav-arhiva">
+        <svg class="nav-icon"><use href="#icon-archive"/></svg> Arhiva
+      </button>
+      <button class="nav-item" data-route="uvoz" id="nav-uvoz">
+        <svg class="nav-icon"><use href="#icon-upload"/></svg> Uvoz
+      </button>
 
-  <!-- ── Agenti tab ── -->
-  <div id="tab-agents" hidden>
-    <div class="card">
-      <h2>Dodaj agenta</h2>
-      <div id="agents-msg"></div>
-      <div class="form-group">
-        <label>Ime i prezime</label>
-        <input type="text" id="new-agent-name" placeholder="npr. Marko Petrović" autocomplete="off">
-      </div>
-      <button class="btn btn-success" id="add-agent-btn" onclick="addAgent()" style="margin-top:0;">
-        Dodaj agenta
+      <div class="sidebar-nav-eyebrow">Agencija</div>
+      <button class="nav-item" data-route="brending" id="nav-brending">
+        <svg class="nav-icon"><use href="#icon-sparkles"/></svg> Brending
+        <svg class="nav-lock" id="brending-lock" hidden><use href="#icon-lock"/></svg>
+      </button>
+      <button class="nav-item" data-route="podesavanja" id="nav-podesavanja">
+        <svg class="nav-icon"><use href="#icon-settings"/></svg> Podešavanja
+      </button>
+    </nav>
+
+    <div class="sidebar-footer">
+      <button class="upgrade-cta" id="upgrade-cta-btn" onclick="goToUpgrade()" hidden>
+        <svg class="nav-icon"><use href="#icon-star"/></svg>
+        <span class="upgrade-cta-text">
+          Otključaj sve
+          <small>Pređi na viši plan →</small>
+        </span>
+      </button>
+      <button class="tutorial-btn" id="tutorial-launch-btn" onclick="startTutorial()">
+        <svg class="nav-icon"><use href="#icon-help"/></svg> Tutorial
       </button>
     </div>
+  </aside>
 
-    <div class="card">
-      <h2>Aktivni agenti <span id="agents-count" style="font-size:0.85rem;color:#8892a4;font-weight:500;"></span></h2>
-      <div id="agents-manage-list">
-        <p class="archive-empty">Učitavanje...</p>
-      </div>
-    </div>
+  <div class="sidebar-backdrop" id="sidebar-backdrop" onclick="closeMobileMenu()"></div>
 
-    <div class="card" id="agent-reports-card">
-      <h2>Izveštaji po agentu</h2>
-      <div id="agent-reports-list">
-        <p class="archive-empty">Učitavanje...</p>
-      </div>
-    </div>
-  </div>
-
-  <!-- ── Uvoz tab ── -->
-  <div id="tab-import" hidden>
-    <div class="card">
-      <h2>CSV uvoz podataka</h2>
-      <p style="font-size:0.88rem;color:#666;margin-bottom:18px;">Uvezite istorijske podatke iz Excel/CSV fajla. Postojeći podaci za istu nedelju se prepisuju.</p>
-
-      <div class="form-group">
-        <label>Učitaj CSV fajl</label>
-        <input type="file" id="csv-file" accept=".csv,.txt" onchange="loadCsvFile(event)">
-      </div>
-
-      <div class="form-group">
-        <label>Ili nalepite CSV tekst</label>
-        <textarea id="csv-text" rows="7" placeholder="week_start,active_listings,new_listings,inquiries,contracts_sale,contracts_rent,revenue,halo_oglasi,4zida,sajt_agencije,instagram_ostalo&#10;2026-04-28,47,5,83,3,7,4200,38,21,14,10&#10;2026-05-05,52,6,91,4,8,4800,42,23,16,10"></textarea>
-      </div>
-
-      <button class="btn-outline" onclick="parseCsv()">Pregledaj uvoz</button>
-    </div>
-
-    <div class="card" id="csv-preview-card" style="display:none">
-      <h2>Pregled podataka</h2>
-      <div id="csv-preview-table" style="overflow-x:auto"></div>
-      <div id="import-msg" style="margin-top:12px"></div>
-      <button class="btn btn-success" id="import-btn" onclick="importCsv()" style="margin-top:14px;">
-        Uvezi u bazu
-      </button>
-    </div>
-  </div>
-
-  <!-- ── Arhiva tab ── -->
-  <div id="tab-archive" hidden>
-    <div class="card">
-      <h2>Arhiva izveštaja</h2>
-      <div id="archive-list">
-        <p class="archive-empty">Učitavanje...</p>
-      </div>
-    </div>
-  </div>
-
-  <!-- ── Brending tab (Premium only) ── -->
-  <div id="tab-branding" hidden>
-    <div class="card">
-      <h2>Logo agencije</h2>
-      <p style="font-size:0.9rem;color:#666;margin-bottom:16px;">Logo se prikazuje u zaglavlju nedeljnih, mesečnih i agent izveštaja (HTML i PDF). Preporučeno: PNG sa providnom pozadinom, visina 80–120 px.</p>
-      <div id="branding-msg"></div>
-      <div id="logo-preview" style="margin-bottom:16px;"></div>
-      <div class="form-group">
-        <label>Otpremi novi logo</label>
-        <input type="file" id="logo-file" accept="image/png,image/jpeg,image/svg+xml" onchange="uploadLogo(event)">
-      </div>
-      <button class="btn-outline" id="logo-remove-btn" onclick="removeLogo()" style="display:none;">Ukloni logo</button>
-    </div>
-  </div>
-
-  <!-- ═══ PODEŠAVANJA / R-1 RAČUN ═══ -->
-  <div id="tab-settings" hidden>
-
-    <!-- ─── Upravljanje planom ─── -->
-    <div class="card">
-      <h2>Pretplata</h2>
-      <div id="plan-management-info" style="margin-bottom:16px;">Učitavanje...</div>
-      <div id="plan-picker" hidden>
-        <div class="plan-change-grid" id="plan-change-grid"></div>
-      </div>
-      <div id="plan-change-msg"></div>
-      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
-        <button type="button" class="btn-outline" id="change-plan-btn" onclick="togglePlanPicker()" hidden>
-          Promeni plan
+  <!-- ─── Main ─── -->
+  <main class="main-content">
+    <div class="topbar">
+      <div class="topbar-left">
+        <button class="mobile-menu-btn" onclick="openMobileMenu()" aria-label="Otvori meni">
+          <svg><use href="#icon-menu"/></svg>
         </button>
-        <button type="button" class="btn-outline" id="cancel-plan-picker-btn" onclick="togglePlanPicker()" hidden
-                style="border-color:#8892a4;color:#8892a4;">
-          Odustani
+        <div class="topbar-title" id="topbar-title">Početna</div>
+      </div>
+      <div class="topbar-actions">
+        <button class="topbar-help" id="topbar-help-btn" onclick="startTutorial()" title="Pokreni tutorial">
+          <svg><use href="#icon-help"/></svg>
         </button>
+        <button class="logout-btn" onclick="doLogout()">Odjavi se</button>
       </div>
     </div>
 
-    <!-- ─── Prihod: nedeljni cilj ─── -->
-    <div class="card">
-      <h2>Nedeljni cilj prihoda</h2>
-      <p style="font-size:0.9rem;color:#666;margin-bottom:16px;">
-        Postavite nedeljni cilj prihoda koji se prikazuje u izveštajima kao referentna vrednost.
-        Mesečni izveštaj automatski množi ovaj broj brojem nedelja u mesecu.
-      </p>
-      <div id="revenue-goal-msg"></div>
-      <form id="revenue-goal-form" onsubmit="saveRevenueGoal(event)">
-        <div class="form-group">
-          <label for="settings-revenue-goal">Nedeljni cilj (€)</label>
-          <input type="number" id="settings-revenue-goal" min="0" step="100" placeholder="npr. 5000">
+    <div class="page-body">
+      <div id="plan-banner-host"></div>
+      <div id="form-msg"></div>
+
+      <!-- ── Početna ── -->
+      <section class="view" data-view="home" id="view-home">
+        <div class="home-hero">
+          <div class="home-hero-eyebrow" id="home-eyebrow">Nedelja —</div>
+          <h2 id="home-greeting">Dobrodošli nazad 👋</h2>
+          <p id="home-subtext">Pregled vaše agencije u jednom trenutku.</p>
         </div>
-        <button type="submit" class="btn-primary" id="revenue-goal-save-btn">Sačuvaj cilj</button>
-      </form>
+
+        <div id="home-content">
+          <p class="archive-empty" style="padding:20px;text-align:center;">Učitavanje...</p>
+        </div>
+      </section>
+
+      <!-- ── Unos ── -->
+      <section class="view" data-view="unos" id="view-unos">
+        <form id="report-form" onsubmit="submitForm(event)">
+
+          <div class="card">
+            <h2>Osnovni KPI-evi</h2>
+            <div class="form-group">
+              <label>Datum početka nedelje (ponedeljak)</label>
+              <input type="date" id="week_start" required>
+            </div>
+            <div class="grid-2">
+              <div class="form-group">
+                <label>Aktivni oglasi</label>
+                <input type="number" id="active_listings" min="0" placeholder="0" required>
+              </div>
+              <div class="form-group">
+                <label>Novi oglasi ove nedelje</label>
+                <input type="number" id="new_listings" min="0" placeholder="0" required>
+              </div>
+              <div class="form-group">
+                <label>Upiti ove nedelje</label>
+                <input type="number" id="inquiries" min="0" placeholder="0" required>
+              </div>
+              <div class="form-group">
+                <label>Ugovori — prodaja</label>
+                <input type="number" id="contracts_sale" min="0" placeholder="0" required>
+              </div>
+              <div class="form-group">
+                <label>Ugovori — zakup</label>
+                <input type="number" id="contracts_rent" min="0" placeholder="0" required>
+              </div>
+              <div class="form-group">
+                <label>Prihod (€)</label>
+                <input type="number" id="revenue" min="0" placeholder="0" required>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <h2>Upiti po izvoru</h2>
+            <div class="grid-2">
+              <div class="form-group">
+                <label>Halo oglasi</label>
+                <input type="number" id="src_halo" min="0" value="0">
+              </div>
+              <div class="form-group">
+                <label>4zida</label>
+                <input type="number" id="src_4zida" min="0" value="0">
+              </div>
+              <div class="form-group">
+                <label>Sajt agencije</label>
+                <input type="number" id="src_sajt" min="0" value="0">
+              </div>
+              <div class="form-group">
+                <label>Instagram / ostalo</label>
+                <input type="number" id="src_insta" min="0" value="0">
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <h2>Performanse agenata</h2>
+            <div id="agents-container">
+              <p style="color:#aaa; font-size:0.9rem;">Učitavanje agenata...</p>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-success" id="submit-btn">
+            Sačuvaj nedeljni izveštaj
+          </button>
+        </form>
+
+        <div class="card" id="public-link-card" style="display:none">
+          <h2>Javni link</h2>
+          <p style="font-size:0.88rem;color:#666;margin-bottom:4px;">Podelite sa investitorima ili franšizodavcem — prikazuje KPI-eve bez logina.</p>
+          <div class="public-link-box">
+            <span class="public-link-text" id="public-link-text"></span>
+            <button class="btn-copy" onclick="copyPublicLink(this)">Kopiraj</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Agenti ── -->
+      <section class="view" data-view="agenti" id="view-agenti">
+        <div class="card">
+          <h2>Dodaj agenta</h2>
+          <div id="agents-msg"></div>
+          <div class="form-group">
+            <label>Ime i prezime</label>
+            <input type="text" id="new-agent-name" placeholder="npr. Marko Petrović" autocomplete="off">
+          </div>
+          <button class="btn btn-success" id="add-agent-btn" onclick="addAgent()" style="margin-top:0;">
+            Dodaj agenta
+          </button>
+        </div>
+
+        <div class="card">
+          <h2>Aktivni agenti <span id="agents-count" style="font-size:0.85rem;color:#8892a4;font-weight:500;"></span></h2>
+          <div id="agents-manage-list">
+            <p class="archive-empty">Učitavanje...</p>
+          </div>
+        </div>
+
+        <div class="card" id="agent-reports-card">
+          <h2>Izveštaji po agentu</h2>
+          <div id="agent-reports-list">
+            <p class="archive-empty">Učitavanje...</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Arhiva ── -->
+      <section class="view" data-view="arhiva" id="view-arhiva">
+        <div class="card">
+          <h2>Arhiva izveštaja</h2>
+          <div id="archive-list">
+            <p class="archive-empty">Učitavanje...</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Uvoz ── -->
+      <section class="view" data-view="uvoz" id="view-uvoz">
+        <div class="card">
+          <h2>CSV uvoz podataka</h2>
+          <p style="font-size:0.88rem;color:#666;margin-bottom:18px;">Uvezite istorijske podatke iz Excel/CSV fajla. Postojeći podaci za istu nedelju se prepisuju.</p>
+
+          <div class="form-group">
+            <label>Učitaj CSV fajl</label>
+            <input type="file" id="csv-file" accept=".csv,.txt" onchange="loadCsvFile(event)">
+          </div>
+
+          <div class="form-group">
+            <label>Ili nalepite CSV tekst</label>
+            <textarea id="csv-text" rows="7" placeholder="week_start,active_listings,new_listings,inquiries,contracts_sale,contracts_rent,revenue,halo_oglasi,4zida,sajt_agencije,instagram_ostalo&#10;2026-04-28,47,5,83,3,7,4200,38,21,14,10&#10;2026-05-05,52,6,91,4,8,4800,42,23,16,10"></textarea>
+          </div>
+
+          <button class="btn-outline" onclick="parseCsv()">Pregledaj uvoz</button>
+        </div>
+
+        <div class="card" id="csv-preview-card" style="display:none">
+          <h2>Pregled podataka</h2>
+          <div id="csv-preview-table" style="overflow-x:auto"></div>
+          <div id="import-msg" style="margin-top:12px"></div>
+          <button class="btn btn-success" id="import-btn" onclick="importCsv()" style="margin-top:14px;">
+            Uvezi u bazu
+          </button>
+        </div>
+      </section>
+
+      <!-- ── Brending ── -->
+      <section class="view" data-view="brending" id="view-brending">
+        <div id="brending-content"></div>
+      </section>
+
+      <!-- ── Podešavanja ── -->
+      <section class="view" data-view="podesavanja" id="view-podesavanja">
+        <div class="card">
+          <h2>Pretplata</h2>
+          <div id="plan-management-info" style="margin-bottom:16px;">Učitavanje...</div>
+          <div id="plan-picker" hidden>
+            <div class="plan-change-grid" id="plan-change-grid"></div>
+          </div>
+          <div id="plan-change-msg"></div>
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+            <button type="button" class="btn-outline" id="change-plan-btn" onclick="togglePlanPicker()" hidden>
+              Promeni plan
+            </button>
+            <button type="button" class="btn-outline" id="cancel-plan-picker-btn" onclick="togglePlanPicker()" hidden
+                    style="border-color:#8892a4;color:#8892a4;">
+              Odustani
+            </button>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Nedeljni cilj prihoda</h2>
+          <p style="font-size:0.9rem;color:#666;margin-bottom:16px;">
+            Postavite nedeljni cilj prihoda koji se prikazuje u izveštajima i na Početnoj kao referentna vrednost.
+            Mesečni izveštaj automatski množi ovaj broj brojem nedelja u mesecu.
+          </p>
+          <div id="revenue-goal-msg"></div>
+          <form id="revenue-goal-form" onsubmit="saveRevenueGoal(event)">
+            <div class="form-group">
+              <label for="settings-revenue-goal">Nedeljni cilj (€)</label>
+              <input type="number" id="settings-revenue-goal" min="0" step="100" placeholder="npr. 5000">
+            </div>
+            <button type="submit" class="btn-primary" id="revenue-goal-save-btn">Sačuvaj cilj</button>
+          </form>
+        </div>
+
+        <div class="card">
+          <h2>Praćenje tržišta</h2>
+          <p style="font-size:0.9rem;color:#666;margin-bottom:16px;">
+            Označite segmente koje vaša agencija prati. Pricing benchmark i analiza tržišta u izveštajima koriste samo izabrane segmente.
+          </p>
+          <div id="tracking-msg"></div>
+          <form id="tracking-form" onsubmit="saveTracking(event)">
+            <div class="form-group" style="display:flex;align-items:center;gap:10px;text-transform:none;">
+              <input type="checkbox" id="tracks-sale" style="width:18px;height:18px;margin:0;cursor:pointer;">
+              <label for="tracks-sale" style="margin:0;text-transform:none;letter-spacing:0;font-weight:500;color:#1a1a2e;cursor:pointer;">
+                Pratim prodaju stanova
+              </label>
+            </div>
+            <div class="form-group" style="display:flex;align-items:center;gap:10px;text-transform:none;">
+              <input type="checkbox" id="tracks-rent" style="width:18px;height:18px;margin:0;cursor:pointer;">
+              <label for="tracks-rent" style="margin:0;text-transform:none;letter-spacing:0;font-weight:500;color:#1a1a2e;cursor:pointer;">
+                Pratim zakup stanova
+              </label>
+            </div>
+            <button type="submit" class="btn-primary" id="tracking-save-btn" style="margin-top:8px;">
+              Sačuvaj preferencije
+            </button>
+          </form>
+        </div>
+
+        <div class="card">
+          <h2>Podaci za R-1 račun</h2>
+          <p style="font-size:0.9rem;color:#666;margin-bottom:16px;">
+            Unesite PIB i matični broj agencije ako želite da račun za pretplatu sadrži R-1 elemente. Polja su <strong>opciona</strong> — ako ih ne unesete, račun će stizati bez tih podataka.
+          </p>
+          <div id="settings-msg"></div>
+
+          <form id="settings-form" onsubmit="saveSettings(event)">
+            <div class="form-group">
+              <label for="settings-pib">PIB</label>
+              <input type="text" id="settings-pib" maxlength="20" placeholder="npr. 123456789">
+            </div>
+            <div class="form-group">
+              <label for="settings-mb">Matični broj</label>
+              <input type="text" id="settings-mb" maxlength="20" placeholder="npr. 12345678">
+            </div>
+            <div class="form-group">
+              <label for="settings-address">Pravna adresa</label>
+              <input type="text" id="settings-address" maxlength="200" placeholder="npr. Kneza Miloša 25">
+            </div>
+            <div class="form-group">
+              <label for="settings-city">Grad</label>
+              <input type="text" id="settings-city" maxlength="100" placeholder="npr. Beograd">
+            </div>
+            <div class="form-group">
+              <label for="settings-billing-email">Email za fakture <span style="font-weight:400;color:#8892a4;text-transform:none;letter-spacing:0;">(opciono)</span></label>
+              <input type="email" id="settings-billing-email" maxlength="200" placeholder="Ostavite prazno za glavni email">
+              <div style="font-size:0.78rem;color:#8892a4;margin-top:5px;">Ako ostavite prazno, fakture stižu na glavni email naloga.</div>
+            </div>
+            <button type="submit" class="btn-primary" id="settings-save-btn">Sačuvaj podatke</button>
+          </form>
+        </div>
+
+        <div class="card" style="margin-top:20px;border:1px solid #fecaca;">
+          <h2 style="color:#991b1b;">Otkazivanje pretplate</h2>
+          <div id="subscription-info" style="font-size:0.92rem;color:#4a5168;margin:8px 0 16px;">
+            Učitavanje statusa pretplate...
+          </div>
+          <div id="cancel-msg"></div>
+          <button type="button" class="btn-outline" id="cancel-sub-btn" onclick="cancelSubscription()" style="border-color:#dc2626;color:#dc2626;">
+            Otkaži pretplatu
+          </button>
+          <p style="font-size:0.82rem;color:#8892a4;margin-top:10px;">
+            Otkazivanje je trenutno — nalog odmah prelazi na Free plan. Kasnije možete ponovo aktivirati plan u sekciji <a href="pricing.html" style="color:#2563eb;">Cene</a>.
+          </p>
+        </div>
+      </section>
     </div>
-
-    <!-- ─── Praćenje tržišta ─── -->
-    <div class="card">
-      <h2>Praćenje tržišta</h2>
-      <p style="font-size:0.9rem;color:#666;margin-bottom:16px;">
-        Označite segmente koje vaša agencija prati. Pricing benchmark i analiza tržišta u izveštajima koriste samo izabrane segmente.
-      </p>
-      <div id="tracking-msg"></div>
-      <form id="tracking-form" onsubmit="saveTracking(event)">
-        <div class="form-group" style="display:flex;align-items:center;gap:10px;text-transform:none;">
-          <input type="checkbox" id="tracks-sale" style="width:18px;height:18px;margin:0;cursor:pointer;">
-          <label for="tracks-sale" style="margin:0;text-transform:none;letter-spacing:0;font-weight:500;color:#1a1a2e;cursor:pointer;">
-            Pratim prodaju stanova
-          </label>
-        </div>
-        <div class="form-group" style="display:flex;align-items:center;gap:10px;text-transform:none;">
-          <input type="checkbox" id="tracks-rent" style="width:18px;height:18px;margin:0;cursor:pointer;">
-          <label for="tracks-rent" style="margin:0;text-transform:none;letter-spacing:0;font-weight:500;color:#1a1a2e;cursor:pointer;">
-            Pratim zakup stanova
-          </label>
-        </div>
-        <button type="submit" class="btn-primary" id="tracking-save-btn" style="margin-top:8px;">
-          Sačuvaj preferencije
-        </button>
-      </form>
-    </div>
-
-    <div class="card">
-      <h2>Podaci za R-1 račun</h2>
-      <p style="font-size:0.9rem;color:#666;margin-bottom:16px;">
-        Unesite PIB i matični broj agencije ako želite da račun za pretplatu sadrži R-1 elemente. Polja su <strong>opciona</strong> — ako ih ne unesete, račun će stizati bez tih podataka.
-      </p>
-      <div id="settings-msg"></div>
-
-      <form id="settings-form" onsubmit="saveSettings(event)">
-
-        <div class="form-group">
-          <label for="settings-pib">PIB</label>
-          <input type="text" id="settings-pib" maxlength="20" placeholder="npr. 123456789">
-        </div>
-
-        <div class="form-group">
-          <label for="settings-mb">Matični broj</label>
-          <input type="text" id="settings-mb" maxlength="20" placeholder="npr. 12345678">
-        </div>
-
-        <div class="form-group">
-          <label for="settings-address">Pravna adresa</label>
-          <input type="text" id="settings-address" maxlength="200" placeholder="npr. Kneza Miloša 25">
-        </div>
-
-        <div class="form-group">
-          <label for="settings-city">Grad</label>
-          <input type="text" id="settings-city" maxlength="100" placeholder="npr. Beograd">
-        </div>
-
-        <div class="form-group">
-          <label for="settings-billing-email">Email za fakture <span style="font-weight:400;color:#8892a4;text-transform:none;letter-spacing:0;">(opciono)</span></label>
-          <input type="email" id="settings-billing-email" maxlength="200" placeholder="Ostavite prazno za glavni email">
-          <div style="font-size:0.78rem;color:#8892a4;margin-top:5px;">Ako ostavite prazno, fakture stižu na glavni email naloga.</div>
-        </div>
-
-        <button type="submit" class="btn-primary" id="settings-save-btn">Sačuvaj podatke</button>
-      </form>
-    </div>
-
-    <div class="card" style="margin-top:20px;border:1px solid #fecaca;">
-      <h2 style="color:#991b1b;">Otkazivanje pretplate</h2>
-      <div id="subscription-info" style="font-size:0.92rem;color:#4a5168;margin:8px 0 16px;">
-        Učitavanje statusa pretplate...
-      </div>
-      <div id="cancel-msg"></div>
-      <button type="button" class="btn-outline" id="cancel-sub-btn" onclick="cancelSubscription()" style="border-color:#dc2626;color:#dc2626;">
-        Otkaži pretplatu
-      </button>
-      <p style="font-size:0.82rem;color:#8892a4;margin-top:10px;">
-        Otkazivanje je trenutno — nalog odmah prelazi na Free plan. Kasnije možete ponovo aktivirati plan u sekciji <a href="pricing.html" style="color:#2563eb;">Cene</a>.
-      </p>
-    </div>
-  </div>
-
+  </main>
 </div>
 
 <!-- ═══ MODAL ZA PREGLED IZVEŠTAJA ═══ -->
@@ -529,6 +834,23 @@
   </div>
 </div>
 
+<!-- ═══ TUTORIAL OVERLAY ═══ -->
+<div id="tutorial-overlay">
+  <div class="tutorial-spotlight" id="tutorial-spotlight"></div>
+  <div class="tutorial-tooltip" id="tutorial-tooltip">
+    <div class="tutorial-step" id="tutorial-step">Korak 1 / 8</div>
+    <div class="tutorial-title" id="tutorial-title"></div>
+    <div class="tutorial-body" id="tutorial-body"></div>
+    <div class="tutorial-actions">
+      <button class="tutorial-skip" onclick="endTutorial()">Preskoči</button>
+      <div style="display:flex;gap:8px;">
+        <button class="tutorial-prev" id="tutorial-prev-btn" onclick="prevTutorialStep()">Nazad</button>
+        <button class="tutorial-next" id="tutorial-next-btn" onclick="nextTutorialStep()">Dalje</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
   const { createClient } = supabase;
   const sb = createClient(
@@ -537,10 +859,11 @@
   );
 
   let agencyId    = null;
-  let agencyPlan  = null;   // { id, name, max_agents, history_months, custom_branding }
+  let agencyPlan  = null;
   let agencyLogo  = null;
+  let agencyData  = null;
   let agentsList  = [];
-  let activeTab   = 'form';
+  let activeView  = 'home';
 
   // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -563,27 +886,81 @@
     return `${d}.${m}.${y}`;
   }
 
-  // ── Tabs ───────────────────────────────────────────────────────────────────
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({
+      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+    }[c]));
+  }
 
-  function switchTab(tab) {
-    activeTab = tab;
-    document.getElementById('tab-form').hidden     = (tab !== 'form');
-    document.getElementById('tab-agents').hidden   = (tab !== 'agents');
-    document.getElementById('tab-import').hidden   = (tab !== 'import');
-    document.getElementById('tab-archive').hidden  = (tab !== 'archive');
-    document.getElementById('tab-branding').hidden = (tab !== 'branding');
-    document.getElementById('tab-settings').hidden = (tab !== 'settings');
-    document.getElementById('tab-form-btn').classList.toggle('active',     tab === 'form');
-    document.getElementById('tab-agents-btn').classList.toggle('active',   tab === 'agents');
-    document.getElementById('tab-import-btn').classList.toggle('active',   tab === 'import');
-    document.getElementById('tab-archive-btn').classList.toggle('active',  tab === 'archive');
-    document.getElementById('tab-branding-btn').classList.toggle('active', tab === 'branding');
-    document.getElementById('tab-settings-btn').classList.toggle('active', tab === 'settings');
+  function fmtEur(n) {
+    return Number(n || 0).toLocaleString('sr-RS') + '€';
+  }
 
-    if (tab === 'archive')  loadArchive();
-    if (tab === 'agents')   { renderAgentsManage(); loadAgentReports(); }
-    if (tab === 'branding') renderBranding();
-    if (tab === 'settings') renderSettings();
+  // ── View routing ───────────────────────────────────────────────────────────
+
+  const VIEW_TITLES = {
+    home: 'Početna',
+    unos: 'Unos nedeljnog izveštaja',
+    agenti: 'Agenti',
+    arhiva: 'Arhiva izveštaja',
+    uvoz: 'Uvoz iz CSV',
+    brending: 'Brending',
+    podesavanja: 'Podešavanja',
+  };
+
+  function switchView(route) {
+    if (!VIEW_TITLES[route]) route = 'home';
+    activeView = route;
+
+    document.querySelectorAll('.view').forEach(v => {
+      v.classList.toggle('active', v.dataset.view === route);
+    });
+    document.querySelectorAll('.nav-item').forEach(b => {
+      b.classList.toggle('active', b.dataset.route === route);
+    });
+    document.getElementById('topbar-title').textContent = VIEW_TITLES[route];
+    window.scrollTo({ top: 0, behavior: 'instant' });
+    closeMobileMenu();
+
+    if (location.hash !== '#/' + route) {
+      history.replaceState(null, '', '#/' + route);
+    }
+
+    if (route === 'home')         loadHome();
+    if (route === 'arhiva')       loadArchive();
+    if (route === 'agenti')     { renderAgentsManage(); loadAgentReports(); }
+    if (route === 'brending')     renderBrending();
+    if (route === 'podesavanja')  renderSettings();
+  }
+
+  function handleHashRoute() {
+    const r = (location.hash || '').replace(/^#\//, '');
+    switchView(r || 'home');
+  }
+  window.addEventListener('hashchange', handleHashRoute);
+
+  function bindNavButtons() {
+    document.querySelectorAll('.nav-item').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const route = btn.dataset.route;
+        if (route === 'brending' && !PlanGate.allows('custom_branding')) {
+          switchView('brending'); // pokaže upgrade landing
+          return;
+        }
+        switchView(route);
+      });
+    });
+  }
+
+  // ── Mobile menu ────────────────────────────────────────────────────────────
+
+  function openMobileMenu() {
+    document.getElementById('sidebar').classList.add('open');
+    document.getElementById('sidebar-backdrop').classList.add('open');
+  }
+  function closeMobileMenu() {
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('sidebar-backdrop').classList.remove('open');
   }
 
   // ── Auth ───────────────────────────────────────────────────────────────────
@@ -612,13 +989,12 @@
     document.getElementById('login-msg').innerHTML      = '';
   }
 
-  // ── Dashboard ──────────────────────────────────────────────────────────────
+  // ── Dashboard init ─────────────────────────────────────────────────────────
 
   async function initDashboard() {
     const { data: { user } } = await sb.auth.getUser();
     if (!user) return;
 
-    // ── Checkout gate: user mora završiti odabir plana pre pristupa panelu ──
     const meta = user.user_metadata || {};
     const validStatuses = ['trialing', 'active'];
     if (!validStatuses.includes(meta.plan_status)) {
@@ -641,15 +1017,19 @@
 
     agencyId   = agencies[0].id;
     agencyLogo = agencies[0].logo_url || null;
-    document.getElementById('agency-name-header').textContent = agencies[0].name;
+    document.getElementById('sidebar-agency-name').textContent = agencies[0].name;
 
     await PlanGate.load(sb, agencyId);
     agencyPlan = PlanGate.state.plan;
     document.getElementById('plan-banner-host').innerHTML = PlanGate.statusBannerHtml();
 
-    if (PlanGate.allows('custom_branding')) {
-      document.getElementById('tab-branding-btn').hidden = false;
-    }
+    // Lock ikona na Brending nav itemu ako nije Premium
+    const isPremium = PlanGate.allows('custom_branding');
+    document.getElementById('brending-lock').hidden = isPremium;
+
+    // Upgrade CTA: prikaži ako nije Premium
+    const isTopPlan = PlanGate.state.plan?.id === 'premium';
+    document.getElementById('upgrade-cta-btn').hidden = isTopPlan;
 
     const token = agencies[0].public_token;
     if (token) {
@@ -671,12 +1051,241 @@
 
     document.getElementById('login-view').style.display = 'none';
     document.getElementById('dashboard').hidden          = false;
+
+    bindNavButtons();
+    handleHashRoute();
+
+    // Auto-pokreni tutorial za prvi put
+    if (localStorage.getItem('tutorial_completed') !== '1') {
+      setTimeout(() => startTutorial(), 600);
+    }
   }
+
+  // ── Home (Početna) ─────────────────────────────────────────────────────────
+
+  async function loadHome() {
+    const container = document.getElementById('home-content');
+    container.innerHTML = '<p class="archive-empty" style="padding:20px;text-align:center;">Učitavanje...</p>';
+
+    // Hero
+    const today = new Date();
+    const months = ['januar','februar','mart','april','maj','jun','jul','avgust','septembar','oktobar','novembar','decembar'];
+    document.getElementById('home-eyebrow').textContent = `${today.getDate()}. ${months[today.getMonth()]} ${today.getFullYear()}.`;
+    document.getElementById('home-greeting').textContent =
+      `Dobrodošli nazad, ${document.getElementById('sidebar-agency-name').textContent} 👋`;
+    document.getElementById('home-subtext').textContent = 'Pregled vaše agencije u jednom trenutku.';
+
+    // Fetch last 5 weekly KPIs + revenue_goal
+    const [{ data: kpis }, { data: ag }, { data: reports }] = await Promise.all([
+      sb.from('weekly_kpis')
+        .select('week_start, revenue, contracts_sale, contracts_rent, inquiries')
+        .eq('agency_id', agencyId)
+        .order('week_start', { ascending: false })
+        .limit(5),
+      sb.from('agencies').select('revenue_goal').eq('id', agencyId).single(),
+      sb.from('reports')
+        .select('week_start, report_type, sent_at')
+        .eq('agency_id', agencyId)
+        .order('week_start', { ascending: false })
+        .limit(3),
+    ]);
+
+    const revenueGoal = ag?.revenue_goal || 0;
+
+    if (!kpis?.length) {
+      container.innerHTML = `
+        <div class="home-empty">
+          <h3>Još uvek nema podataka 📊</h3>
+          <p>Unesi prvi nedeljni izveštaj i odmah ćeš videti KPI-eve, trendove i AI uvide.</p>
+          <button class="btn btn-primary" style="width:auto;padding:11px 26px;" onclick="switchView('unos')">
+            Unesi prvi izveštaj
+          </button>
+        </div>
+        ${renderQuickActions(false)}
+        ${renderHomePublicLink()}
+      `;
+      return;
+    }
+
+    const cur = kpis[0];
+    const prev = kpis[1];
+    const totalContracts = (cur.contracts_sale || 0) + (cur.contracts_rent || 0);
+    const prevContracts = prev ? (prev.contracts_sale || 0) + (prev.contracts_rent || 0) : 0;
+
+    // Revenue card
+    const revenue = cur.revenue || 0;
+    const goalPct = revenueGoal > 0 ? Math.min(100, Math.round(revenue / revenueGoal * 100)) : 0;
+    const revDelta = prev ? deltaHtml(revenue, prev.revenue || 0, true) : '';
+
+    // Contracts sparkline (last 4 weeks, reverse order)
+    const sparkData = kpis.slice(0, 4).reverse().map(k => (k.contracts_sale || 0) + (k.contracts_rent || 0));
+    const sparkline = renderSparkline(sparkData);
+    const contractsDelta = prev ? deltaHtml(totalContracts, prevContracts, false) : '';
+
+    // Top agent of current week
+    const { data: perf } = await sb.from('agent_performance')
+      .select('agent_id, contracts, inquiries, agents(name)')
+      .eq('agency_id', agencyId)
+      .eq('week_start', cur.week_start)
+      .order('contracts', { ascending: false })
+      .limit(1);
+    const topAgent = perf?.[0];
+    const topAgentName = topAgent?.agents?.name || '—';
+    const topAgentMetric = topAgent ? `${topAgent.contracts || 0} ugovora, ${topAgent.inquiries || 0} upita` : 'Nema podataka';
+
+    const goalHtml = revenueGoal > 0
+      ? `<div class="kpi-progress"><div class="kpi-progress-bar" style="width:${goalPct}%"></div></div>
+         <div class="kpi-sub">${goalPct}% nedeljnog cilja (${fmtEur(revenueGoal)})</div>`
+      : `<div class="kpi-sub" style="font-size:0.78rem;"><a href="#/podesavanja" style="color:#2563eb;">Postavi nedeljni cilj →</a></div>`;
+
+    let html = `
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-eyebrow">Prihod nedelje</div>
+          <div class="kpi-value">${fmtEur(revenue)}</div>
+          ${revDelta}
+          ${goalHtml}
+        </div>
+        <div class="kpi-card green">
+          <div class="kpi-eyebrow">Ugovori (prodaja + zakup)</div>
+          <div class="kpi-value">${totalContracts}</div>
+          ${contractsDelta}
+          <div class="kpi-sparkline">${sparkline}</div>
+        </div>
+        <div class="kpi-card amber">
+          <div class="kpi-eyebrow">Top agent nedelje</div>
+          <div class="kpi-value" style="font-size:1.15rem;">${escapeHtml(topAgentName)}</div>
+          <div class="kpi-sub">${escapeHtml(topAgentMetric)}</div>
+        </div>
+      </div>
+      ${renderQuickActions(true, cur.week_start)}
+      ${renderHomePublicLink()}
+    `;
+
+    // Mini arhiva
+    if (reports?.length) {
+      html += `
+        <div class="card">
+          <h2>Poslednji izveštaji</h2>
+          ${reports.map(r => {
+            const type    = r.report_type === 'monthly' ? 'monthly' : 'weekly';
+            const label   = type === 'monthly' ? 'Mesečni' : 'Nedeljni';
+            const cls     = type === 'monthly' ? 'badge-monthly' : 'badge-weekly';
+            return `
+              <div class="report-row">
+                <div>
+                  <div class="report-date">${fmtDate(r.week_start)}
+                    <span class="report-type-badge ${cls}">${label}</span>
+                  </div>
+                  ${r.sent_at ? `<div class="report-meta">Poslat ${fmtDate(r.sent_at)}</div>` : ''}
+                </div>
+                <button class="btn-view" onclick="viewReport('${r.week_start}','${label}',this)">Pregledaj</button>
+              </div>`;
+          }).join('')}
+          <div style="margin-top:14px;text-align:right;">
+            <a href="#/arhiva" style="color:#2563eb;font-size:0.88rem;font-weight:600;">Vidi sve →</a>
+          </div>
+        </div>
+      `;
+    }
+
+    container.innerHTML = html;
+  }
+
+  function renderQuickActions(hasData, lastWeek) {
+    const viewBtn = hasData
+      ? `<button class="quick-action" onclick="viewLastReport('${lastWeek}')">
+           <div class="quick-action-icon"><svg><use href="#icon-eye"/></svg></div>
+           <div>
+             <div class="quick-action-title">Pogledaj poslednji izveštaj</div>
+             <div class="quick-action-sub">Nedelja ${fmtDate(lastWeek)}</div>
+           </div>
+         </button>`
+      : `<button class="quick-action" onclick="switchView('arhiva')">
+           <div class="quick-action-icon"><svg><use href="#icon-archive"/></svg></div>
+           <div>
+             <div class="quick-action-title">Arhiva izveštaja</div>
+             <div class="quick-action-sub">Svi prošli izveštaji</div>
+           </div>
+         </button>`;
+
+    return `
+      <div class="quick-actions">
+        <button class="quick-action primary" onclick="switchView('unos')">
+          <div class="quick-action-icon"><svg><use href="#icon-edit"/></svg></div>
+          <div>
+            <div class="quick-action-title">Unesi nedeljni izveštaj</div>
+            <div class="quick-action-sub">Brojke za tekuću nedelju</div>
+          </div>
+        </button>
+        ${viewBtn}
+      </div>
+    `;
+  }
+
+  function renderHomePublicLink() {
+    const linkEl = document.getElementById('public-link-text');
+    const link = linkEl ? linkEl.textContent : '';
+    if (!link) return '';
+    return `
+      <div class="card" id="home-public-link-card">
+        <h2>Javni link za investitore</h2>
+        <p style="font-size:0.88rem;color:#666;margin-bottom:4px;">Read-only pregled KPI-eva — bez logina.</p>
+        <div class="public-link-box">
+          <span class="public-link-text">${escapeHtml(link)}</span>
+          <button class="btn-copy" onclick="copyPublicLinkText('${escapeHtml(link)}', this)">Kopiraj</button>
+        </div>
+      </div>
+    `;
+  }
+
+  function copyPublicLinkText(link, btn) {
+    navigator.clipboard.writeText(link).then(() => {
+      btn.textContent = 'Kopirano!';
+      setTimeout(() => btn.textContent = 'Kopiraj', 1600);
+    });
+  }
+
+  function deltaHtml(curr, prev, isCurrency) {
+    if (prev === 0 && curr === 0) return `<div class="kpi-delta flat">— vs prošla nedelja</div>`;
+    if (prev === 0) return `<div class="kpi-delta up">▲ nova vrednost</div>`;
+    const diff = curr - prev;
+    const pct = Math.round(diff / prev * 100);
+    const cls = diff > 0 ? 'up' : (diff < 0 ? 'down' : 'flat');
+    const arrow = diff > 0 ? '▲' : (diff < 0 ? '▼' : '—');
+    const sign = diff > 0 ? '+' : '';
+    const value = isCurrency ? fmtEur(Math.abs(diff)) : Math.abs(diff);
+    return `<div class="kpi-delta ${cls}">${arrow} ${sign}${pct}% (${value}) vs prošla nedelja</div>`;
+  }
+
+  function renderSparkline(data) {
+    if (!data.length) return '';
+    const w = 120, h = 28, pad = 2;
+    const max = Math.max(...data, 1);
+    const min = Math.min(...data, 0);
+    const range = max - min || 1;
+    const step = (w - 2*pad) / Math.max(1, data.length - 1);
+    const pts = data.map((v, i) => {
+      const x = pad + i * step;
+      const y = h - pad - ((v - min) / range) * (h - 2*pad);
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    }).join(' ');
+    return `
+      <svg width="${w}" height="${h}" style="overflow:visible">
+        <polyline fill="none" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" points="${pts}"/>
+      </svg>`;
+  }
+
+  async function viewLastReport(weekStart) {
+    await viewReport(weekStart, 'Nedeljni', { disabled: false, textContent: '' });
+  }
+
+  // ── Agents render (form) ────────────────────────────────────────────────────
 
   function renderAgents() {
     const container = document.getElementById('agents-container');
     if (!agentsList.length) {
-      container.innerHTML = '<p style="color:#aaa">Nema aktivnih agenata. Dodajte agente u tabu „Agenti“.</p>';
+      container.innerHTML = '<p style="color:#aaa">Nema aktivnih agenata. Dodajte agente u sekciji „Agenti“.</p>';
       return;
     }
     container.innerHTML = `
@@ -691,12 +1300,6 @@
         </div>
       `).join('')}
     `;
-  }
-
-  function escapeHtml(s) {
-    return String(s).replace(/[&<>"']/g, c => ({
-      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
-    }[c]));
   }
 
   // ── Agenti: dodavanje / uklanjanje ─────────────────────────────────────────
@@ -733,8 +1336,6 @@
     renderAgentsManage();
   }
 
-  // ── Per-agent izveštaji ─────────────────────────────────────────────────────
-
   async function loadAgentReports() {
     const card = document.getElementById('agent-reports-card');
     const list = document.getElementById('agent-reports-list');
@@ -764,7 +1365,6 @@
       return;
     }
 
-    // Grupisati po agentu — prikaži poslednje 3 nedelje po agentu
     const byAgent = {};
     for (const r of rows) {
       const id   = r.agent_id;
@@ -839,7 +1439,6 @@
     btn.textContent = 'Dodaj agenta';
 
     if (error) {
-      // Postgres trigger može vratiti LIMIT_EXCEEDED:agents:<max> ako je JS proverapromasena
       if (PlanGate.handleDbError(error, 'agents-msg')) return;
       showMsg('agents-msg', `Greška: ${error.message}`, true);
       return;
@@ -931,8 +1530,10 @@
   }
 
   async function viewReport(weekStart, label, btn) {
-    btn.disabled    = true;
-    btn.textContent = 'Učitavanje...';
+    if (btn && btn.disabled !== undefined) {
+      btn.disabled    = true;
+      btn.textContent = 'Učitavanje...';
+    }
 
     const { data, error } = await sb
       .from('reports')
@@ -941,8 +1542,10 @@
       .eq('week_start', weekStart)
       .single();
 
-    btn.disabled    = false;
-    btn.textContent = 'Pregledaj';
+    if (btn && btn.disabled !== undefined) {
+      btn.disabled    = false;
+      btn.textContent = 'Pregledaj';
+    }
 
     if (error || !data?.html) {
       alert('Izveštaj nije pronađen.');
@@ -967,7 +1570,7 @@
     document.body.style.overflow = '';
   }
 
-  // ── Submit ─────────────────────────────────────────────────────────────────
+  // ── Submit form ────────────────────────────────────────────────────────────
 
   async function submitForm(e) {
     e.preventDefault();
@@ -1167,7 +1770,7 @@
     btn.disabled    = false;
     btn.textContent = 'Uvezi u bazu';
 
-    const msg     = fail
+    const msg = fail
       ? `Uvezeno ${ok} nedelja. Greška: ${fail} nedelja (pogledajte konzolu).`
       : `Uspešno uvezeno ${ok} ${ok === 1 ? 'nedelja' : 'nedelja'}.`;
     document.getElementById('import-msg').innerHTML =
@@ -1176,12 +1779,35 @@
     if (!fail) parsedCsvRows = [];
   }
 
-  // ── Brending: logo upload (Premium only) ───────────────────────────────────
+  // ── Brending: logo upload (Premium) / upgrade landing (non-Premium) ────────
 
-  function renderBranding() {
+  function renderBrending() {
+    const container = document.getElementById('brending-content');
+    if (!PlanGate.allows('custom_branding')) {
+      container.innerHTML = `
+        <div class="upgrade-landing">
+          <div class="upgrade-landing-icon"><svg><use href="#icon-sparkles"/></svg></div>
+          <h3>Brending je dostupan na Premium planu</h3>
+          <p>Otpremite logo agencije i prikažite ga u zaglavlju nedeljnih, mesečnih i agent izveštaja — i u PDF-ovima koje šaljete investitorima.</p>
+          <button class="btn-primary" style="width:auto;padding:12px 26px;" onclick="goToUpgrade()">Pređi na Premium →</button>
+        </div>`;
+      return;
+    }
+    container.innerHTML = `
+      <div class="card">
+        <h2>Logo agencije</h2>
+        <p style="font-size:0.9rem;color:#666;margin-bottom:16px;">Logo se prikazuje u zaglavlju nedeljnih, mesečnih i agent izveštaja (HTML i PDF). Preporučeno: PNG sa providnom pozadinom, visina 80–120 px.</p>
+        <div id="branding-msg"></div>
+        <div id="logo-preview" style="margin-bottom:16px;"></div>
+        <div class="form-group">
+          <label>Otpremi novi logo</label>
+          <input type="file" id="logo-file" accept="image/png,image/jpeg,image/svg+xml" onchange="uploadLogo(event)">
+        </div>
+        <button class="btn-outline" id="logo-remove-btn" onclick="removeLogo()" style="display:none;">Ukloni logo</button>
+      </div>
+    `;
     const preview = document.getElementById('logo-preview');
     const removeBtn = document.getElementById('logo-remove-btn');
-    document.getElementById('branding-msg').innerHTML = '';
     if (agencyLogo) {
       preview.innerHTML = `<img src="${agencyLogo}" alt="Trenutni logo" style="max-height:80px;max-width:240px;border:1px solid #eaedf3;border-radius:8px;padding:10px;background:#fff;">`;
       removeBtn.style.display = 'inline-block';
@@ -1230,7 +1856,7 @@
 
     agencyLogo = url;
     event.target.value = '';
-    renderBranding();
+    renderBrending();
     showMsg('branding-msg', 'Logo je sačuvan i biće prikazan u sledećim izveštajima.');
   }
 
@@ -1250,8 +1876,22 @@
     }
 
     agencyLogo = null;
-    renderBranding();
+    renderBrending();
     showMsg('branding-msg', 'Logo je uklonjen.');
+  }
+
+  // ── Upgrade ────────────────────────────────────────────────────────────────
+
+  function goToUpgrade() {
+    switchView('podesavanja');
+    setTimeout(() => {
+      const btn = document.getElementById('change-plan-btn');
+      if (btn && !btn.hidden) {
+        const picker = document.getElementById('plan-picker');
+        if (picker.hidden) togglePlanPicker();
+      }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 200);
   }
 
   // ── Upravljanje planom ─────────────────────────────────────────────────────
@@ -1360,7 +2000,7 @@
     window.location.href = `checkout.html?plan=${newPlanId}&change=1`;
   }
 
-  // ── Podešavanja / R-1 račun ────────────────────────────────────────────────
+  // ── Podešavanja / R-1 ──────────────────────────────────────────────────────
 
   async function renderSettings() {
     document.getElementById('settings-msg').innerHTML = '';
@@ -1387,8 +2027,8 @@
     document.getElementById('settings-billing-email').value = data?.billing_email  || '';
     document.getElementById('settings-revenue-goal').value  = data?.revenue_goal != null ? data.revenue_goal : '';
 
-    document.getElementById('tracks-sale').checked = data?.tracks_sale !== false;  // default true
-    document.getElementById('tracks-rent').checked = data?.tracks_rent === true;   // default false
+    document.getElementById('tracks-sale').checked = data?.tracks_sale !== false;
+    document.getElementById('tracks-rent').checked = data?.tracks_rent === true;
 
     renderPlanManagement(data);
     renderSubscriptionInfo(data);
@@ -1556,17 +2196,182 @@
     showMsg('settings-msg', 'Podaci su sačuvani. Sledeći račun će sadržati R-1 elemente.');
   }
 
-  // ── Auto-session ───────────────────────────────────────────────────────────
+  // ════════════════════════════════════════════════════════════════════════════
+  // TUTORIAL WALKTHROUGH (8 koraka)
+  // ════════════════════════════════════════════════════════════════════════════
 
-  sb.auth.getSession().then(({ data: { session } }) => {
-    if (session) initDashboard();
+  const TUTORIAL_STEPS = [
+    {
+      target: '#nav-home',
+      title: 'Početna — tvoj kontrolni centar',
+      body: 'Ovde vidiš prihod nedelje, ugovore i top agenta. Sve što je važno na jednom mestu.',
+      placement: 'right',
+    },
+    {
+      target: '#nav-unos',
+      title: 'Unos podataka',
+      body: 'Jednom nedeljno uneseš brojke (oglasi, upiti, ugovori). AI generiše izveštaj umesto tebe.',
+      placement: 'right',
+      onShow: () => {},
+    },
+    {
+      target: '#nav-agenti',
+      title: 'Agenti',
+      body: 'Dodaj svoje agente jednom. AI će im automatski slati personalizovane nedeljne izveštaje.',
+      placement: 'right',
+    },
+    {
+      target: '#nav-arhiva',
+      title: 'Arhiva izveštaja',
+      body: 'Svi tvoji nedeljni i mesečni izveštaji ostaju ovde. Možeš ih preuzeti kao PDF ili podeliti link.',
+      placement: 'right',
+    },
+    {
+      target: '#nav-uvoz',
+      title: 'Uvoz iz CSV',
+      body: 'Ako već imaš istorijske podatke u Excelu — uvezi ih ovde u par sekundi.',
+      placement: 'right',
+    },
+    {
+      target: '#nav-brending',
+      title: 'Brending (Premium)',
+      body: 'Otpremi logo agencije i on će se prikazivati u svim izveštajima i PDF-ovima.',
+      placement: 'right',
+    },
+    {
+      target: '#upgrade-cta-btn',
+      title: 'Otključaj sve',
+      body: 'Pređi na viši plan kada budeš spreman. Bez kartice za probu, otkazivanje u jednom kliku.',
+      placement: 'right',
+      skipIf: () => document.getElementById('upgrade-cta-btn').hidden,
+    },
+    {
+      target: '#tutorial-launch-btn',
+      title: 'Vrati se ovde uvek',
+      body: 'Klikni na „Tutorial" kad god ti zatreba podsetnik. Spreman si — uživaj u radu! 🚀',
+      placement: 'right',
+    },
+  ];
+
+  let tutorialIndex = 0;
+
+  function startTutorial() {
+    tutorialIndex = 0;
+    document.getElementById('tutorial-overlay').classList.add('active');
+    document.body.style.overflow = 'hidden';
+    closeMobileMenu();
+    // Vrati se na home pre tutoriala da svi sidebar elementi budu vidljivi
+    if (activeView !== 'home') switchView('home');
+    setTimeout(() => showTutorialStep(), 100);
+  }
+
+  function endTutorial() {
+    document.getElementById('tutorial-overlay').classList.remove('active');
+    document.body.style.overflow = '';
+    localStorage.setItem('tutorial_completed', '1');
+  }
+
+  function nextTutorialStep() {
+    let next = tutorialIndex + 1;
+    while (next < TUTORIAL_STEPS.length && TUTORIAL_STEPS[next].skipIf && TUTORIAL_STEPS[next].skipIf()) {
+      next++;
+    }
+    if (next >= TUTORIAL_STEPS.length) {
+      endTutorial();
+      return;
+    }
+    tutorialIndex = next;
+    showTutorialStep();
+  }
+
+  function prevTutorialStep() {
+    let prev = tutorialIndex - 1;
+    while (prev >= 0 && TUTORIAL_STEPS[prev].skipIf && TUTORIAL_STEPS[prev].skipIf()) {
+      prev--;
+    }
+    if (prev < 0) return;
+    tutorialIndex = prev;
+    showTutorialStep();
+  }
+
+  function showTutorialStep() {
+    const step = TUTORIAL_STEPS[tutorialIndex];
+    if (!step) { endTutorial(); return; }
+
+    const target = document.querySelector(step.target);
+    if (!target) {
+      // skip
+      nextTutorialStep();
+      return;
+    }
+
+    if (step.onShow) step.onShow();
+
+    const rect = target.getBoundingClientRect();
+    const spotlight = document.getElementById('tutorial-spotlight');
+    const tooltip = document.getElementById('tutorial-tooltip');
+
+    const pad = 6;
+    spotlight.style.top = `${rect.top - pad}px`;
+    spotlight.style.left = `${rect.left - pad}px`;
+    spotlight.style.width = `${rect.width + pad*2}px`;
+    spotlight.style.height = `${rect.height + pad*2}px`;
+
+    document.getElementById('tutorial-step').textContent =
+      `Korak ${tutorialIndex + 1} / ${TUTORIAL_STEPS.length}`;
+    document.getElementById('tutorial-title').textContent = step.title;
+    document.getElementById('tutorial-body').textContent = step.body;
+
+    // Position tooltip
+    const tooltipWidth = 320;
+    const tooltipGap = 16;
+    let top, left;
+    if (step.placement === 'right' && window.innerWidth > 880) {
+      left = rect.right + tooltipGap;
+      top = Math.max(20, rect.top);
+      if (left + tooltipWidth > window.innerWidth - 20) {
+        left = window.innerWidth - tooltipWidth - 20;
+        top = rect.bottom + tooltipGap;
+      }
+    } else {
+      left = Math.max(20, Math.min(window.innerWidth - tooltipWidth - 20, rect.left));
+      top = rect.bottom + tooltipGap;
+      if (top + 200 > window.innerHeight) {
+        top = Math.max(20, rect.top - 220);
+      }
+    }
+    tooltip.style.top = `${top}px`;
+    tooltip.style.left = `${left}px`;
+
+    document.getElementById('tutorial-prev-btn').style.visibility =
+      tutorialIndex === 0 ? 'hidden' : 'visible';
+    document.getElementById('tutorial-next-btn').textContent =
+      tutorialIndex === TUTORIAL_STEPS.length - 1 ? 'Završi' : 'Dalje';
+  }
+
+  window.addEventListener('resize', () => {
+    if (document.getElementById('tutorial-overlay').classList.contains('active')) {
+      showTutorialStep();
+    }
   });
 
   document.addEventListener('keydown', e => {
+    if (document.getElementById('tutorial-overlay').classList.contains('active')) {
+      if (e.key === 'Escape') endTutorial();
+      else if (e.key === 'ArrowRight' || e.key === 'Enter') nextTutorialStep();
+      else if (e.key === 'ArrowLeft') prevTutorialStep();
+      return;
+    }
     if (e.key === 'Enter' && document.getElementById('login-view').style.display !== 'none'
         && !document.getElementById('login-view').hidden) {
       doLogin();
     }
+  });
+
+  // ── Auto-session ───────────────────────────────────────────────────────────
+
+  sb.auth.getSession().then(({ data: { session } }) => {
+    if (session) initDashboard();
   });
 </script>
 </body>
