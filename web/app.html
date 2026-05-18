@@ -546,7 +546,7 @@
       <button class="nav-item" data-route="arhiva" id="nav-arhiva">
         <svg class="nav-icon"><use href="#icon-archive"/></svg> Arhiva
       </button>
-      <button class="nav-item" data-route="uvoz" id="nav-uvoz">
+      <button class="nav-item" data-route="uvoz" id="nav-uvoz" hidden>
         <svg class="nav-icon"><use href="#icon-upload"/></svg> Uvoz
       </button>
 
@@ -969,6 +969,7 @@
 
   function switchView(route) {
     if (!VIEW_TITLES[route]) route = 'home';
+    if (route === 'uvoz') route = 'home';
     activeView = route;
 
     document.querySelectorAll('.view').forEach(v => {
@@ -2298,6 +2299,7 @@
       title: 'Uvoz iz CSV',
       body: 'Ako već imaš istorijske podatke u Excelu — uvezi ih ovde u par sekundi.',
       placement: 'right',
+      skipIf: () => document.getElementById('nav-uvoz').hidden,
     },
     {
       target: '#nav-brending',
