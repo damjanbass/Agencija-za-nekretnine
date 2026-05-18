@@ -1032,8 +1032,8 @@
     const isPremium = PlanGate.allows('custom_branding');
     document.getElementById('brending-lock').hidden = isPremium;
 
-    // Upgrade CTA: prikaži ako nije Premium
-    const isTopPlan = PlanGate.state.plan?.id === 'premium';
+    // Upgrade CTA: sakrij ako plan ima sve feature-e (premium)
+    const isTopPlan = PlanGate.allows('custom_branding') && PlanGate.allows('pdf_export') && PlanGate.allows('benchmark');
     document.getElementById('upgrade-cta-btn').hidden = isTopPlan;
 
     const token = agencies[0].public_token;
@@ -1317,7 +1317,9 @@
     const count = document.getElementById('agents-count');
     const { max } = PlanGate.limit('agents');
     if (count) {
-      count.textContent = max === -1 ? `(${agentsList.length})` : `(${agentsList.length}/${max})`;
+      count.textContent = max === -1
+        ? `(${agentsList.length} — neograničeno)`
+        : `(${agentsList.length}/${max})`;
     }
     if (!agentsList.length) {
       list.innerHTML = '<p class="archive-empty">Nema aktivnih agenata.</p>';

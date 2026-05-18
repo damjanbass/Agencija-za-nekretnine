@@ -54,7 +54,7 @@
         plans (
           id, name, max_agents, max_listings, history_months,
           ai_analysis, email_send, weekly_report, monthly_report, daily_report,
-          pdf_export, custom_branding, benchmark
+          pdf_export, custom_branding, benchmark, agent_reports
         )
       `)
       .eq('id', agencyId)
@@ -66,16 +66,22 @@
       return state;
     }
 
+    console.log('[PlanGate] agency raw:', JSON.stringify({
+      plan_id: agency.plan_id,
+      subscription_status: agency.subscription_status,
+      plans: agency.plans,
+    }, null, 2));
+
     state.rawPlanId        = agency.plan_id;
     state.status           = agency.subscription_status || 'trial';
     state.trialEndsAt      = agency.trial_ends_at ? new Date(agency.trial_ends_at) : null;
     state.currentPeriodEnd = agency.current_period_end ? new Date(agency.current_period_end) : null;
 
-    // Effective plan: ako pretplata nije active/trial, vrati free.
-    const effective = (state.status === 'trial' || state.status === 'active')
-      ? agency.plans
-      : null;
+    // Effective plan: ako pretplata nije active/trial(ing), vrati free.
+    const VALID_STATUSES = ['trial', 'trialing', 'active'];
+    const effective = VALID_STATUSES.includes(state.status) ? agency.plans : null;
     state.plan = effective || freeFallback();
+    console.log('[PlanGate] effective plan:', state.plan?.id, '| status:', state.status, '| custom_branding:', state.plan?.custom_branding);
 
     await refreshCounts();
     return state;
@@ -99,7 +105,7 @@
       max_agents: 3, max_listings: 5, history_months: 1,
       ai_analysis: true, email_send: true,
       weekly_report: true, monthly_report: false, daily_report: false,
-      pdf_export: false, custom_branding: false, benchmark: false,
+      pdf_export: false, custom_branding: false, benchmark: false, agent_reports: false,
     };
   }
 
@@ -173,7 +179,7 @@
   }
 
   function statusBannerHtml() {
-    if (state.status === 'trial') {
+    if (state.status === 'trial' || state.status === 'trialing') {
       const d = trialDaysLeft();
       if (d === null) return '';
       const tone = d <= 3 ? 'warn' : 'info';
