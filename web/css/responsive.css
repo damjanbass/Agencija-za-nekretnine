@@ -21,9 +21,13 @@ html {
 }
 
 /* Globalni tampon protiv horizontalnog "šetanja" */
-html, body {
+html {
+  overflow-x: hidden;
+}
+body {
   max-width: 100%;
-  overflow-x: clip;
+  overflow-x: hidden;
+  position: relative; /* bez ovoga overflow-x: hidden ne radi u nekim browserima */
 }
 
 /* Sva media automatski responsive */
