@@ -519,7 +519,11 @@
     try {
       const { data: { user }, error: userErr } = await sb.auth.getUser();
       if (userErr || !user) {
-        showMsg('Sesija nije pronađena. Prijavite se ponovo.', 'error');
+        showMsg(
+          'Email adresa još nije potvrđena — molimo proverite inbox i kliknite link koji smo vam poslali. ' +
+          'Nakon potvrde, osvežite ovu stranicu i pokušajte ponovo.',
+          'error'
+        );
         return;
       }
 
