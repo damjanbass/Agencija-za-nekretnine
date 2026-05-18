@@ -47,21 +47,17 @@
     state.sb = sb;
     state.agencyId = agencyId;
 
-    const { data: agency, error } = await sb
+    // 1) Agency red — flat, bez embedded join-a (PostgREST relationship
+    //    inference je u prošlosti tiho vraćao plans=null, što je rušilo
+    //    feature gating čak i za korisnike sa ispravnim plan_id-em).
+    const { data: agency, error: agencyErr } = await sb
       .from('agencies')
-      .select(`
-        plan_id, subscription_status, trial_ends_at, current_period_end,
-        plans (
-          id, name, max_agents, max_listings, history_months,
-          ai_analysis, email_send, weekly_report, monthly_report, daily_report,
-          pdf_export, custom_branding, benchmark, agent_reports
-        )
-      `)
+      .select('plan_id, subscription_status, trial_ends_at, current_period_end')
       .eq('id', agencyId)
       .single();
 
-    if (error || !agency) {
-      console.error('[PlanGate] load failed', error);
+    if (agencyErr || !agency) {
+      console.error('[PlanGate] agency load failed', agencyErr);
       state.plan = freeFallback();
       return state;
     }
@@ -71,34 +67,32 @@
     state.trialEndsAt      = agency.trial_ends_at ? new Date(agency.trial_ends_at) : null;
     state.currentPeriodEnd = agency.current_period_end ? new Date(agency.current_period_end) : null;
 
-    // Embedded join može vratiti null ako RLS/policy blokira plans tabelu
-    // za authenticated rolu. U tom slučaju, učitaj plan direktno po id-u.
-    let planRow = agency.plans;
-    if (!planRow && agency.plan_id) {
-      const { data: planFallback, error: planErr } = await sb
+    // 2) Plan red — posebnim upitom, da JOIN nikad ne može da padne.
+    let planRow = null;
+    if (agency.plan_id) {
+      const { data: p, error: planErr } = await sb
         .from('plans')
         .select('id, name, max_agents, max_listings, history_months, ai_analysis, email_send, weekly_report, monthly_report, daily_report, pdf_export, custom_branding, benchmark, agent_reports')
         .eq('id', agency.plan_id)
         .single();
       if (planErr) {
-        console.error('[PlanGate] plan fallback fetch failed', planErr);
+        console.error('[PlanGate] plan load failed', planErr, '| plan_id:', agency.plan_id);
       } else {
-        planRow = planFallback;
-        console.warn('[PlanGate] embedded plans join vratio null — koristim direktan fetch.');
+        planRow = p;
       }
     }
 
-    console.log('[PlanGate] agency raw:', JSON.stringify({
+    console.log('[PlanGate] loaded:', {
       plan_id: agency.plan_id,
-      subscription_status: agency.subscription_status,
-      plans: planRow,
-    }, null, 2));
+      status: agency.subscription_status,
+      plan: planRow,
+    });
 
     // Effective plan: ako pretplata nije active/trial(ing), vrati free.
     const VALID_STATUSES = ['trial', 'trialing', 'active'];
     const effective = VALID_STATUSES.includes(state.status) ? planRow : null;
     state.plan = effective || freeFallback();
-    console.log('[PlanGate] effective plan:', state.plan?.id, '| status:', state.status, '| custom_branding:', state.plan?.custom_branding);
+    console.log('[PlanGate] effective:', state.plan?.id, '| status:', state.status, '| custom_branding:', state.plan?.custom_branding);
 
     await refreshCounts();
     return state;
