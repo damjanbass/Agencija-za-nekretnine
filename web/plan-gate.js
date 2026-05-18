@@ -66,20 +66,37 @@
       return state;
     }
 
-    console.log('[PlanGate] agency raw:', JSON.stringify({
-      plan_id: agency.plan_id,
-      subscription_status: agency.subscription_status,
-      plans: agency.plans,
-    }, null, 2));
-
     state.rawPlanId        = agency.plan_id;
     state.status           = agency.subscription_status || 'trial';
     state.trialEndsAt      = agency.trial_ends_at ? new Date(agency.trial_ends_at) : null;
     state.currentPeriodEnd = agency.current_period_end ? new Date(agency.current_period_end) : null;
 
+    // Embedded join može vratiti null ako RLS/policy blokira plans tabelu
+    // za authenticated rolu. U tom slučaju, učitaj plan direktno po id-u.
+    let planRow = agency.plans;
+    if (!planRow && agency.plan_id) {
+      const { data: planFallback, error: planErr } = await sb
+        .from('plans')
+        .select('id, name, max_agents, max_listings, history_months, ai_analysis, email_send, weekly_report, monthly_report, daily_report, pdf_export, custom_branding, benchmark, agent_reports')
+        .eq('id', agency.plan_id)
+        .single();
+      if (planErr) {
+        console.error('[PlanGate] plan fallback fetch failed', planErr);
+      } else {
+        planRow = planFallback;
+        console.warn('[PlanGate] embedded plans join vratio null — koristim direktan fetch.');
+      }
+    }
+
+    console.log('[PlanGate] agency raw:', JSON.stringify({
+      plan_id: agency.plan_id,
+      subscription_status: agency.subscription_status,
+      plans: planRow,
+    }, null, 2));
+
     // Effective plan: ako pretplata nije active/trial(ing), vrati free.
     const VALID_STATUSES = ['trial', 'trialing', 'active'];
-    const effective = VALID_STATUSES.includes(state.status) ? agency.plans : null;
+    const effective = VALID_STATUSES.includes(state.status) ? planRow : null;
     state.plan = effective || freeFallback();
     console.log('[PlanGate] effective plan:', state.plan?.id, '| status:', state.status, '| custom_branding:', state.plan?.custom_branding);
 
