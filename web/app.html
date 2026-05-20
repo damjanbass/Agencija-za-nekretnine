@@ -1053,6 +1053,21 @@
 
             <button type="submit" class="btn-save" id="imap-save-btn">Poveži inbox</button>
           </form>
+
+          <div style="height:1px;background:#f0f2f5;margin:24px 0 20px;"></div>
+
+          <h3 style="font-size:0.82rem;font-weight:700;color:#4a5168;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:12px;">Mystery Shopper email</h3>
+          <div style="padding:12px 14px;background:#fef3c7;border-left:3px solid #f59e0b;border-radius:8px;font-size:0.85rem;color:#92400e;margin-bottom:14px;line-height:1.6;">
+            <strong>⚠ Važno:</strong> Ovaj email mora biti <strong>drugačiji</strong> od emaila kojim je agencija registrovana na Halo Oglasima / 4Zidi. Ako koristite isti email, portal može detektovati da agencija šalje upite na sopstvene oglase i blokirati nalog. Preporučujemo poseban Gmail nalog (npr. <em>testiranje.agencija@gmail.com</em>).
+          </div>
+          <div id="ms-email-msg"></div>
+          <form id="ms-email-form" onsubmit="saveMsEmail(event)">
+            <div class="form-group">
+              <label for="ms-email">Email za Mystery Shopper testove</label>
+              <input type="email" id="ms-email" placeholder="npr. testiranje.agencija@gmail.com" autocomplete="off">
+            </div>
+            <button type="submit" class="btn-save" id="ms-email-save-btn">Sačuvaj</button>
+          </form>
         </div>
 
         <div class="card" style="margin-top:20px;border:1px solid #fecaca;">
@@ -2512,7 +2527,7 @@
 
     const { data, error } = await sb
       .from('agencies')
-      .select('pib, maticni_broj, legal_address, legal_city, billing_email, plan_id, subscription_status, current_period_end, trial_ends_at, tracks_sale, tracks_rent, revenue_goal, imap_host, imap_port, imap_user, imap_pass, sla_minutes, escalation_email')
+      .select('pib, maticni_broj, legal_address, legal_city, billing_email, plan_id, subscription_status, current_period_end, trial_ends_at, tracks_sale, tracks_rent, revenue_goal, imap_host, imap_port, imap_user, imap_pass, sla_minutes, escalation_email, mystery_shopper_email')
       .eq('id', agencyId)
       .single();
 
@@ -2544,6 +2559,7 @@
       b.classList.toggle('active', mins === `${savedSla} min` || (savedSla === 60 && mins === '1 sat'));
     });
     if (imapUser) onImapEmailInput(imapUser);
+    document.getElementById('ms-email').value = data?.mystery_shopper_email || '';
 
     renderPlanManagement(data);
     renderSubscriptionInfo(data);
@@ -2651,6 +2667,29 @@
     }
 
     showMsg('revenue-goal-msg', 'Cilj prihoda je sačuvan. Sledeći izveštaj će prikazivati novu vrednost.');
+  }
+
+  // ── Mystery Shopper email ──────────────────────────────────────────────────
+
+  async function saveMsEmail(event) {
+    event.preventDefault();
+    if (!agencyId) return;
+    const btn   = document.getElementById('ms-email-save-btn');
+    const email = document.getElementById('ms-email').value.trim();
+    btn.disabled = true; btn.textContent = 'Čuvam...';
+    document.getElementById('ms-email-msg').innerHTML = '';
+
+    const imapUser = document.getElementById('imap-user').value.trim();
+    if (email && imapUser && email.toLowerCase() === imapUser.toLowerCase()) {
+      showMsg('ms-email-msg', 'Mystery Shopper email mora biti drugačiji od emaila agencije! Koristite poseban nalog.', true);
+      btn.disabled = false; btn.textContent = 'Sačuvaj';
+      return;
+    }
+
+    const { error } = await sb.from('agencies').update({ mystery_shopper_email: email || null }).eq('id', agencyId);
+    btn.disabled = false; btn.textContent = 'Sačuvaj';
+    if (error) { showMsg('ms-email-msg', `Greška: ${error.message}`, true); return; }
+    showMsg('ms-email-msg', 'Sačuvano.');
   }
 
   // ── Lead Rescue — IMAP ─────────────────────────────────────────────────────

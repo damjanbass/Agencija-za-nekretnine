@@ -32,8 +32,9 @@ _FAKE_MESSAGES = [
 def _random_shopper() -> dict:
     name = random.choice(_FAKE_NAMES)
     msg = random.choice(_FAKE_MESSAGES)
-    # Fejk telefon — ne postoji u srpskoj numeraciji (za sigurnost)
-    phone = f"060 999 {random.randint(1000, 9999)}"
+    # Realistično formatiran srpski mobilni broj — izgleda kao pravi
+    prefix = random.choice(["060", "061", "062", "063", "064", "065"])
+    phone = f"{prefix} {random.randint(100,999)} {random.randint(1000,9999)}"
     return {
         "first_name": name[0],
         "last_name":  name[1],
