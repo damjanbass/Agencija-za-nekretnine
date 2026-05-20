@@ -55,6 +55,13 @@
     .btn-save:hover { background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%); box-shadow: 0 2px 4px rgba(37,99,235,0.22), 0 8px 18px rgba(37,99,235,0.22); transform: translateY(-1px); }
     .btn-save:active { transform: translateY(0); box-shadow: 0 1px 2px rgba(37,99,235,0.18); }
     .btn-save:disabled { background: #93c5fd; box-shadow: none; cursor: not-allowed; transform: none; }
+    .provider-btn {
+      padding: 7px 14px; border: 1.5px solid #e2e6ea; border-radius: 8px;
+      background: white; color: #4a5168; font-size: 0.88rem; font-weight: 600;
+      cursor: pointer; transition: all 0.15s; font-family: inherit;
+    }
+    .provider-btn:hover { border-color: #2563eb; color: #2563eb; background: #eff6ff; }
+    .provider-btn.active { border-color: #2563eb; color: #2563eb; background: #eff6ff; }
     .btn-save::before {
       content: ''; width: 16px; height: 16px; flex-shrink: 0;
       background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='20 6 9 17 4 12'/></svg>");
@@ -859,6 +866,65 @@
             </div>
             <button type="submit" class="btn-save" id="settings-save-btn">Sačuvaj podatke</button>
           </form>
+        </div>
+
+        <div class="card" id="imap-card">
+          <h2>Lead Rescue — Inbox konfiguracija</h2>
+          <p style="font-size:0.9rem;color:#666;margin-bottom:16px;">
+            Unesite pristup email inboxu na koji Halo Oglasi, 4Zida i Nekretnine.rs šalju obaveštenja o upitima.
+            Sistem čita te emailove i automatski kreira lead sa tajmerom za svakog agenta.
+          </p>
+
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;">
+            <button type="button" class="provider-btn" onclick="fillProvider('gmail')">Gmail</button>
+            <button type="button" class="provider-btn" onclick="fillProvider('outlook')">Outlook / Hotmail</button>
+            <button type="button" class="provider-btn" onclick="fillProvider('yahoo')">Yahoo</button>
+            <button type="button" class="provider-btn" onclick="fillProvider('custom')">Poslovni hosting</button>
+          </div>
+
+          <div id="imap-msg"></div>
+
+          <form id="imap-form" onsubmit="saveImapSettings(event)">
+            <div class="grid-2">
+              <div class="form-group">
+                <label for="imap-host">IMAP server</label>
+                <input type="text" id="imap-host" placeholder="npr. imap.gmail.com">
+              </div>
+              <div class="form-group">
+                <label for="imap-port">Port</label>
+                <input type="number" id="imap-port" placeholder="993" value="993">
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="imap-user">Email adresa inboxa</label>
+              <input type="email" id="imap-user" placeholder="npr. info@vasa-agencija.rs">
+              <div style="font-size:0.78rem;color:#8892a4;margin-top:4px;">Isti email koji je prijavljen na Halo Oglasima / 4Zidi.</div>
+            </div>
+            <div class="form-group">
+              <label for="imap-pass">Lozinka <span id="imap-pass-hint" style="font-weight:400;color:#8892a4;text-transform:none;letter-spacing:0;"></span></label>
+              <input type="password" id="imap-pass" placeholder="Lozinka ili App Password" autocomplete="new-password">
+            </div>
+            <div class="grid-2">
+              <div class="form-group">
+                <label for="imap-sla">SLA rok (minuti)</label>
+                <input type="number" id="imap-sla" placeholder="15" value="15" min="5" max="120">
+                <div style="font-size:0.78rem;color:#8892a4;margin-top:4px;">Vreme za odgovor pre eskalacije.</div>
+              </div>
+              <div class="form-group">
+                <label for="imap-escalation">Email za alertove</label>
+                <input type="email" id="imap-escalation" placeholder="vlasnik@agencija.rs">
+                <div style="font-size:0.78rem;color:#8892a4;margin-top:4px;">Na ovaj email stižu SLA alertovi.</div>
+              </div>
+            </div>
+            <button type="submit" class="btn-save" id="imap-save-btn">Sačuvaj inbox konfiguraciju</button>
+          </form>
+
+          <div id="imap-gmail-help" hidden style="margin-top:16px;padding:14px;background:#eff6ff;border-radius:8px;font-size:0.88rem;color:#1d4ed8;line-height:1.6;">
+            <strong>Gmail — App Password:</strong> Gmail ne dozvoljava običnu lozinku za IMAP.<br>
+            1. Otvori <a href="https://myaccount.google.com/apppasswords" target="_blank" style="color:#1d4ed8;font-weight:600;">myaccount.google.com/apppasswords</a><br>
+            2. Izaberi <em>Ostalo (prilagođeni naziv)</em> → upiši "Izveštaj"<br>
+            3. Kopiraj generisanu lozinku (16 znakova) i nalepi je ovde.
+          </div>
         </div>
 
         <div class="card" style="margin-top:20px;border:1px solid #fecaca;">
@@ -2081,7 +2147,7 @@
 
     const { data, error } = await sb
       .from('agencies')
-      .select('pib, maticni_broj, legal_address, legal_city, billing_email, plan_id, subscription_status, current_period_end, trial_ends_at, tracks_sale, tracks_rent, revenue_goal')
+      .select('pib, maticni_broj, legal_address, legal_city, billing_email, plan_id, subscription_status, current_period_end, trial_ends_at, tracks_sale, tracks_rent, revenue_goal, imap_host, imap_port, imap_user, imap_pass, sla_minutes, escalation_email')
       .eq('id', agencyId)
       .single();
 
@@ -2099,6 +2165,13 @@
 
     document.getElementById('tracks-sale').checked = data?.tracks_sale !== false;
     document.getElementById('tracks-rent').checked = data?.tracks_rent === true;
+
+    document.getElementById('imap-host').value        = data?.imap_host        || '';
+    document.getElementById('imap-port').value        = data?.imap_port        || 993;
+    document.getElementById('imap-user').value        = data?.imap_user        || '';
+    document.getElementById('imap-pass').value        = data?.imap_pass        ? '••••••••' : '';
+    document.getElementById('imap-sla').value         = data?.sla_minutes      || 15;
+    document.getElementById('imap-escalation').value  = data?.escalation_email || '';
 
     renderPlanManagement(data);
     renderSubscriptionInfo(data);
@@ -2206,6 +2279,68 @@
     }
 
     showMsg('revenue-goal-msg', 'Cilj prihoda je sačuvan. Sledeći izveštaj će prikazivati novu vrednost.');
+  }
+
+  // ── Lead Rescue — IMAP ─────────────────────────────────────────────────────
+
+  const PROVIDERS = {
+    gmail:   { host: 'imap.gmail.com',            port: 993, hint: '(Gmail App Password — ne obična lozinka)', showHelp: true },
+    outlook: { host: 'outlook.office365.com',      port: 993, hint: '',                                          showHelp: false },
+    yahoo:   { host: 'imap.mail.yahoo.com',        port: 993, hint: '(Yahoo App Password)',                      showHelp: false },
+    custom:  { host: '',                            port: 993, hint: '',                                          showHelp: false },
+  };
+
+  function fillProvider(key) {
+    const p = PROVIDERS[key];
+    if (!p) return;
+    if (p.host) document.getElementById('imap-host').value = p.host;
+    document.getElementById('imap-port').value = p.port;
+    document.getElementById('imap-pass-hint').textContent = p.hint;
+    document.getElementById('imap-gmail-help').hidden = !p.showHelp;
+    document.querySelectorAll('.provider-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.provider-btn').forEach(b => {
+      if (b.textContent.toLowerCase().includes(key) || (key === 'custom' && b.textContent.includes('hosting')))
+        b.classList.add('active');
+    });
+    if (!p.host) document.getElementById('imap-host').focus();
+  }
+
+  async function saveImapSettings(event) {
+    event.preventDefault();
+    if (!agencyId) return;
+
+    const btn  = document.getElementById('imap-save-btn');
+    btn.disabled    = true;
+    btn.textContent = 'Čuvam...';
+    document.getElementById('imap-msg').innerHTML = '';
+
+    const host = document.getElementById('imap-host').value.trim();
+    const port = parseInt(document.getElementById('imap-port').value) || 993;
+    const user = document.getElementById('imap-user').value.trim();
+    const pass = document.getElementById('imap-pass').value;
+    const sla  = parseInt(document.getElementById('imap-sla').value) || 15;
+    const esc  = document.getElementById('imap-escalation').value.trim();
+
+    if (!host || !user) {
+      showMsg('imap-msg', 'IMAP server i email adresa su obavezni.', true);
+      btn.disabled = false; btn.textContent = 'Sačuvaj inbox konfiguraciju';
+      return;
+    }
+
+    const payload = { imap_host: host, imap_port: port, imap_user: user, sla_minutes: sla };
+    if (esc) payload.escalation_email = esc;
+    if (pass && pass !== '••••••••') payload.imap_pass = pass;
+
+    const { error } = await sb.from('agencies').update(payload).eq('id', agencyId);
+
+    btn.disabled    = false;
+    btn.textContent = 'Sačuvaj inbox konfiguraciju';
+
+    if (error) {
+      showMsg('imap-msg', `Greška: ${error.message}`, true);
+      return;
+    }
+    showMsg('imap-msg', 'Inbox konfiguracija je sačuvana. Sistem će početi da prati upite u sledećem ciklusu.');
   }
 
   async function cancelSubscription() {
