@@ -293,13 +293,13 @@
 
           <div class="plan-toggle">
             <button class="plan-btn" data-plan="basic" onclick="selectPlan('basic')">
-              Basic <span style="font-size: 0.85rem; color: #8892a4;">29€</span>
+              Rescue <span style="font-size: 0.85rem; color: #8892a4;">39€</span>
             </button>
             <button class="plan-btn active" data-plan="pro" onclick="selectPlan('pro')">
-              Pro <span style="font-size: 0.85rem; color: #8892a4;">79€</span>
+              Rescue+ <span style="font-size: 0.85rem; color: #8892a4;">89€</span>
             </button>
             <button class="plan-btn" data-plan="premium" onclick="selectPlan('premium')">
-              Premium <span style="font-size: 0.85rem; color: #8892a4;">149€</span>
+              Rescue Pro <span style="font-size: 0.85rem; color: #8892a4;">179€</span>
             </button>
           </div>
         </div>
@@ -364,38 +364,40 @@
   const PLAN_DATA = {
     pro: {
       id: "pro",
-      name: "Pro",
-      price: 79,
+      name: "Rescue+",
+      price: 89,
       features: [
         "Do 10 agenata",
-        "Nedeljni i mesečni AI izveštaj",
-        "Pojedinačni izveštaji po agentu",
-        "Poređenje sa tržištem (benchmark)",
-        "PDF export",
-        "6 meseci istorije",
+        "Lead rescue tajmer (SLA 15 min)",
+        "Stale listing nudge za prodavce",
+        "Benchmark konkurencije (3 portala)",
+        "Mystery shopper 4× mesečno",
+        "Jutarnji brief + nedeljni PDF",
       ],
     },
     basic: {
       id: "basic",
-      name: "Basic",
-      price: 29,
+      name: "Rescue",
+      price: 39,
       features: [
-        "1 agencija, do 3 agenta",
-        "Nedeljni izveštaj sa AI analizom",
-        "1 tržišni sajt (Halo oglasi)",
-        "1 mesec istorije izveštaja",
-        "Email dostava",
+        "Do 3 agenta",
+        "Lead rescue tajmer (SLA 15 min)",
+        "Click-to-WhatsApp za agente",
+        "Jutarnji brief svaki dan",
+        "Mystery shopper 1× mesečno",
+        "Nedeljni AI izveštaj",
       ],
     },
     premium: {
       id: "premium",
-      name: "Premium",
-      price: 149,
+      name: "Rescue Pro",
+      price: 179,
       features: [
         "Neograničen broj agenata",
-        "Sve iz Pro plana",
-        "Custom branding (logo agencije)",
-        "12 meseci istorije izveštaja",
+        "Sve iz Rescue+ plana",
+        "Custom SLA pravila po agentu",
+        "Telegram alerti + custom branding",
+        "12 meseci istorije + API pristup",
         "Prioritetna podrška",
       ],
     },

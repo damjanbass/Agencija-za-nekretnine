@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jutarnji brief — {{ agency_name }}</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6f9; color: #1a1a2e; line-height: 1.55; }
+
+  .wrapper {
+    max-width: 600px; margin: 32px auto; background: #fff;
+    border-radius: 14px; overflow: hidden;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+  }
+
+  .header {
+    background: linear-gradient(135deg, #1a1a2e 0%, #0f3460 60%, #1d4ed8 100%);
+    padding: 28px 32px 24px; color: #fff;
+  }
+  .header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+  .header h1 { font-size: 20px; font-weight: 700; letter-spacing: -0.2px; }
+  .header .time-badge {
+    font-size: 11px; background: rgba(255,255,255,0.15);
+    padding: 4px 10px; border-radius: 12px; font-weight: 600;
+  }
+  .header .agency { font-size: 13px; opacity: 0.7; }
+  .header .date   { font-size: 12px; opacity: 0.55; margin-top: 2px; }
+
+  .body { padding: 24px 32px; }
+
+  /* ── Score strip ── */
+  .score-strip {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 10px; margin-bottom: 22px;
+  }
+  .score-cell {
+    background: #f8f9fc; border: 1px solid #eaedf3;
+    border-radius: 10px; padding: 12px 14px; text-align: center;
+  }
+  .score-cell.bad  { background: #fef2f2; border-color: #fecaca; }
+  .score-cell.good { background: #f0fdf4; border-color: #bbf7d0; }
+  .score-cell.warn { background: #fffbeb; border-color: #fde68a; }
+  .score-num  { font-size: 1.7rem; font-weight: 800; line-height: 1; color: #1a1a2e; }
+  .score-num.red    { color: #dc2626; }
+  .score-num.green  { color: #16a34a; }
+  .score-num.yellow { color: #d97706; }
+  .score-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em;
+                 color: #8892a4; font-weight: 700; margin-top: 4px; }
+
+  /* ── Section ── */
+  .section { margin-bottom: 20px; }
+  .section-title {
+    font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.08em; color: #8892a4; margin-bottom: 10px;
+  }
+
+  /* ── Lead cards ── */
+  .lead-card {
+    border-radius: 8px; padding: 12px 14px; margin-bottom: 8px;
+    border-left: 3px solid #e5e7eb; background: #f8f9fc;
+  }
+  .lead-card.urgent { border-left-color: #dc2626; background: #fef2f2; }
+  .lead-card.pending { border-left-color: #f59e0b; background: #fffbeb; }
+  .lead-card.ok     { border-left-color: #16a34a; background: #f0fdf4; }
+
+  .lead-name  { font-size: 0.93rem; font-weight: 700; color: #1a1a2e; }
+  .lead-meta  { font-size: 0.8rem; color: #6b7280; margin-top: 2px; }
+  .lead-meta strong { color: #374151; }
+
+  .wa-btn {
+    display: inline-block; margin-top: 8px;
+    background: #25D366; color: white !important; text-decoration: none;
+    font-size: 0.78rem; font-weight: 700; padding: 5px 12px;
+    border-radius: 6px;
+  }
+
+  /* ── Empty state ── */
+  .empty {
+    background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px;
+    padding: 12px 16px; font-size: 0.88rem; color: #166534; font-weight: 600;
+  }
+
+  /* ── Response time bar ── */
+  .rt-row { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+  .rt-label { font-size: 0.82rem; color: #374151; min-width: 120px; }
+  .rt-bar-wrap { flex: 1; background: #eaedf3; border-radius: 99px; height: 8px; }
+  .rt-bar { height: 8px; border-radius: 99px; background: #2563eb; }
+  .rt-bar.red    { background: #dc2626; }
+  .rt-bar.green  { background: #16a34a; }
+  .rt-val { font-size: 0.82rem; font-weight: 700; color: #1a1a2e; min-width: 48px; text-align: right; }
+
+  /* ── CTA ── */
+  .cta-wrap { margin-top: 22px; text-align: center; }
+  .cta {
+    display: inline-block; background: #2563eb; color: #fff !important;
+    padding: 12px 28px; border-radius: 9px;
+    font-size: 14px; font-weight: 600; text-decoration: none;
+  }
+
+  .footer {
+    background: #f8f9fc; border-top: 1px solid #eaedf3;
+    padding: 16px 32px; font-size: 11px; color: #9ca3af; text-align: center;
+    line-height: 1.6;
+  }
+  .footer a { color: #6b7280; }
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+  <div class="header">
+    <div class="header-top">
+      <h1>Jutarnji brief</h1>
+      <span class="time-badge">07:30</span>
+    </div>
+    <div class="agency">{{ agency_name }}</div>
+    <div class="date">{{ today_label }}</div>
+  </div>
+
+  <div class="body">
+
+    <!-- ── Score strip ── -->
+    <div class="score-strip">
+      <div class="score-cell {% if pending_count > 0 %}bad{% else %}good{% endif %}">
+        <div class="score-num {% if pending_count > 0 %}red{% else %}green{% endif %}">{{ pending_count }}</div>
+        <div class="score-label">Čekaju callback</div>
+      </div>
+      <div class="score-cell {% if avg_response_min and avg_response_min > 20 %}warn{% elif avg_response_min and avg_response_min <= 10 %}good{% else %}{{ '' }}{% endif %}">
+        <div class="score-num {% if avg_response_min and avg_response_min > 20 %}yellow{% elif avg_response_min and avg_response_min <= 10 %}green{% endif %}">
+          {% if avg_response_min %}{{ avg_response_min }}min{% else %}—{% endif %}
+        </div>
+        <div class="score-label">Prosek odgovora</div>
+      </div>
+      <div class="score-cell {% if responded_7d > 0 %}good{% endif %}">
+        <div class="score-num {% if responded_7d > 0 %}green{% endif %}">{{ responded_7d }}</div>
+        <div class="score-label">Obrađeno 7 dana</div>
+      </div>
+    </div>
+
+    <!-- ── Pending leads ── -->
+    <div class="section">
+      <div class="section-title">Lead-ovi koji čekaju odgovor</div>
+
+      {% if pending_leads %}
+        {% for lead in pending_leads %}
+        <div class="lead-card {% if lead.is_escalated %}urgent{% else %}pending{% endif %}">
+          <div class="lead-name">
+            {% if lead.is_escalated %}🚨{% else %}⏳{% endif %}
+            {{ lead.buyer_name or 'Nepoznat kupac' }}
+          </div>
+          <div class="lead-meta">
+            <strong>{{ lead.agent_name or '—' }}</strong> ·
+            {{ lead.source_label }} ·
+            {{ lead.listing_title or '—' }} ·
+            čeka <strong>{{ lead.waiting_label }}</strong>
+          </div>
+          {% if lead.wa_link %}
+          <a href="{{ lead.wa_link }}" class="wa-btn">💬 WhatsApp</a>
+          {% endif %}
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="empty">✓ Nema otvorenih lead-ova — svi upiti su obrađeni.</div>
+      {% endif %}
+    </div>
+
+    <!-- ── Response time po agentu ── -->
+    {% if agent_stats %}
+    <div class="section">
+      <div class="section-title">Brzina odgovora po agentu (7 dana)</div>
+      {% for agent in agent_stats %}
+      <div class="rt-row">
+        <span class="rt-label">{{ agent.name }}</span>
+        <div class="rt-bar-wrap">
+          <div class="rt-bar {% if agent.avg_min > 20 %}red{% elif agent.avg_min <= 10 %}green{% endif %}"
+               style="width: {{ [agent.bar_pct, 100] | min }}%"></div>
+        </div>
+        <span class="rt-val">{{ agent.avg_min }}min</span>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- ── CTA ── -->
+    {% if dashboard_url %}
+    <div class="cta-wrap">
+      <a href="{{ dashboard_url }}" class="cta">Otvori Lead Rescue tablu →</a>
+    </div>
+    {% endif %}
+
+  </div>
+
+  <div class="footer">
+    Jutarnji brief · {{ agency_name }} · Lead Rescue by Izveštaj.com<br>
+    {% if support_email %}Za pitanja: <a href="mailto:{{ support_email }}">{{ support_email }}</a>{% endif %}
+  </div>
+
+</div>
+</body>
+</html>

@@ -341,9 +341,13 @@ def run_monthly(preview: bool = False, use_mock: bool = False):
 
         analysis = None
         if plan.allows_ai() and config.ANTHROPIC_API_KEY:
-            from ai.analyze import generate_monthly_analysis
+            from ai.analyze import generate_monthly_analysis, generate_monthly_analysis_fallback
             print("    [AI] Pozivam Claude za mesečnu analizu...")
-            analysis = generate_monthly_analysis(data, market=snapshots or None)
+            try:
+                analysis = generate_monthly_analysis(data, market=snapshots or None)
+            except Exception as e:
+                print(f"    [AI] Claude poziv neuspešan ({type(e).__name__}) — fallback.")
+                analysis = generate_monthly_analysis_fallback(data)
         elif plan.allows_ai():
             from ai.analyze import generate_monthly_analysis_fallback
             print("    [AI] Nema ANTHROPIC_API_KEY — fallback mesečna analiza.")
@@ -594,18 +598,291 @@ def run_agent_reports(preview: bool = False, use_mock: bool = False, plan_overri
     print("\n[✓] Agent izveštaji gotovi.")
 
 
+def run_daily_brief(preview: bool = False) -> None:
+    """
+    Šalje jutarnji brief vlasniku agencije (7:30 svako jutro).
+    Sadrži: pending lead-ovi, response time po agentu, ukupni stats.
+    """
+    if not config.SUPABASE_KEY:
+        print("[!] SUPABASE_KEY nije podešen — daily brief nije dostupan bez baze.")
+        return
+
+    from datetime import date as _date
+    from data.leads_client import get_brief_data
+    from data.supabase_client import get_all_active_clients
+
+    clients = get_all_active_clients()
+    if not clients:
+        print("[Daily Brief] Nema aktivnih klijenata.")
+        return
+
+    template_dir = Path(__file__).parent / "templates"
+    from jinja2 import Environment, FileSystemLoader
+    env = Environment(loader=FileSystemLoader(str(template_dir)))
+    env.globals["support_email"] = config.SUPPORT_EMAIL
+    tpl = env.get_template("daily_brief.html")
+
+    today_label = _date.today().strftime("%-d. %-m. %Y.")
+
+    for client in clients:
+        plan = get_plan(client.get("plan_id", "basic"))
+        if not plan.allows_lead_rescue():
+            continue
+
+        agency_id = client["id"]
+        agency_name = client.get("name", "Agencija")
+        agency_email = client.get("email", "")
+        sla_min = client.get("sla_minutes") or 15
+
+        print(f"\n[Daily Brief] {agency_name}")
+
+        try:
+            brief = get_brief_data(agency_id, sla_minutes=sla_min)
+        except Exception as e:
+            print(f"    [!] Greška pri učitavanju podataka: {e}")
+            continue
+
+        dashboard_url = getattr(config, "APP_BASE_URL", "https://app.izvestaj.com") + "/leads"
+
+        html = tpl.render(
+            agency_name=agency_name,
+            today_label=today_label,
+            dashboard_url=dashboard_url,
+            **brief,
+        )
+
+        slug = re.sub(r"[^\w]", "_", agency_name.lower()).strip("_")
+        out = Path(__file__).parent / f"brief_{slug}.html"
+        out.write_text(html, encoding="utf-8")
+        print(f"    [HTML] {out.name}")
+
+        if not preview and agency_email:
+            pending = brief.get("pending_count", 0)
+            avg = brief.get("avg_response_min")
+            avg_str = f"{avg}min" if avg else "—"
+            subject = f"☀️ Jutarnji brief — {pending} lead-ova čeka · prosek {avg_str}"
+            send_report_email(
+                to_email=agency_email,
+                to_name=agency_name,
+                subject=subject,
+                html_body=html,
+            )
+            print(f"    [EMAIL] Poslat na {agency_email}")
+        else:
+            print("    [EMAIL] Preview mod — mejl nije poslat.")
+
+    print("\n[✓] Daily brief gotov.")
+
+
+def run_mystery_shop(dry_run: bool = False) -> None:
+    """Šalje mystery shop test za sve agencije koje imaju mystery_shopper_email."""
+    if not config.SUPABASE_KEY:
+        print("[!] SUPABASE_KEY nije podešen.")
+        return
+    from data.supabase_client import get_client
+    from mystery_shopper.runner import run_mystery_shop as _run_shop
+
+    sb = get_client()
+    res = (
+        sb.table("agencies")
+        .select("id, name, mystery_shopper_email, mystery_shopper_listing_url, plan_id")
+        .eq("active", True)
+        .not_.is_("mystery_shopper_email", "null")
+        .execute()
+    )
+    agencies = res.data or []
+
+    if not agencies:
+        print("[Mystery Shop] Nema agencija sa konfiguriranim mystery_shopper_email.")
+        return
+
+    for agency in agencies:
+        plan = get_plan(agency.get("plan_id", "basic"))
+        if not plan.allows_mystery_shopper():
+            print(f"\n[skip] {agency['name']} — mystery shopper nije dostupan na {plan.name} planu.")
+            continue
+        print(f"\n[Mystery Shop] {agency['name']}")
+        _run_shop(
+            agency_id=agency["id"],
+            agency_name=agency["name"],
+            shopper_email=agency["mystery_shopper_email"],
+            listing_url=agency.get("mystery_shopper_listing_url"),
+            dry_run=dry_run,
+        )
+
+    print("\n[✓] Mystery shop gotov.")
+
+
+def run_score_reports() -> None:
+    """
+    Proverava mystery shop testove starije od 24h i šalje score report vlasniku.
+    Pokreće se jednom dnevno (npr. u 08:00 — sat posle briefa).
+    """
+    if not config.SUPABASE_KEY:
+        print("[!] SUPABASE_KEY nije podešen.")
+        return
+    from data.supabase_client import get_client
+    from mystery_shopper.scorer import get_latest_pending_shop, send_score_report
+
+    sb = get_client()
+    res = (
+        sb.table("agencies")
+        .select("id, name, email, escalation_email, plan_id")
+        .eq("active", True)
+        .execute()
+    )
+    agencies = res.data or []
+
+    for agency in agencies:
+        plan = get_plan(agency.get("plan_id", "basic"))
+        if not plan.allows_mystery_shopper():
+            continue
+
+        lead = get_latest_pending_shop(agency["id"])
+        if not lead:
+            continue
+
+        owner_email = agency.get("escalation_email") or agency.get("email")
+        if not owner_email:
+            continue
+
+        print(f"\n[Score Report] {agency['name']} — ocena za test {(lead.get('received_at') or '')[:10]}")
+        send_score_report(
+            agency_id=agency["id"],
+            agency_name=agency["name"],
+            owner_email=owner_email,
+            owner_name=agency["name"],
+            lead=lead,
+        )
+
+    print("\n[✓] Score reporti gotovi.")
+
+
+def run_stale_nudge(preview: bool = False) -> None:
+    """
+    Detektuje stale oglase (60+ dana) i šalje agentu email sa
+    predlogom poruke za prodavca + WA linkom.
+    """
+    if not config.SUPABASE_KEY:
+        print("[!] SUPABASE_KEY nije podešen.")
+        return
+
+    from data.supabase_client import get_all_active_clients, get_client
+    from stale_listings.detector import enrich_with_benchmark, get_stale_listings
+    from stale_listings.nudge import send_nudge_email
+
+    clients = get_all_active_clients()
+    for client in clients:
+        plan = get_plan(client.get("plan_id", "basic"))
+        if not plan.allows_stale_nudge():
+            continue
+
+        agency_id   = client["id"]
+        agency_name = client.get("name", "Agencija")
+        stale_days  = 60
+
+        print(f"\n[StaleNudge] {agency_name}")
+        stale = get_stale_listings(agency_id, stale_days=stale_days)
+        if not stale:
+            print(f"    Nema oglasa starijih od {stale_days} dana.")
+            continue
+
+        enriched = enrich_with_benchmark(stale, agency_id)
+        print(f"    {len(enriched)} stale oglasa ({sum(1 for x in enriched if x['overpriced'])} precenjeno)")
+
+        # Grupiši po agentu
+        by_agent: dict[str, list[dict]] = {}
+        unassigned: list[dict] = []
+        for lst in enriched:
+            agent_data = lst.get("agents") or {}
+            agent_email = agent_data.get("email")
+            if agent_email:
+                by_agent.setdefault(agent_email, {"name": agent_data.get("name", ""), "items": []})
+                by_agent[agent_email]["items"].append(lst)
+            else:
+                unassigned.append(lst)
+
+        # Pošalji svakom agentu njegova stale
+        for agent_email, info in by_agent.items():
+            if preview:
+                print(f"    [preview] {info['name']} ({agent_email}) — {len(info['items'])} oglasa")
+                continue
+            ok = send_nudge_email(
+                agent_email=agent_email,
+                agent_name=info["name"],
+                agency_name=agency_name,
+                listings=info["items"],
+            )
+            status = "poslat" if ok else "greška"
+            print(f"    [{status}] {info['name']} ({agent_email}) — {len(info['items'])} oglasa")
+
+        # Nezasignrani oglasi → šalji vlasniku
+        if unassigned:
+            owner_email = client.get("escalation_email") or client.get("email")
+            if owner_email and not preview:
+                send_nudge_email(
+                    agent_email=owner_email,
+                    agent_name=agency_name,
+                    agency_name=agency_name,
+                    listings=unassigned,
+                )
+                print(f"    [vlasnik] {len(unassigned)} oglasa bez agenta → {owner_email}")
+
+    print("\n[✓] Stale nudge gotov.")
+
+
+def run_lead_rescue(dry_run: bool = False) -> None:
+    """Fetch inbox + dodela + SLA provera — kompletan ciklus."""
+    if not config.SUPABASE_KEY:
+        print("[!] SUPABASE_KEY nije podešen — lead rescue nije dostupan bez baze.")
+        return
+    from lead_rescue.sla_engine import run_full_cycle
+    run_full_cycle(dry_run=dry_run)
+
+
+def run_check_sla() -> None:
+    """Samo SLA provera (eskalacija) — pokreće se svaki minut via cron."""
+    if not config.SUPABASE_KEY:
+        print("[!] SUPABASE_KEY nije podešen.")
+        return
+    from lead_rescue.sla_engine import check_sla_breaches
+    print("\n[SLA Check]")
+    s = check_sla_breaches()
+    print(f"  Eskalirano: {s['escalated']}, Preraspoređeno: {s['reassigned']}, Greške: {s['errors']}")
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--preview",       action="store_true", help="Ne šalji mejl")
     parser.add_argument("--mock",          action="store_true", help="Koristi mock podatke")
     parser.add_argument("--monthly",       action="store_true", help="Mesečni izveštaj umesto nedeljnog")
     parser.add_argument("--agent-reports", action="store_true", help="Pošalji personalne izveštaje agentima")
+    parser.add_argument("--daily-brief",    action="store_true", help="Pošalji jutarnji brief svim vlasnicima (07:30)")
+    parser.add_argument("--stale-nudge",    action="store_true", help="Detektuj stale oglase i pošalji agentu WA predlog za prodavca")
+    parser.add_argument("--mystery-shop",   action="store_true", help="Pošalji mystery shop upit na oglas agencije")
+    parser.add_argument("--score-reports",  action="store_true", help="Pošalji mystery shopper score reporti (24h posle testa)")
+    parser.add_argument("--lead-rescue",   action="store_true", help="Fetch inbox + dodeli agentima + SLA provera")
+    parser.add_argument("--check-sla",     action="store_true", help="Samo SLA provera (pokreće se svakih 60s)")
+    parser.add_argument("--dry-run",       action="store_true", help="Simulacija bez pisanja u bazu")
     parser.add_argument("--plan",          default=None,        help="Override plan_id za mock testiranje (basic/pro/premium)")
     parser.add_argument("--city",          default="beograd",   help="Grad za tržišnu analizu")
     args = parser.parse_args()
+
     if args.monthly:
         run_monthly(preview=args.preview, use_mock=args.mock)
     elif args.agent_reports:
         run_agent_reports(preview=args.preview, use_mock=args.mock, plan_override=args.plan)
+    elif args.daily_brief:
+        run_daily_brief(preview=args.preview)
+    elif args.stale_nudge:
+        run_stale_nudge(preview=args.preview)
+    elif args.mystery_shop:
+        run_mystery_shop(dry_run=args.dry_run)
+    elif args.score_reports:
+        run_score_reports()
+    elif args.lead_rescue:
+        run_lead_rescue(dry_run=args.dry_run)
+    elif args.check_sla:
+        run_check_sla()
     else:
         run(preview=args.preview, use_mock=args.mock, city=args.city)

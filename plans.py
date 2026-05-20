@@ -19,9 +19,12 @@ class Plan:
     custom_branding: bool
     benchmark:       bool
     agent_reports:   bool
-    pricing_benchmark: bool = False
-    alerts:          bool = False
-    market_sites:    list[str] = field(default_factory=list)
+    pricing_benchmark:   bool = False
+    alerts:              bool = False
+    lead_rescue:         bool = False
+    mystery_shopper:     bool = False
+    stale_listing_nudge: bool = False
+    market_sites:        list[str] = field(default_factory=list)
 
     def allows_ai(self)                -> bool: return self.ai_analysis
     def allows_email(self)             -> bool: return self.email_send
@@ -34,6 +37,9 @@ class Plan:
     def allows_agent_reports(self)     -> bool: return self.agent_reports
     def allows_pricing_benchmark(self) -> bool: return self.pricing_benchmark
     def allows_alerts(self)            -> bool: return self.alerts
+    def allows_lead_rescue(self)       -> bool: return self.lead_rescue
+    def allows_mystery_shopper(self)   -> bool: return self.mystery_shopper
+    def allows_stale_nudge(self)       -> bool: return self.stale_listing_nudge
 
     def agent_limit_ok(self, count: int) -> bool:
         return self.max_agents == -1 or count <= self.max_agents
@@ -56,33 +62,36 @@ PLANS: dict[str, Plan] = {
         market_sites=["Halo oglasi"],
     ),
     "basic": Plan(
-        id="basic", name="Basic", price_eur=29,
+        id="basic", name="Rescue", price_eur=39,
         max_agencies=1, max_agents=3, max_listings=50, history_months=1,
         ai_analysis=True, email_send=True,
-        weekly_report=True, monthly_report=False, daily_report=False,
+        weekly_report=True, monthly_report=False, daily_report=True,
         pdf_export=False, custom_branding=False,
         benchmark=False, agent_reports=True,
+        lead_rescue=True, mystery_shopper=True,
         market_sites=["Halo oglasi"],
     ),
     "pro": Plan(
-        id="pro", name="Pro", price_eur=79,
+        id="pro", name="Rescue+", price_eur=89,
         max_agencies=1, max_agents=10, max_listings=100, history_months=6,
         ai_analysis=True, email_send=True,
-        weekly_report=True, monthly_report=True, daily_report=False,
+        weekly_report=True, monthly_report=True, daily_report=True,
         pdf_export=True, custom_branding=False,
         benchmark=True, agent_reports=True,
         pricing_benchmark=True,
+        lead_rescue=True, mystery_shopper=True, stale_listing_nudge=True,
         market_sites=["Halo oglasi", "4zida", "Nekretnine.rs"],
     ),
     "premium": Plan(
-        id="premium", name="Premium", price_eur=149,
+        id="premium", name="Rescue Pro", price_eur=179,
         max_agencies=1, max_agents=-1, max_listings=-1, history_months=12,
         ai_analysis=True, email_send=True,
-        weekly_report=True, monthly_report=True, daily_report=False,
+        weekly_report=True, monthly_report=True, daily_report=True,
         pdf_export=True, custom_branding=True,
         benchmark=True, agent_reports=True,
         pricing_benchmark=True,
         alerts=True,
+        lead_rescue=True, mystery_shopper=True, stale_listing_nudge=True,
         market_sites=["Halo oglasi", "4zida", "Nekretnine.rs"],
     ),
 }

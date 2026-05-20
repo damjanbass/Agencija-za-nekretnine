@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Demo — Izveštaj Panel</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    [hidden] { display: none !important; }
+    body { font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; background: #f4f6f9; color: #1a1a2e; min-height: 100vh; }
+
+    /* ─── Demo banner ─── */
+    .demo-banner {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 9999;
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: white; text-align: center; padding: 8px 16px;
+      font-size: 0.82rem; font-weight: 700; letter-spacing: 0.04em;
+      box-shadow: 0 2px 8px rgba(245,158,11,0.4);
+    }
+    body { padding-top: 36px; }
+
+    /* ─── Forms ─── */
+    label { display: block; font-size: 0.82rem; font-weight: 600; color: #444; margin-bottom: 5px; letter-spacing: 0.02em; text-transform: uppercase; }
+    input[type="email"], input[type="password"], input[type="date"], input[type="number"], input[type="text"] {
+      width: 100%; padding: 10px 13px; border: 1.5px solid #e2e6ea; border-radius: 8px;
+      font-size: 0.95rem; outline: none; transition: border-color 0.2s; background: #fafafa;
+      box-sizing: border-box; height: 42px;
+    }
+    input:focus { border-color: #2563eb; background: white; }
+    .form-group { margin-bottom: 16px; }
+
+    /* ─── Buttons ─── */
+    .btn { width: 100%; padding: 12px; border: none; border-radius: 9px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+    .btn-primary { background: #2563eb; color: white; }
+    .btn-primary:hover { background: #1d4ed8; }
+    .btn-success { background: #16a34a; color: white; margin-top: 8px; }
+    .btn-success:hover { background: #15803d; }
+    .btn-outline { background: white; border: 1.5px solid #2563eb; color: #2563eb; padding: 10px 22px; border-radius: 9px; font-size: 0.92rem; font-weight: 600; cursor: pointer; transition: all 0.18s; display: inline-block; }
+    .btn-outline:hover { background: #2563eb; color: white; }
+
+    .btn-save {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 11px 22px; border: none; border-radius: 10px;
+      background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+      color: #fff; font-size: 0.92rem; font-weight: 600;
+      letter-spacing: 0.01em; cursor: pointer;
+      box-shadow: 0 1px 2px rgba(37,99,235,0.18), 0 4px 12px rgba(37,99,235,0.18);
+      transition: transform 0.15s ease, box-shadow 0.2s ease;
+    }
+    .btn-save:hover { background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%); transform: translateY(-1px); }
+    .btn-save::before {
+      content: ''; width: 16px; height: 16px; flex-shrink: 0;
+      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='20 6 9 17 4 12'/></svg>");
+      background-repeat: no-repeat; background-position: center; background-size: contain;
+    }
+
+    /* ─── App shell ─── */
+    :root { --sidebar-w: 248px; }
+    #dashboard { display: flex; min-height: calc(100vh - 36px); }
+
+    /* ─── Sidebar ─── */
+    .sidebar {
+      width: var(--sidebar-w); background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+      color: #e4e8f0; display: flex; flex-direction: column;
+      position: fixed; top: 36px; bottom: 0; left: 0; z-index: 50;
+      box-shadow: 2px 0 16px rgba(15,23,42,0.08);
+    }
+    .sidebar-header { padding: 22px 20px 18px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+    .sidebar-brand { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+    .sidebar-brand-mark {
+      width: 32px; height: 32px; border-radius: 8px;
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+      display: grid; place-items: center; color: white; font-weight: 800; font-size: 0.95rem;
+      box-shadow: 0 2px 8px rgba(37,99,235,0.35);
+    }
+    .sidebar-brand-name { font-size: 0.95rem; font-weight: 700; color: white; letter-spacing: 0.01em; }
+    .sidebar-agency { font-size: 0.78rem; color: #93a3b8; line-height: 1.35; }
+
+    .sidebar-nav { flex: 1; overflow-y: auto; padding: 14px 12px; display: flex; flex-direction: column; gap: 2px; }
+    .sidebar-nav-eyebrow {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.68rem; color: #6b7a92; text-transform: uppercase; letter-spacing: 0.12em;
+      padding: 10px 12px 6px;
+    }
+    .nav-item {
+      display: flex; align-items: center; gap: 11px;
+      padding: 9px 12px; border-radius: 8px;
+      background: transparent; border: none; color: #c8d0e0;
+      font-size: 0.93rem; font-weight: 500; cursor: pointer;
+      text-align: left; width: 100%; transition: background 0.15s, color 0.15s;
+    }
+    .nav-item:hover { background: rgba(255,255,255,0.06); color: white; }
+    .nav-item.active {
+      background: linear-gradient(135deg, rgba(37,99,235,0.22), rgba(37,99,235,0.10));
+      color: white; box-shadow: inset 3px 0 0 #60a5fa;
+    }
+    .nav-item .nav-icon { width: 18px; height: 18px; flex-shrink: 0; }
+
+    .sidebar-footer {
+      padding: 12px; border-top: 1px solid rgba(255,255,255,0.08);
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .upgrade-cta {
+      display: flex; align-items: center; gap: 10px;
+      padding: 12px 14px; border-radius: 10px; border: none;
+      background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+      color: white; font-weight: 700; font-size: 0.9rem; cursor: pointer;
+      text-align: left; transition: transform 0.15s, box-shadow 0.15s;
+      box-shadow: 0 4px 14px rgba(37,99,235,0.35);
+    }
+    .upgrade-cta:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(37,99,235,0.45); }
+    .upgrade-cta .nav-icon { width: 18px; height: 18px; }
+    .upgrade-cta-text { display: flex; flex-direction: column; line-height: 1.2; }
+    .upgrade-cta-text small { font-weight: 500; font-size: 0.74rem; opacity: 0.85; }
+
+    .logout-nav {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 12px; border-radius: 8px; border: none;
+      background: transparent; color: #c8d0e0; font-size: 0.85rem; font-weight: 500;
+      cursor: pointer; text-align: left; width: 100%; transition: background 0.15s;
+    }
+    .logout-nav .nav-icon { width: 16px; height: 16px; }
+    .logout-nav:hover { background: rgba(220,38,38,0.12); color: #fca5a5; }
+
+    /* ─── Main ─── */
+    .main-content { flex: 1; margin-left: var(--sidebar-w); min-width: 0; display: flex; flex-direction: column; }
+    .topbar {
+      background: white; border-bottom: 1px solid #eaedf3;
+      padding: 10px 16px; display: none;
+      align-items: center; justify-content: space-between; gap: 10px;
+      position: sticky; top: 36px; z-index: 20;
+    }
+    .mobile-menu-btn {
+      background: none; border: 1px solid #e2e6ea;
+      width: 44px; height: 44px; border-radius: 10px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; color: #1a1a2e;
+    }
+    .mobile-menu-btn svg { width: 20px; height: 20px; }
+    .page-body { padding: 24px 28px 60px; max-width: 1080px; }
+
+    /* ─── Views ─── */
+    .view { display: none; }
+    .view.active { display: block; }
+
+    /* ─── Hero ─── */
+    .home-hero {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 60%, #0f3460 100%);
+      color: white; border-radius: 14px; padding: 22px 26px; margin-bottom: 18px;
+      position: relative; overflow: hidden;
+    }
+    .home-hero::after {
+      content: ''; position: absolute; top: -40px; right: -40px;
+      width: 180px; height: 180px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(96,165,250,0.18) 0%, rgba(96,165,250,0) 70%);
+    }
+    .home-hero-eyebrow {
+      font-family: 'JetBrains Mono', monospace; font-size: 0.72rem;
+      color: #93c5fd; text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 6px;
+    }
+    .home-hero h2 { font-size: 1.35rem; font-weight: 700; margin-bottom: 4px; }
+    .home-hero p { font-size: 0.9rem; color: #c8d0e0; }
+
+    /* ─── KPI ─── */
+    .kpi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 18px; }
+    .kpi-card {
+      background: white; border-radius: 12px; padding: 18px 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+      display: flex; flex-direction: column; gap: 6px;
+      border-top: 3px solid #2563eb;
+    }
+    .kpi-card.green { border-top-color: #16a34a; }
+    .kpi-card.amber { border-top-color: #f59e0b; }
+    .kpi-eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; color: #2563eb; text-transform: uppercase; letter-spacing: 0.12em; }
+    .kpi-card.green .kpi-eyebrow { color: #16a34a; }
+    .kpi-card.amber .kpi-eyebrow { color: #f59e0b; }
+    .kpi-value { font-size: 1.6rem; font-weight: 800; color: #1a1a2e; line-height: 1.1; }
+    .kpi-sub { font-size: 0.82rem; color: #6b7280; }
+    .kpi-delta { font-size: 0.82rem; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; }
+    .kpi-delta.up { color: #16a34a; }
+    .kpi-delta.down { color: #dc2626; }
+    .kpi-delta.flat { color: #8892a4; }
+    .kpi-progress { height: 6px; background: #eef2f7; border-radius: 999px; overflow: hidden; margin-top: 4px; }
+    .kpi-progress-bar { height: 100%; background: linear-gradient(90deg, #2563eb, #60a5fa); border-radius: 999px; }
+    .kpi-sparkline { margin-top: 4px; height: 28px; }
+
+    /* ─── Quick actions ─── */
+    .quick-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 18px; }
+    .quick-action {
+      background: white; border: 1.5px solid #e2e6ea; border-radius: 12px;
+      padding: 18px 20px; cursor: pointer; transition: all 0.18s;
+      display: flex; align-items: center; gap: 14px; text-align: left; font-family: inherit;
+    }
+    .quick-action:hover { border-color: #2563eb; box-shadow: 0 4px 14px rgba(37,99,235,0.12); transform: translateY(-1px); }
+    .quick-action.primary {
+      background: linear-gradient(135deg, #2563eb, #1d4ed8); color: white; border-color: transparent;
+      box-shadow: 0 4px 14px rgba(37,99,235,0.25);
+    }
+    .quick-action.primary:hover { box-shadow: 0 6px 20px rgba(37,99,235,0.35); }
+    .quick-action-icon {
+      width: 42px; height: 42px; border-radius: 10px; flex-shrink: 0;
+      display: grid; place-items: center; background: #eff6ff; color: #2563eb;
+    }
+    .quick-action.primary .quick-action-icon { background: rgba(255,255,255,0.18); color: white; }
+    .quick-action-icon svg { width: 20px; height: 20px; }
+    .quick-action-title { font-weight: 700; font-size: 0.98rem; margin-bottom: 2px; }
+    .quick-action-sub { font-size: 0.82rem; opacity: 0.85; }
+
+    /* ─── Cards ─── */
+    .card { background: white; border-radius: 12px; padding: 24px; margin-bottom: 16px; box-shadow: 0 2px 10px rgba(0,0,0,0.06); }
+    .card h2 { font-size: 0.85rem; color: #2563eb; font-weight: 700; margin-bottom: 18px; padding-bottom: 10px; border-bottom: 2px solid #eff6ff; text-transform: uppercase; letter-spacing: 0.06em; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+    /* ─── Reports ─── */
+    .report-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 13px 0; border-bottom: 1px solid #f0f2f5;
+    }
+    .report-row:last-child { border-bottom: none; }
+    .report-date { font-size: 0.95rem; font-weight: 600; }
+    .report-meta { font-size: 0.82rem; color: #888; margin-top: 2px; }
+    .report-type-badge {
+      display: inline-block; font-size: 0.75rem; font-weight: 700;
+      padding: 2px 8px; border-radius: 10px; margin-left: 8px;
+    }
+    .badge-weekly  { background: #eff6ff; color: #2563eb; }
+    .badge-monthly { background: #fef9c3; color: #ca8a04; }
+    .btn-view {
+      padding: 7px 16px; border: 1.5px solid #2563eb; border-radius: 7px;
+      background: white; color: #2563eb; font-size: 0.85rem; font-weight: 600;
+      cursor: pointer; transition: all 0.18s; white-space: nowrap;
+    }
+    .btn-view:hover { background: #2563eb; color: white; }
+    .btn-remove {
+      padding: 7px 16px; border: 1.5px solid #dc2626; border-radius: 7px;
+      background: white; color: #dc2626; font-size: 0.85rem; font-weight: 600;
+      cursor: pointer; transition: all 0.18s; white-space: nowrap;
+    }
+    .btn-remove:hover { background: #dc2626; color: white; }
+    .archive-empty { color: #aaa; font-size: 0.9rem; padding: 8px 0; }
+
+    /* ─── Agents ─── */
+    .agents-header { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 12px; margin-bottom: 8px; }
+    .agents-header span { font-size: 0.78rem; color: #999; font-weight: 600; text-transform: uppercase; }
+    .agent-row { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 12px; align-items: center; margin-bottom: 10px; }
+    .agent-name { font-size: 0.92rem; font-weight: 500; }
+
+    /* ─── Public link ─── */
+    .public-link-box { display: flex; align-items: center; gap: 10px; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 12px 14px; margin-top: 10px; }
+    .public-link-text { font-size: 0.82rem; color: #1d4ed8; word-break: break-all; flex: 1; }
+    .btn-copy { background: #eff6ff; border: 1.5px solid #2563eb; color: #2563eb; padding: 7px 14px; border-radius: 6px; font-size: 0.82rem; font-weight: 600; cursor: pointer; white-space: nowrap; transition: all 0.18s; }
+    .btn-copy:hover { background: #2563eb; color: white; }
+
+    /* ─── Brending colors ─── */
+    .color-swatches { display: flex; gap: 10px; flex-wrap: wrap; margin: 12px 0; }
+    .color-swatch {
+      width: 36px; height: 36px; border-radius: 8px; cursor: pointer;
+      border: 3px solid transparent; transition: all 0.18s;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+    }
+    .color-swatch.selected { border-color: #1a1a2e; transform: scale(1.1); }
+    .logo-preview-box {
+      background: #f4f6f9; border-radius: 10px; padding: 24px; text-align: center;
+      border: 2px dashed #d1d5db; margin: 12px 0;
+    }
+    .logo-preview-box p { color: #9ca3af; font-size: 0.88rem; margin-top: 8px; }
+
+    /* ─── Plan badge ─── */
+    .plan-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: linear-gradient(135deg, #fef9c3, #fef08a);
+      color: #92400e; border: 1px solid #fde68a;
+      border-radius: 20px; padding: 4px 12px; font-size: 0.8rem; font-weight: 700;
+    }
+    .plan-info-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+    .plan-info-label { font-size: 0.92rem; color: #4a5168; }
+    .plan-detail { font-size: 0.88rem; color: #6b7280; margin-bottom: 4px; }
+
+    /* ─── Msg ─── */
+    .msg { padding: 13px 16px; border-radius: 9px; margin-bottom: 16px; font-size: 0.9rem; }
+    .msg-success { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
+    .msg-info { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+
+    /* ─── Demo toast ─── */
+    .demo-toast {
+      position: fixed; bottom: 24px; right: 24px; z-index: 9998;
+      background: #1a1a2e; color: white; border-radius: 10px;
+      padding: 12px 20px; font-size: 0.88rem; font-weight: 500;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+      transform: translateY(80px); opacity: 0; transition: all 0.3s ease;
+      max-width: 280px;
+    }
+    .demo-toast.show { transform: translateY(0); opacity: 1; }
+
+    /* ─── Sidebar backdrop ─── */
+    .sidebar-backdrop {
+      display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.55);
+      z-index: 49; opacity: 0; transition: opacity 0.2s ease;
+    }
+    .sidebar-backdrop.open { display: block; opacity: 1; }
+
+    /* ─── Responsive ─── */
+    @media (max-width: 1100px) and (min-width: 901px) {
+      :root { --sidebar-w: 220px; }
+      .page-body { padding: 22px 22px 60px; }
+      .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 900px) {
+      .sidebar { transform: translateX(-100%); transition: transform 0.25s ease; width: 290px; max-width: 86vw; top: 36px; }
+      .sidebar.open { transform: translateX(0); }
+      .main-content { margin-left: 0; }
+      .topbar { display: flex; }
+      .page-body { padding: 18px 16px 56px; }
+      .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+      .quick-actions { grid-template-columns: 1fr; }
+      body.no-scroll { overflow: hidden; }
+      .sidebar-backdrop { display: none; }
+      .sidebar-backdrop.open { display: block; }
+    }
+    @media (max-width: 640px) {
+      .grid-2 { grid-template-columns: 1fr; }
+      .kpi-grid { grid-template-columns: 1fr; }
+      .home-hero { padding: 20px 18px; }
+      .home-hero h2 { font-size: 1.2rem; }
+      .card { padding: 18px 16px; }
+      .quick-action { padding: 14px 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══ DEMO BANNER ═══ -->
+<div class="demo-banner">
+  DEMO PRIKAZ — Svi podaci su ilustrativni i ne predstavljaju stvarne podatke agencije
+</div>
+
+<!-- ═══ SVG ICONS ═══ -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="icon-home" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1V9.5z"/></symbol>
+    <symbol id="icon-edit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></symbol>
+    <symbol id="icon-users" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+    <symbol id="icon-archive" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8v13H3V8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></symbol>
+    <symbol id="icon-sparkles" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/></symbol>
+    <symbol id="icon-settings" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></symbol>
+    <symbol id="icon-star" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></symbol>
+    <symbol id="icon-menu" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></symbol>
+    <symbol id="icon-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="icon-upload" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></symbol>
+    <symbol id="icon-image" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></symbol>
+    <symbol id="icon-logout" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></symbol>
+  </defs>
+</svg>
+
+<!-- ═══ DASHBOARD ═══ -->
+<div id="dashboard">
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-brand">
+        <div class="sidebar-brand-mark">I</div>
+        <div class="sidebar-brand-name">Izveštaj</div>
+      </div>
+      <div class="sidebar-agency">Prima Nekretnine d.o.o.</div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="sidebar-nav-eyebrow">Rad</div>
+      <button class="nav-item active" data-view="home">
+        <svg class="nav-icon"><use href="#icon-home"/></svg> Početna
+      </button>
+      <button class="nav-item" data-view="unos">
+        <svg class="nav-icon"><use href="#icon-edit"/></svg> Unos
+      </button>
+      <button class="nav-item" data-view="agenti">
+        <svg class="nav-icon"><use href="#icon-users"/></svg> Agenti
+      </button>
+
+      <div class="sidebar-nav-eyebrow">Podaci</div>
+      <button class="nav-item" data-view="arhiva">
+        <svg class="nav-icon"><use href="#icon-archive"/></svg> Arhiva
+      </button>
+
+      <div class="sidebar-nav-eyebrow">Agencija</div>
+      <button class="nav-item" data-view="brending">
+        <svg class="nav-icon"><use href="#icon-sparkles"/></svg> Brending
+      </button>
+      <button class="nav-item" data-view="podesavanja">
+        <svg class="nav-icon"><use href="#icon-settings"/></svg> Podešavanja
+      </button>
+    </nav>
+
+    <div class="sidebar-footer">
+      <button class="upgrade-cta" onclick="demoToast('Ovo bi otvorilo stranicu za nadogradnju plana.')">
+        <svg class="nav-icon"><use href="#icon-star"/></svg>
+        <span class="upgrade-cta-text">
+          Otključaj sve
+          <small>Pređi na viši plan →</small>
+        </span>
+      </button>
+      <button class="logout-nav" onclick="demoToast('U realnoj aplikaciji ovo bi odjavilo korisnika.')">
+        <svg class="nav-icon"><use href="#icon-logout"/></svg>
+        Odjavi se
+      </button>
+    </div>
+  </aside>
+
+  <div class="sidebar-backdrop" id="sidebar-backdrop" onclick="closeMobileMenu()"></div>
+
+  <main class="main-content">
+    <div class="topbar">
+      <button class="mobile-menu-btn" onclick="openMobileMenu()">
+        <svg><use href="#icon-menu"/></svg>
+      </button>
+      <span style="font-size:0.88rem;font-weight:600;color:#1a1a2e;">Izveštaj — Demo</span>
+      <div></div>
+    </div>
+
+    <div class="page-body">
+
+      <!-- ══ Početna ══ -->
+      <section class="view active" data-view="home">
+        <div class="home-hero">
+          <div class="home-hero-eyebrow" id="home-eyebrow"></div>
+          <h2>Dobrodošli nazad, Prima Nekretnine 👋</h2>
+          <p>Pregled vaše agencije u jednom trenutku.</p>
+        </div>
+
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <div class="kpi-eyebrow">Prihod nedelje</div>
+            <div class="kpi-value">4.850 €</div>
+            <div class="kpi-delta up">▲ +12% (550 €) vs prošla nedelja</div>
+            <div class="kpi-progress"><div class="kpi-progress-bar" style="width:78%"></div></div>
+            <div class="kpi-sub">78% nedeljnog cilja (6.200 €)</div>
+          </div>
+          <div class="kpi-card green">
+            <div class="kpi-eyebrow">Ugovori (prodaja + zakup)</div>
+            <div class="kpi-value">7</div>
+            <div class="kpi-delta up">▲ +40% (2) vs prošla nedelja</div>
+            <div class="kpi-sparkline">
+              <svg width="120" height="28" style="overflow:visible">
+                <polyline fill="none" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                  points="2,22 32,18 62,20 92,12 118,4"/>
+              </svg>
+            </div>
+          </div>
+          <div class="kpi-card amber">
+            <div class="kpi-eyebrow">Top agent nedelje</div>
+            <div class="kpi-value" style="font-size:1.15rem;">Marko Petrović</div>
+            <div class="kpi-sub">3 ugovora, 24 upita</div>
+          </div>
+        </div>
+
+        <div class="quick-actions">
+          <button class="quick-action primary" onclick="switchView('unos')">
+            <div class="quick-action-icon"><svg><use href="#icon-edit"/></svg></div>
+            <div>
+              <div class="quick-action-title">Unesi nedeljni izveštaj</div>
+              <div class="quick-action-sub">Brojke za tekuću nedelju</div>
+            </div>
+          </button>
+          <button class="quick-action" onclick="demoToast('Otvorio bi pregled poslednjeg izveštaja u PDF modalnom prozoru.')">
+            <div class="quick-action-icon"><svg><use href="#icon-eye"/></svg></div>
+            <div>
+              <div class="quick-action-title">Pogledaj poslednji izveštaj</div>
+              <div class="quick-action-sub">Nedelja 12.05.2026.</div>
+            </div>
+          </button>
+        </div>
+
+        <div class="card">
+          <h2>Poslednji izveštaji</h2>
+          <div class="report-row">
+            <div>
+              <div class="report-date">12.05.2026. <span class="report-type-badge badge-weekly">Nedeljni</span></div>
+              <div class="report-meta">Poslat 13.05.2026.</div>
+            </div>
+            <button class="btn-view" onclick="demoToast('Izveštaj bi se otvorio u modalnom prozoru sa opcijom preuzimanja PDF-a.')">Pregledaj</button>
+          </div>
+          <div class="report-row">
+            <div>
+              <div class="report-date">30.04.2026. <span class="report-type-badge badge-monthly">Mesečni</span></div>
+              <div class="report-meta">Poslat 01.05.2026.</div>
+            </div>
+            <button class="btn-view" onclick="demoToast('Izveštaj bi se otvorio u modalnom prozoru sa opcijom preuzimanja PDF-a.')">Pregledaj</button>
+          </div>
+          <div class="report-row">
+            <div>
+              <div class="report-date">05.05.2026. <span class="report-type-badge badge-weekly">Nedeljni</span></div>
+              <div class="report-meta">Poslat 06.05.2026.</div>
+            </div>
+            <button class="btn-view" onclick="demoToast('Izveštaj bi se otvorio u modalnom prozoru sa opcijom preuzimanja PDF-a.')">Pregledaj</button>
+          </div>
+          <div style="margin-top:14px;text-align:right;">
+            <a href="#" style="color:#2563eb;font-size:0.88rem;font-weight:600;" onclick="switchView('arhiva');return false;">Vidi sve →</a>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Javni link za investitore</h2>
+          <p style="font-size:0.88rem;color:#666;margin-bottom:4px;">Read-only pregled KPI-eva — bez logina.</p>
+          <div class="public-link-box">
+            <span class="public-link-text">https://app.izvestaj.com/public#prima-abc123</span>
+            <button class="btn-copy" onclick="demoToast('Link je kopiran! (demo)')">Kopiraj</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ══ Unos ══ -->
+      <section class="view" data-view="unos">
+        <form onsubmit="submitDemoForm(event)">
+          <div class="card">
+            <h2>Osnovni KPI-evi</h2>
+            <div class="form-group">
+              <label>Datum početka nedelje (ponedeljak)</label>
+              <input type="date" id="week_start" value="2026-05-19">
+            </div>
+            <div class="grid-2">
+              <div class="form-group">
+                <label>Aktivni oglasi</label>
+                <input type="number" placeholder="0" value="54">
+              </div>
+              <div class="form-group">
+                <label>Novi oglasi ove nedelje</label>
+                <input type="number" placeholder="0" value="6">
+              </div>
+              <div class="form-group">
+                <label>Upiti ove nedelje</label>
+                <input type="number" placeholder="0" value="87">
+              </div>
+              <div class="form-group">
+                <label>Ugovori — prodaja</label>
+                <input type="number" placeholder="0" value="3">
+              </div>
+              <div class="form-group">
+                <label>Ugovori — zakup</label>
+                <input type="number" placeholder="0" value="4">
+              </div>
+              <div class="form-group">
+                <label>Prihod (€)</label>
+                <input type="number" placeholder="0" value="4850">
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <h2>Upiti po izvoru</h2>
+            <div class="grid-2">
+              <div class="form-group">
+                <label>Halo oglasi</label>
+                <input type="number" value="41">
+              </div>
+              <div class="form-group">
+                <label>4zida</label>
+                <input type="number" value="22">
+              </div>
+              <div class="form-group">
+                <label>Sajt agencije</label>
+                <input type="number" value="15">
+              </div>
+              <div class="form-group">
+                <label>Instagram / ostalo</label>
+                <input type="number" value="9">
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <h2>Performanse agenata</h2>
+            <div class="agents-header">
+              <span>Agent</span><span>Upiti</span><span>Ugovori</span>
+            </div>
+            <div class="agent-row">
+              <div class="agent-name">Marko Petrović</div>
+              <input type="number" value="24">
+              <input type="number" value="3">
+            </div>
+            <div class="agent-row">
+              <div class="agent-name">Ana Nikolić</div>
+              <input type="number" value="19">
+              <input type="number" value="2">
+            </div>
+            <div class="agent-row">
+              <div class="agent-name">Stefan Ilić</div>
+              <input type="number" value="28">
+              <input type="number" value="1">
+            </div>
+            <div class="agent-row">
+              <div class="agent-name">Milica Stojanović</div>
+              <input type="number" value="16">
+              <input type="number" value="1">
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-success">Sačuvaj nedeljni izveštaj</button>
+        </form>
+      </section>
+
+      <!-- ══ Agenti ══ -->
+      <section class="view" data-view="agenti">
+        <div class="card">
+          <h2>Dodaj agenta</h2>
+          <div class="form-group">
+            <label>Ime i prezime</label>
+            <input type="text" placeholder="npr. Marko Petrović">
+          </div>
+          <button class="btn btn-success" style="margin-top:0;" onclick="demoToast('Agent bi bio dodat u listu.')">
+            Dodaj agenta
+          </button>
+        </div>
+
+        <div class="card">
+          <h2>Aktivni agenti <span style="font-size:0.85rem;color:#8892a4;font-weight:500;">(4 — neograničeno)</span></h2>
+          <div class="report-row">
+            <div class="report-date">Marko Petrović</div>
+            <button class="btn-remove" onclick="demoToast('Agent bi bio uklonjen iz liste.')">Ukloni</button>
+          </div>
+          <div class="report-row">
+            <div class="report-date">Ana Nikolić</div>
+            <button class="btn-remove" onclick="demoToast('Agent bi bio uklonjen iz liste.')">Ukloni</button>
+          </div>
+          <div class="report-row">
+            <div class="report-date">Stefan Ilić</div>
+            <button class="btn-remove" onclick="demoToast('Agent bi bio uklonjen iz liste.')">Ukloni</button>
+          </div>
+          <div class="report-row">
+            <div class="report-date">Milica Stojanović</div>
+            <button class="btn-remove" onclick="demoToast('Agent bi bio uklonjen iz liste.')">Ukloni</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Izveštaji po agentu</h2>
+          <div class="report-row" style="flex-direction:column;align-items:flex-start;gap:8px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;width:100%;">
+              <div class="report-date">Marko Petrović</div>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <button class="btn-view" onclick="demoToast('Agent izveštaj bi se otvorio u modalnom prozoru.')">12.05.2026.</button>
+              <button class="btn-view" onclick="demoToast('Agent izveštaj bi se otvorio u modalnom prozoru.')">05.05.2026.</button>
+              <button class="btn-view" onclick="demoToast('Agent izveštaj bi se otvorio u modalnom prozoru.')">28.04.2026.</button>
+            </div>
+          </div>
+          <div class="report-row" style="flex-direction:column;align-items:flex-start;gap:8px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;width:100%;">
+              <div class="report-date">Ana Nikolić</div>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <button class="btn-view" onclick="demoToast('Agent izveštaj bi se otvorio u modalnom prozoru.')">12.05.2026.</button>
+              <button class="btn-view" onclick="demoToast('Agent izveštaj bi se otvorio u modalnom prozoru.')">05.05.2026.</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ══ Arhiva ══ -->
+      <section class="view" data-view="arhiva">
+        <div class="card">
+          <h2>Arhiva izveštaja</h2>
+          <div class="report-row">
+            <div>
+              <div class="report-date">12.05.2026. <span class="report-type-badge badge-weekly">Nedeljni</span></div>
+              <div class="report-meta">Poslat 13.05.2026.</div>
+            </div>
+            <button class="btn-view" onclick="demoToast('Izveštaj bi se otvorio u modalnom prozoru sa opcijom preuzimanja PDF-a.')">Pregledaj</button>
+          </div>
+          <div class="report-row">
+            <div>
+              <div class="report-date">30.04.2026. <span class="report-type-badge badge-monthly">Mesečni</span></div>
+              <div class="report-meta">Poslat 01.05.2026.</div>
+            </div>
+            <button class="btn-view" onclick="demoToast('Izveštaj bi se otvorio u modalnom prozoru sa opcijom preuzimanja PDF-a.')">Pregledaj</button>
+          </div>
+          <div class="report-row">
+            <div>
+              <div class="report-date">05.05.2026. <span class="report-type-badge badge-weekly">Nedeljni</span></div>
+              <div class="report-meta">Poslat 06.05.2026.</div>
+            </div>
+            <button class="btn-view" onclick="demoToast('Izveštaj bi se otvorio u modalnom prozoru sa opcijom preuzimanja PDF-a.')">Pregledaj</button>
+          </div>
+          <div class="report-row">
+            <div>
+              <div class="report-date">28.04.2026. <span class="report-type-badge badge-weekly">Nedeljni</span></div>
+              <div class="report-meta">Poslat 29.04.2026.</div>
+            </div>
+            <button class="btn-view" onclick="demoToast('Izveštaj bi se otvorio u modalnom prozoru sa opcijom preuzimanja PDF-a.')">Pregledaj</button>
+          </div>
+          <div class="report-row">
+            <div>
+              <div class="report-date">21.04.2026. <span class="report-type-badge badge-weekly">Nedeljni</span></div>
+              <div class="report-meta">Poslat 22.04.2026.</div>
+            </div>
+            <button class="btn-view" onclick="demoToast('Izveštaj bi se otvorio u modalnom prozoru sa opcijom preuzimanja PDF-a.')">Pregledaj</button>
+          </div>
+          <div class="report-row">
+            <div>
+              <div class="report-date">31.03.2026. <span class="report-type-badge badge-monthly">Mesečni</span></div>
+              <div class="report-meta">Poslat 01.04.2026.</div>
+            </div>
+            <button class="btn-view" onclick="demoToast('Izveštaj bi se otvorio u modalnom prozoru sa opcijom preuzimanja PDF-a.')">Pregledaj</button>
+          </div>
+          <div class="report-row">
+            <div>
+              <div class="report-date">14.04.2026. <span class="report-type-badge badge-weekly">Nedeljni</span></div>
+              <div class="report-meta">Poslat 15.04.2026.</div>
+            </div>
+            <button class="btn-view" onclick="demoToast('Izveštaj bi se otvorio u modalnom prozoru sa opcijom preuzimanja PDF-a.')">Pregledaj</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ══ Brending ══ -->
+      <section class="view" data-view="brending">
+        <div class="card">
+          <h2>Logo agencije</h2>
+          <p style="font-size:0.9rem;color:#666;margin-bottom:16px;">
+            Dodajte logo koji se pojavljuje u svim izveštajima. Preporučena veličina: 200×60 px, PNG sa prozirnom pozadinom.
+          </p>
+          <div class="logo-preview-box">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" stroke-width="1.5"><use href="#icon-image"/></svg>
+            <p>Nema učitanog loga — kliknite da dodate</p>
+          </div>
+          <input type="file" accept="image/*" style="margin-top:8px;" onchange="demoToast('Logo bi bio učitan i prikazan u izveštajima.')">
+        </div>
+
+        <div class="card">
+          <h2>Boja brenda</h2>
+          <p style="font-size:0.9rem;color:#666;margin-bottom:4px;">
+            Izabrana boja koristi se za naslove, akcentne elemente i istaknute sekcije u PDF izveštajima.
+          </p>
+          <div class="color-swatches">
+            <div class="color-swatch selected" style="background:#2563eb;" onclick="selectColor(this)" title="#2563eb"></div>
+            <div class="color-swatch" style="background:#16a34a;" onclick="selectColor(this)" title="#16a34a"></div>
+            <div class="color-swatch" style="background:#dc2626;" onclick="selectColor(this)" title="#dc2626"></div>
+            <div class="color-swatch" style="background:#7c3aed;" onclick="selectColor(this)" title="#7c3aed"></div>
+            <div class="color-swatch" style="background:#0891b2;" onclick="selectColor(this)" title="#0891b2"></div>
+            <div class="color-swatch" style="background:#f59e0b;" onclick="selectColor(this)" title="#f59e0b"></div>
+            <div class="color-swatch" style="background:#1a1a2e;" onclick="selectColor(this)" title="#1a1a2e"></div>
+          </div>
+          <div class="form-group" style="margin-top:8px;max-width:200px;">
+            <label>Hex kod</label>
+            <input type="text" id="brand-color-input" value="#2563eb" placeholder="#2563eb" maxlength="7">
+          </div>
+          <button class="btn-save" onclick="demoToast('Boja brenda bi bila sačuvana.')">Sačuvaj boju</button>
+        </div>
+
+        <div class="card">
+          <h2>Prilagođeni tekst u izveštaju</h2>
+          <p style="font-size:0.9rem;color:#666;margin-bottom:16px;">
+            Opcioni tekst koji se prikazuje u podnožju svakog izveštaja — kontakt podaci, slogan ili pravna napomena.
+          </p>
+          <div class="form-group">
+            <label>Tekst podnožja</label>
+            <textarea style="width:100%;padding:10px 13px;border:1.5px solid #e2e6ea;border-radius:8px;font-size:0.9rem;resize:vertical;background:#fafafa;font-family:inherit;" rows="3"
+              placeholder="npr. Prima Nekretnine | Bulevar Oslobođenja 12, Novi Sad | +381 21 123 456">Prima Nekretnine d.o.o. | Bulevar Oslobođenja 48, Novi Sad | office@prima.rs</textarea>
+          </div>
+          <button class="btn-save" onclick="demoToast('Tekst podnožja bi bio sačuvan.')">Sačuvaj tekst</button>
+        </div>
+      </section>
+
+      <!-- ══ Podešavanja ══ -->
+      <section class="view" data-view="podesavanja">
+        <div class="card">
+          <h2>Pretplata</h2>
+          <div class="plan-info-row">
+            <div class="plan-info-label">Trenutni plan:</div>
+            <div class="plan-badge">⭐ Premium</div>
+          </div>
+          <div class="plan-detail">Aktivan od: 01.01.2026.</div>
+          <div class="plan-detail">Sledeća naplata: 01.06.2026. — 29,99 €/mes.</div>
+          <div style="margin-top:16px;">
+            <button class="btn-outline" onclick="demoToast('Otvorio bi pregled planova za promenu pretplate.')">Promeni plan</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Nedeljni cilj prihoda</h2>
+          <p style="font-size:0.9rem;color:#666;margin-bottom:16px;">
+            Postavite nedeljni cilj prihoda koji se prikazuje u izveštajima i na Početnoj kao referentna vrednost.
+          </p>
+          <div class="form-group">
+            <label>Nedeljni cilj (€)</label>
+            <input type="number" value="6200" min="0" step="100">
+          </div>
+          <button class="btn-save" onclick="demoToast('Cilj prihoda bi bio sačuvan.')">Sačuvaj cilj</button>
+        </div>
+
+        <div class="card">
+          <h2>Praćenje tržišta</h2>
+          <p style="font-size:0.9rem;color:#666;margin-bottom:16px;">
+            Označite segmente koje vaša agencija prati. Pricing benchmark i analiza tržišta u izveštajima koriste samo izabrane segmente.
+          </p>
+          <div class="form-group" style="display:flex;align-items:center;gap:10px;">
+            <input type="checkbox" id="tracks-sale" checked style="width:18px;height:18px;margin:0;cursor:pointer;">
+            <label for="tracks-sale" style="margin:0;text-transform:none;letter-spacing:0;font-weight:500;color:#1a1a2e;cursor:pointer;">
+              Pratim prodaju stanova
+            </label>
+          </div>
+          <div class="form-group" style="display:flex;align-items:center;gap:10px;">
+            <input type="checkbox" id="tracks-rent" checked style="width:18px;height:18px;margin:0;cursor:pointer;">
+            <label for="tracks-rent" style="margin:0;text-transform:none;letter-spacing:0;font-weight:500;color:#1a1a2e;cursor:pointer;">
+              Pratim zakup stanova
+            </label>
+          </div>
+          <button class="btn-save" onclick="demoToast('Preferencije praćenja bi bile sačuvane.')" style="margin-top:8px;">
+            Sačuvaj preferencije
+          </button>
+        </div>
+
+        <div class="card">
+          <h2>Podaci za R-1 račun</h2>
+          <p style="font-size:0.9rem;color:#666;margin-bottom:16px;">
+            Unesite PIB i matični broj agencije ako želite da račun za pretplatu sadrži R-1 elemente.
+          </p>
+          <div class="form-group">
+            <label>PIB</label>
+            <input type="text" value="112345678">
+          </div>
+          <div class="form-group">
+            <label>Matični broj</label>
+            <input type="text" value="12345678">
+          </div>
+          <div class="form-group">
+            <label>Pravna adresa</label>
+            <input type="text" value="Bulevar Oslobođenja 48">
+          </div>
+          <div class="form-group">
+            <label>Grad</label>
+            <input type="text" value="Novi Sad">
+          </div>
+          <div class="form-group">
+            <label>Email za fakture <span style="font-weight:400;color:#8892a4;text-transform:none;letter-spacing:0;">(opciono)</span></label>
+            <input type="email" placeholder="Ostavite prazno za glavni email">
+          </div>
+          <button class="btn-save" onclick="demoToast('Podaci za R-1 račun bi bili sačuvani.')">Sačuvaj podatke</button>
+        </div>
+
+        <div class="card" style="border:1px solid #fecaca;">
+          <h2 style="color:#991b1b;">Otkazivanje pretplate</h2>
+          <p style="font-size:0.92rem;color:#4a5168;margin:8px 0 16px;">
+            Aktivan Premium plan. Otkazivanje je trenutno — nalog odmah prelazi na Free plan.
+          </p>
+          <button class="btn-outline" style="border-color:#dc2626;color:#dc2626;" onclick="demoToast('U realnoj aplikaciji ovo bi pokrenulo proces otkazivanja pretplate.')">
+            Otkaži pretplatu
+          </button>
+        </div>
+      </section>
+
+    </div>
+  </main>
+</div>
+
+<!-- ═══ DEMO TOAST ═══ -->
+<div class="demo-toast" id="demo-toast"></div>
+
+<script>
+  // ── Date setup ──────────────────────────────────────────────────────────────
+  (function() {
+    const d = new Date();
+    const months = ['januar','februar','mart','april','maj','jun','jul','avgust','septembar','oktobar','novembar','decembar'];
+    document.getElementById('home-eyebrow').textContent =
+      `${d.getDate()}. ${months[d.getMonth()]} ${d.getFullYear()}.`;
+  })();
+
+  // ── Navigation ─────────────────────────────────────────────────────────────
+  function switchView(name) {
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+
+    const target = document.querySelector(`.view[data-view="${name}"]`);
+    const navBtn = document.querySelector(`.nav-item[data-view="${name}"]`);
+    if (target) target.classList.add('active');
+    if (navBtn) navBtn.classList.add('active');
+
+    closeMobileMenu();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  document.querySelectorAll('.nav-item[data-view]').forEach(btn => {
+    btn.addEventListener('click', () => switchView(btn.dataset.view));
+  });
+
+  // ── Mobile menu ─────────────────────────────────────────────────────────────
+  function openMobileMenu() {
+    document.getElementById('sidebar').classList.add('open');
+    document.getElementById('sidebar-backdrop').classList.add('open');
+    document.body.classList.add('no-scroll');
+  }
+  function closeMobileMenu() {
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('sidebar-backdrop').classList.remove('open');
+    document.body.classList.remove('no-scroll');
+  }
+
+  // ── Demo form submit ─────────────────────────────────────────────────────────
+  function submitDemoForm(e) {
+    e.preventDefault();
+    demoToast('Podaci bi bili sačuvani i izveštaj generisan. ✓');
+    setTimeout(() => switchView('home'), 800);
+  }
+
+  // ── Color picker ─────────────────────────────────────────────────────────────
+  function selectColor(el) {
+    document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('selected'));
+    el.classList.add('selected');
+    document.getElementById('brand-color-input').value = el.title;
+  }
+
+  // ── Toast notification ────────────────────────────────────────────────────────
+  let toastTimer;
+  function demoToast(msg) {
+    const el = document.getElementById('demo-toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove('show'), 3000);
+  }
+</script>
+</body>
+</html>

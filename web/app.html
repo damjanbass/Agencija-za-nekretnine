@@ -1857,9 +1857,9 @@
       container.innerHTML = `
         <div class="upgrade-landing">
           <div class="upgrade-landing-icon"><svg><use href="#icon-sparkles"/></svg></div>
-          <h3>Brending je dostupan na Premium planu</h3>
+          <h3>Brending je dostupan na Rescue Pro planu</h3>
           <p>Otpremite logo agencije i prikažite ga u zaglavlju nedeljnih, mesečnih i agent izveštaja — i u PDF-ovima koje šaljete investitorima.</p>
-          <button class="btn-primary" style="width:auto;padding:12px 26px;" onclick="goToUpgrade()">Pređi na Premium →</button>
+          <button class="btn-primary" style="width:auto;padding:12px 26px;" onclick="goToUpgrade()">Pređi na Rescue Pro →</button>
         </div>`;
       return;
     }
@@ -1966,13 +1966,13 @@
 
   // ── Upravljanje planom ─────────────────────────────────────────────────────
 
-  const PLAN_NAMES  = { free: 'Free', basic: 'Basic', pro: 'Pro', premium: 'Premium' };
-  const PLAN_PRICES = { free: 0, basic: 29, pro: 79, premium: 149 };
+  const PLAN_NAMES  = { free: 'Free', basic: 'Rescue', pro: 'Rescue+', premium: 'Rescue Pro' };
+  const PLAN_PRICES = { free: 0, basic: 39, pro: 89, premium: 179 };
   const PLAN_ORDER  = ['free', 'basic', 'pro', 'premium'];
   const PLAN_CATALOG = [
-    { id: 'basic',   name: 'Basic',   price: 29,  features: ['Do 3 agenta', 'Nedeljni izveštaj sa AI', '1 mesec istorije'] },
-    { id: 'pro',     name: 'Pro',     price: 79,  features: ['Do 10 agenata', 'Mesečni izveštaj + PDF', 'Benchmark', '6 meseci istorije'] },
-    { id: 'premium', name: 'Premium', price: 149, features: ['Neograničeni agenti', 'Custom branding', '12 meseci istorije', 'Sva ostala funkcionalnost'] },
+    { id: 'basic',   name: 'Rescue',     price: 39,  features: ['Do 3 agenta', 'Lead rescue tajmer', 'Jutarnji brief', 'Mystery shopper 1×/mes'] },
+    { id: 'pro',     name: 'Rescue+',    price: 89,  features: ['Do 10 agenata', 'Stale listing nudge', 'Benchmark', 'Mystery shopper 4×/mes'] },
+    { id: 'premium', name: 'Rescue Pro', price: 179, features: ['Neograničeni agenti', 'Custom SLA + Telegram', 'Custom branding', 'API pristup'] },
   ];
 
   let _currentPlanId = 'free';
