@@ -622,7 +622,8 @@ def run_daily_brief(preview: bool = False) -> None:
     env.globals["support_email"] = config.SUPPORT_EMAIL
     tpl = env.get_template("daily_brief.html")
 
-    today_label = _date.today().strftime("%-d. %-m. %Y.")
+    d = _date.today()
+    today_label = f"{d.day}. {d.month}. {d.year}."
 
     for client in clients:
         plan = get_plan(client.get("plan_id", "basic"))
