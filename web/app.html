@@ -414,6 +414,13 @@
     .leads-empty h3 { font-size: 1.1rem; color: #1a1a2e; margin-bottom: 8px; }
     .leads-empty p  { font-size: 0.92rem; }
 
+    .lead-rescue-stats {
+      display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 14px;
+    }
+    .lead-rescue-stat { text-align: center; }
+    .lead-rescue-stat-val { font-size: 1.6rem; font-weight: 800; }
+    .lead-rescue-stat-lbl { font-size: 0.78rem; color: #6b7280; }
+
     /* ─── Report modal ─── */
     #report-modal {
       display: none; position: fixed; inset: 0; z-index: 1000;
@@ -553,6 +560,12 @@
       .public-link-box { flex-wrap: wrap; }
       .public-link-text { width: 100%; }
       .report-row { flex-wrap: wrap; gap: 8px; }
+      .lead-rescue-stats { grid-template-columns: repeat(2,1fr); }
+      .lead-rescue-stat-val { font-size: 1.3rem; }
+      .leads-toolbar { flex-direction: column; align-items: stretch; }
+      .leads-toolbar .btn-outline { text-align: center; }
+      .lead-card { grid-template-columns: 1fr; }
+      .lead-card > div:last-child { text-align: left; padding-top: 0; color: #aaa; font-size: 0.75rem; }
       .csv-table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
       textarea { font-size: 16px; }
     }
@@ -1580,22 +1593,22 @@
       html += `
         <div class="card" style="border-top:3px solid ${overdue > 0 ? '#dc2626' : '#2563eb'}">
           <h2 style="color:${overdue > 0 ? '#dc2626' : '#2563eb'}">Lead Rescue — poslednjih 7 dana</h2>
-          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px;">
-            <div style="text-align:center;">
-              <div style="font-size:1.6rem;font-weight:800;color:#2563eb;">${leadStats.length}</div>
-              <div style="font-size:0.78rem;color:#6b7280;">Ukupno upita</div>
+          <div class="lead-rescue-stats">
+            <div class="lead-rescue-stat">
+              <div class="lead-rescue-stat-val" style="color:#2563eb;">${leadStats.length}</div>
+              <div class="lead-rescue-stat-lbl">Ukupno upita</div>
             </div>
-            <div style="text-align:center;">
-              <div style="font-size:1.6rem;font-weight:800;color:#f59e0b;">${pending}</div>
-              <div style="font-size:0.78rem;color:#6b7280;">Čeka odgovor</div>
+            <div class="lead-rescue-stat">
+              <div class="lead-rescue-stat-val" style="color:#f59e0b;">${pending}</div>
+              <div class="lead-rescue-stat-lbl">Čeka odgovor</div>
             </div>
-            <div style="text-align:center;">
-              <div style="font-size:1.6rem;font-weight:800;color:${overdue > 0 ? '#dc2626' : '#16a34a'};">${overdue}</div>
-              <div style="font-size:0.78rem;color:#6b7280;">Prekoračeno</div>
+            <div class="lead-rescue-stat">
+              <div class="lead-rescue-stat-val" style="color:${overdue > 0 ? '#dc2626' : '#16a34a'};">${overdue}</div>
+              <div class="lead-rescue-stat-lbl">Prekoračeno</div>
             </div>
-            <div style="text-align:center;">
-              <div style="font-size:1.6rem;font-weight:800;color:#16a34a;">${avgTime != null ? avgTime + ' min' : '—'}</div>
-              <div style="font-size:0.78rem;color:#6b7280;">Prosek odgovora</div>
+            <div class="lead-rescue-stat">
+              <div class="lead-rescue-stat-val" style="color:#16a34a;">${avgTime != null ? avgTime + ' min' : '—'}</div>
+              <div class="lead-rescue-stat-lbl">Prosek odgovora</div>
             </div>
           </div>
           <button class="btn-outline" style="width:auto;padding:8px 18px;font-size:0.88rem;" onclick="switchView('leadovi')">
