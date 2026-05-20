@@ -22,7 +22,6 @@ class Plan:
     pricing_benchmark:   bool = False
     alerts:              bool = False
     lead_rescue:         bool = False
-    mystery_shopper:     bool = False
     stale_listing_nudge: bool = False
     market_sites:        list[str] = field(default_factory=list)
 
@@ -38,7 +37,6 @@ class Plan:
     def allows_pricing_benchmark(self) -> bool: return self.pricing_benchmark
     def allows_alerts(self)            -> bool: return self.alerts
     def allows_lead_rescue(self)       -> bool: return self.lead_rescue
-    def allows_mystery_shopper(self)   -> bool: return self.mystery_shopper
     def allows_stale_nudge(self)       -> bool: return self.stale_listing_nudge
 
     def agent_limit_ok(self, count: int) -> bool:
@@ -68,7 +66,7 @@ PLANS: dict[str, Plan] = {
         weekly_report=True, monthly_report=False, daily_report=True,
         pdf_export=False, custom_branding=False,
         benchmark=False, agent_reports=True,
-        lead_rescue=True, mystery_shopper=True,
+        lead_rescue=True,
         market_sites=["Halo oglasi"],
     ),
     "pro": Plan(
@@ -79,7 +77,7 @@ PLANS: dict[str, Plan] = {
         pdf_export=True, custom_branding=False,
         benchmark=True, agent_reports=True,
         pricing_benchmark=True,
-        lead_rescue=True, mystery_shopper=True, stale_listing_nudge=True,
+        lead_rescue=True, stale_listing_nudge=True,
         market_sites=["Halo oglasi", "4zida", "Nekretnine.rs"],
     ),
     "premium": Plan(
@@ -91,7 +89,7 @@ PLANS: dict[str, Plan] = {
         benchmark=True, agent_reports=True,
         pricing_benchmark=True,
         alerts=True,
-        lead_rescue=True, mystery_shopper=True, stale_listing_nudge=True,
+        lead_rescue=True, stale_listing_nudge=True,
         market_sites=["Halo oglasi", "4zida", "Nekretnine.rs"],
     ),
 }

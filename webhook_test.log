@@ -1,0 +1,7 @@
+INFO:     Started server process [11372]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8787 (Press CTRL+C to quit)
+[paypal] WARNING: PAYPAL_WEBHOOK_ID nije podešen, preskačem verifikaciju potpisa.
+[paypal] PAYMENT.SALE.COMPLETED sub=I-TEST123SANDBOX updated=0
+INFO:     127.0.0.1:50302 - "POST /webhook/paypal HTTP/1.1" 200 OK

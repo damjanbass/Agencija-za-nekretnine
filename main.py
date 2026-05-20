@@ -675,88 +675,6 @@ def run_daily_brief(preview: bool = False) -> None:
     print("\n[✓] Daily brief gotov.")
 
 
-def run_mystery_shop(dry_run: bool = False) -> None:
-    """Šalje mystery shop test za sve agencije koje imaju mystery_shopper_email."""
-    if not config.SUPABASE_KEY:
-        print("[!] SUPABASE_KEY nije podešen.")
-        return
-    from data.supabase_client import get_client
-    from mystery_shopper.runner import run_mystery_shop as _run_shop
-
-    sb = get_client()
-    res = (
-        sb.table("agencies")
-        .select("id, name, mystery_shopper_email, mystery_shopper_listing_url, plan_id")
-        .eq("active", True)
-        .not_.is_("mystery_shopper_email", "null")
-        .execute()
-    )
-    agencies = res.data or []
-
-    if not agencies:
-        print("[Mystery Shop] Nema agencija sa konfiguriranim mystery_shopper_email.")
-        return
-
-    for agency in agencies:
-        plan = get_plan(agency.get("plan_id", "basic"))
-        if not plan.allows_mystery_shopper():
-            print(f"\n[skip] {agency['name']} — mystery shopper nije dostupan na {plan.name} planu.")
-            continue
-        print(f"\n[Mystery Shop] {agency['name']}")
-        _run_shop(
-            agency_id=agency["id"],
-            agency_name=agency["name"],
-            shopper_email=agency["mystery_shopper_email"],
-            listing_url=agency.get("mystery_shopper_listing_url"),
-            dry_run=dry_run,
-        )
-
-    print("\n[✓] Mystery shop gotov.")
-
-
-def run_score_reports() -> None:
-    """
-    Proverava mystery shop testove starije od 24h i šalje score report vlasniku.
-    Pokreće se jednom dnevno (npr. u 08:00 — sat posle briefa).
-    """
-    if not config.SUPABASE_KEY:
-        print("[!] SUPABASE_KEY nije podešen.")
-        return
-    from data.supabase_client import get_client
-    from mystery_shopper.scorer import get_latest_pending_shop, send_score_report
-
-    sb = get_client()
-    res = (
-        sb.table("agencies")
-        .select("id, name, email, escalation_email, plan_id")
-        .eq("active", True)
-        .execute()
-    )
-    agencies = res.data or []
-
-    for agency in agencies:
-        plan = get_plan(agency.get("plan_id", "basic"))
-        if not plan.allows_mystery_shopper():
-            continue
-
-        lead = get_latest_pending_shop(agency["id"])
-        if not lead:
-            continue
-
-        owner_email = agency.get("escalation_email") or agency.get("email")
-        if not owner_email:
-            continue
-
-        print(f"\n[Score Report] {agency['name']} — ocena za test {(lead.get('received_at') or '')[:10]}")
-        send_score_report(
-            agency_id=agency["id"],
-            agency_name=agency["name"],
-            owner_email=owner_email,
-            owner_name=agency["name"],
-            lead=lead,
-        )
-
-    print("\n[✓] Score reporti gotovi.")
 
 
 def run_stale_nudge(preview: bool = False) -> None:
@@ -860,8 +778,6 @@ if __name__ == "__main__":
     parser.add_argument("--agent-reports", action="store_true", help="Pošalji personalne izveštaje agentima")
     parser.add_argument("--daily-brief",    action="store_true", help="Pošalji jutarnji brief svim vlasnicima (07:30)")
     parser.add_argument("--stale-nudge",    action="store_true", help="Detektuj stale oglase i pošalji agentu WA predlog za prodavca")
-    parser.add_argument("--mystery-shop",   action="store_true", help="Pošalji mystery shop upit na oglas agencije")
-    parser.add_argument("--score-reports",  action="store_true", help="Pošalji mystery shopper score reporti (24h posle testa)")
     parser.add_argument("--lead-rescue",   action="store_true", help="Fetch inbox + dodeli agentima + SLA provera")
     parser.add_argument("--check-sla",     action="store_true", help="Samo SLA provera (pokreće se svakih 60s)")
     parser.add_argument("--dry-run",       action="store_true", help="Simulacija bez pisanja u bazu")
@@ -877,10 +793,6 @@ if __name__ == "__main__":
         run_daily_brief(preview=args.preview)
     elif args.stale_nudge:
         run_stale_nudge(preview=args.preview)
-    elif args.mystery_shop:
-        run_mystery_shop(dry_run=args.dry_run)
-    elif args.score_reports:
-        run_score_reports()
     elif args.lead_rescue:
         run_lead_rescue(dry_run=args.dry_run)
     elif args.check_sla:
