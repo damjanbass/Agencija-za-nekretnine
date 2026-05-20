@@ -5,7 +5,7 @@
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <link rel="stylesheet" href="css/responsive.css">
-  <title>Panel — Nekretnine</title>
+  <title>Panel — Izveštaj</title>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="plan-gate.js?v=20260518"></script>
@@ -342,6 +342,78 @@
     .btn-remove:hover { background: #dc2626; color: white; }
     .btn-remove:disabled { border-color: #fecaca; color: #fca5a5; cursor: not-allowed; }
 
+    /* ─── Nav badge ─── */
+    .nav-badge {
+      margin-left: auto; background: #dc2626; color: white;
+      font-size: 0.68rem; font-weight: 700; min-width: 18px; height: 18px;
+      border-radius: 999px; display: inline-flex; align-items: center; justify-content: center;
+      padding: 0 5px; flex-shrink: 0;
+    }
+
+    /* ─── Leadovi ─── */
+    .leads-toolbar {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px; margin-bottom: 16px; flex-wrap: wrap;
+    }
+    .leads-filter-tabs { display: flex; gap: 4px; flex-wrap: wrap; }
+    .filter-tab {
+      padding: 6px 14px; border: 1.5px solid #e2e6ea; border-radius: 999px;
+      background: white; color: #4a5168; font-size: 0.85rem; font-weight: 600;
+      cursor: pointer; transition: all 0.15s; font-family: inherit;
+    }
+    .filter-tab:hover { border-color: #2563eb; color: #2563eb; }
+    .filter-tab.active { background: #2563eb; border-color: #2563eb; color: white; }
+
+    .lead-card {
+      background: white; border-radius: 10px; padding: 16px 18px;
+      margin-bottom: 10px; box-shadow: 0 1px 6px rgba(0,0,0,0.05);
+      border-left: 4px solid #e2e6ea; transition: box-shadow 0.15s;
+      display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: start;
+    }
+    .lead-card:hover { box-shadow: 0 4px 14px rgba(0,0,0,0.09); }
+    .lead-card.status-new      { border-left-color: #2563eb; }
+    .lead-card.status-assigned { border-left-color: #f59e0b; }
+    .lead-card.status-overdue  { border-left-color: #dc2626; background: #fff8f8; }
+    .lead-card.status-responded{ border-left-color: #16a34a; }
+    .lead-card.status-escalated{ border-left-color: #7c3aed; background: #fdf4ff; }
+
+    .lead-buyer { font-size: 1rem; font-weight: 700; color: #1a1a2e; margin-bottom: 3px; }
+    .lead-meta  { font-size: 0.82rem; color: #6b7280; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 8px; }
+    .lead-msg   { font-size: 0.88rem; color: #4a5168; font-style: italic; background: #f8f9fc; padding: 8px 10px; border-radius: 6px; margin-bottom: 8px; line-height: 1.45; }
+    .lead-footer{ display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+    .lead-status-badge {
+      display: inline-block; font-size: 0.72rem; font-weight: 700;
+      padding: 3px 9px; border-radius: 999px; text-transform: uppercase; letter-spacing: 0.04em;
+    }
+    .badge-new       { background: #eff6ff; color: #1d4ed8; }
+    .badge-assigned  { background: #fef3c7; color: #92400e; }
+    .badge-overdue   { background: #fef2f2; color: #dc2626; }
+    .badge-responded { background: #f0fdf4; color: #15803d; }
+    .badge-escalated { background: #fdf4ff; color: #7c3aed; }
+
+    .source-badge {
+      display: inline-block; font-size: 0.72rem; font-weight: 600;
+      padding: 2px 7px; border-radius: 5px; background: #f1f5f9; color: #475569;
+    }
+    .lead-timer { font-size: 0.82rem; font-weight: 700; color: #dc2626; }
+    .lead-timer.ok { color: #16a34a; }
+
+    .btn-wa {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 6px 12px; background: #25d366; color: white;
+      border: none; border-radius: 8px; font-size: 0.82rem; font-weight: 600;
+      cursor: pointer; text-decoration: none; transition: background 0.15s;
+      font-family: inherit;
+    }
+    .btn-wa:hover { background: #1ebe5d; }
+
+    .leads-empty {
+      text-align: center; padding: 48px 24px; color: #8892a4;
+    }
+    .leads-empty h3 { font-size: 1.1rem; color: #1a1a2e; margin-bottom: 8px; }
+    .leads-empty p  { font-size: 0.92rem; }
+
     /* ─── Report modal ─── */
     #report-modal {
       display: none; position: fixed; inset: 0; z-index: 1000;
@@ -502,6 +574,8 @@
     <symbol id="icon-star" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></symbol>
     <symbol id="icon-help" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></symbol>
     <symbol id="icon-menu" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></symbol>
+    <symbol id="icon-zap" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></symbol>
+    <symbol id="icon-phone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.4 2 2 0 0 1 3.6 1.22h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.86a16 16 0 0 0 6.16 6.16l.95-.95a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21.73 16.92z"/></symbol>
     <symbol id="icon-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></symbol>
     <symbol id="icon-arrow-up" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 14l5-5 5 5"/></symbol>
     <symbol id="icon-arrow-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 10l5 5 5-5"/></symbol>
@@ -543,6 +617,10 @@
       <div class="sidebar-nav-eyebrow">Rad</div>
       <button class="nav-item" data-route="home" id="nav-home">
         <svg class="nav-icon"><use href="#icon-home"/></svg> Početna
+      </button>
+      <button class="nav-item" data-route="leadovi" id="nav-leadovi">
+        <svg class="nav-icon"><use href="#icon-zap"/></svg> Leadovi
+        <span class="nav-badge" id="leads-badge" hidden></span>
       </button>
       <button class="nav-item" data-route="unos" id="nav-unos">
         <svg class="nav-icon"><use href="#icon-edit"/></svg> Unos
@@ -619,6 +697,23 @@
         </div>
       </section>
 
+      <!-- ── Leadovi ── -->
+      <section class="view" data-view="leadovi" id="view-leadovi">
+        <div class="leads-toolbar">
+          <div class="leads-filter-tabs" id="leads-filter-tabs">
+            <button class="filter-tab active" data-filter="all">Svi</button>
+            <button class="filter-tab" data-filter="new">Novi</button>
+            <button class="filter-tab" data-filter="assigned">Dodeljeni</button>
+            <button class="filter-tab" data-filter="overdue">Prekoračeni</button>
+            <button class="filter-tab" data-filter="responded">Odgovoreno</button>
+          </div>
+          <button class="btn-outline" style="padding:7px 14px;font-size:0.88rem;" onclick="loadLeads()">↻ Osveži</button>
+        </div>
+        <div id="leads-content">
+          <p class="archive-empty" style="padding:20px;text-align:center;">Učitavanje...</p>
+        </div>
+      </section>
+
       <!-- ── Unos ── -->
       <section class="view" data-view="unos" id="view-unos">
         <form id="report-form" onsubmit="submitForm(event)">
@@ -657,8 +752,11 @@
             </div>
           </div>
 
-          <div class="card">
+          <div class="card" id="inquiries-source-card">
             <h2>Upiti po izvoru</h2>
+            <div id="inbox-connected-note" hidden style="margin-bottom:12px;padding:10px 12px;background:#f0fdf4;border-left:3px solid #16a34a;border-radius:6px;font-size:0.85rem;color:#15803d;">
+              Inbox je povezan — upiti sa portala se broje automatski. Polja ispod koristite za upite koji stižu van portala (Instagram, telefon, preporuka).
+            </div>
             <div class="grid-2">
               <div class="form-group">
                 <label>Halo oglasi</label>
@@ -706,9 +804,15 @@
         <div class="card">
           <h2>Dodaj agenta</h2>
           <div id="agents-msg"></div>
-          <div class="form-group">
-            <label>Ime i prezime</label>
-            <input type="text" id="new-agent-name" placeholder="npr. Marko Petrović" autocomplete="off">
+          <div class="grid-2">
+            <div class="form-group">
+              <label>Ime i prezime</label>
+              <input type="text" id="new-agent-name" placeholder="npr. Marko Petrović" autocomplete="off">
+            </div>
+            <div class="form-group">
+              <label>Broj telefona <span style="font-weight:400;color:#8892a4;text-transform:none;letter-spacing:0;">(za WhatsApp)</span></label>
+              <input type="tel" id="new-agent-phone" placeholder="npr. 0641234567" autocomplete="off">
+            </div>
           </div>
           <button class="btn btn-success" id="add-agent-btn" onclick="addAgent()" style="margin-top:0;">
             Dodaj agenta
@@ -1065,6 +1169,7 @@
     }
 
     if (route === 'home')         loadHome();
+    if (route === 'leadovi')      loadLeads();
     if (route === 'arhiva')       loadArchive();
     if (route === 'agenti')     { renderAgentsManage(); loadAgentReports(); }
     if (route === 'brending')     renderBrending();
@@ -1147,7 +1252,7 @@
 
     const { data: agencies, error } = await sb
       .from('agencies')
-      .select('id, name, public_token, logo_url')
+      .select('id, name, public_token, logo_url, imap_host')
       .eq('user_id', user.id)
       .limit(1);
 
@@ -1160,6 +1265,12 @@
     agencyId   = agencies[0].id;
     agencyLogo = agencies[0].logo_url || null;
     document.getElementById('sidebar-agency-name').textContent = agencies[0].name;
+
+    // Prikaži napomenu u Unosu ako je inbox podešen
+    if (agencies[0].imap_host) {
+      const note = document.getElementById('inbox-connected-note');
+      if (note) note.hidden = false;
+    }
 
     await PlanGate.load(sb, agencyId);
     agencyPlan = PlanGate.state.plan;
@@ -1182,7 +1293,7 @@
 
     const { data: agents } = await sb
       .from('agents')
-      .select('id, name')
+      .select('id, name, phone')
       .eq('agency_id', agencyId)
       .eq('active', true)
       .order('name');
@@ -1204,6 +1315,150 @@
       document.getElementById('tutorial-launch-btn').hidden = true;
       document.getElementById('topbar-help-btn').hidden = true;
     }
+  }
+
+  // ── Leadovi ────────────────────────────────────────────────────────────────
+
+  let leadsFilter = 'all';
+
+  async function loadLeads() {
+    const container = document.getElementById('leads-content');
+    container.innerHTML = '<p class="archive-empty" style="padding:20px;text-align:center;">Učitavanje...</p>';
+
+    const { data: leads, error } = await sb
+      .from('leads')
+      .select('*, agents(name, phone)')
+      .eq('agency_id', agencyId)
+      .order('received_at', { ascending: false })
+      .limit(100);
+
+    if (error) {
+      container.innerHTML = `<p class="archive-empty">Greška: ${escapeHtml(error.message)}</p>`;
+      return;
+    }
+
+    if (!leads?.length) {
+      container.innerHTML = `
+        <div class="leads-empty">
+          <h3>Nema lead-ova</h3>
+          <p>Kada povežete inbox u Podešavanjima, ovde će se pojavljivati svi upiti sa portala sa tajmerom za odgovor.</p>
+          <button class="btn-outline" style="margin-top:16px;width:auto;padding:10px 20px;" onclick="switchView('podesavanja')">
+            Poveži inbox →
+          </button>
+        </div>`;
+      document.getElementById('leads-badge').hidden = true;
+      return;
+    }
+
+    const now = Date.now();
+    const enriched = leads.map(l => {
+      const isOverdue = l.status === 'assigned' && l.sla_deadline && new Date(l.sla_deadline) < new Date();
+      return { ...l, isOverdue };
+    });
+
+    const pending = enriched.filter(l => l.status === 'new' || l.isOverdue).length;
+    const badge = document.getElementById('leads-badge');
+    if (pending > 0) { badge.textContent = pending; badge.hidden = false; }
+    else { badge.hidden = true; }
+
+    document.querySelectorAll('#leads-filter-tabs .filter-tab').forEach(btn => {
+      btn.onclick = () => {
+        leadsFilter = btn.dataset.filter;
+        document.querySelectorAll('#leads-filter-tabs .filter-tab').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        renderLeadCards(enriched);
+      };
+    });
+
+    renderLeadCards(enriched);
+  }
+
+  function renderLeadCards(leads) {
+    const container = document.getElementById('leads-content');
+    const filtered = leads.filter(l => {
+      if (leadsFilter === 'all')       return true;
+      if (leadsFilter === 'new')       return l.status === 'new';
+      if (leadsFilter === 'assigned')  return l.status === 'assigned' && !l.isOverdue;
+      if (leadsFilter === 'overdue')   return l.isOverdue;
+      if (leadsFilter === 'responded') return l.status === 'responded';
+      return true;
+    });
+
+    if (!filtered.length) {
+      container.innerHTML = '<p class="archive-empty" style="padding:20px;text-align:center;">Nema lead-ova u ovoj kategoriji.</p>';
+      return;
+    }
+
+    container.innerHTML = filtered.map(l => {
+      const statusKey  = l.isOverdue ? 'overdue' : l.status;
+      const statusLabels = { new: 'Novi', assigned: 'Dodeljen', overdue: 'Prekoračeno', responded: 'Odgovoreno', escalated: 'Eskalirano' };
+      const sourceFmt = { halo_oglasi: 'Halo Oglasi', '4zida': '4Zida', nekretnine_rs: 'Nekretnine.rs', mystery_shopper: 'Mystery Shop' };
+
+      const elapsed = elapsedLabel(l.received_at);
+      const timerCls = l.isOverdue ? 'lead-timer' : 'lead-timer ok';
+
+      const waLink = (l.buyer_phone && l.agents?.phone)
+        ? `<a class="btn-wa" href="${waUrl(l.agents.phone, l.buyer_name || '', l.listing_title || '')}" target="_blank">
+             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+             WhatsApp
+           </a>`
+        : (l.buyer_phone
+            ? `<a class="btn-wa" href="https://wa.me/${normalizePhone(l.buyer_phone)}" target="_blank">
+                 <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                 WhatsApp
+               </a>`
+            : '');
+
+      return `
+        <div class="lead-card status-${statusKey}">
+          <div>
+            <div class="lead-buyer">${escapeHtml(l.buyer_name || 'Nepoznat kupac')}</div>
+            <div class="lead-meta">
+              <span class="lead-status-badge badge-${statusKey}">${statusLabels[statusKey] || statusKey}</span>
+              <span class="source-badge">${sourceFmt[l.source] || l.source}</span>
+              ${l.agents?.name ? `<span>Agent: <strong>${escapeHtml(l.agents.name)}</strong></span>` : ''}
+              ${l.listing_title ? `<span>Oglas: ${escapeHtml(l.listing_title)}</span>` : ''}
+              <span class="${timerCls}">${elapsed}</span>
+            </div>
+            ${l.message ? `<div class="lead-msg">"${escapeHtml(l.message.slice(0, 160))}${l.message.length > 160 ? '…' : ''}"</div>` : ''}
+            <div class="lead-footer">
+              ${waLink}
+              ${l.buyer_phone ? `<span style="font-size:0.82rem;color:#6b7280;">${escapeHtml(l.buyer_phone)}</span>` : ''}
+              ${l.response_time_minutes ? `<span style="font-size:0.82rem;color:#16a34a;">✓ Odgovoreno za ${l.response_time_minutes} min</span>` : ''}
+            </div>
+          </div>
+          <div style="text-align:right;font-size:0.75rem;color:#aaa;white-space:nowrap;padding-top:2px;">
+            ${fmtDatetime(l.received_at)}
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  function elapsedLabel(iso) {
+    const diff = Math.floor((Date.now() - new Date(iso)) / 60000);
+    if (diff < 60) return `pre ${diff} min`;
+    if (diff < 1440) return `pre ${Math.floor(diff/60)}h`;
+    return `pre ${Math.floor(diff/1440)}d`;
+  }
+
+  function normalizePhone(p) {
+    const d = p.replace(/\D/g, '');
+    if (d.startsWith('381')) return d;
+    if (d.startsWith('0')) return '381' + d.slice(1);
+    return d;
+  }
+
+  function waUrl(agentPhone, buyerName, listing) {
+    const phone = normalizePhone(agentPhone);
+    const ime = (buyerName || '').split(' ')[0] || 'Vas';
+    const text = encodeURIComponent(`Pozdrav ${ime}, javljam Vam se u vezi upita za oglas '${listing}'. Kada Vam odgovara da razgovaramo?`);
+    return `https://wa.me/${phone}?text=${text}`;
+  }
+
+  function fmtDatetime(iso) {
+    if (!iso) return '';
+    const d = new Date(iso);
+    return `${d.getDate()}.${d.getMonth()+1}. ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
   }
 
   // ── Home (Početna) ─────────────────────────────────────────────────────────
@@ -1306,6 +1561,48 @@
       ${renderQuickActions(true, cur.week_start)}
       ${renderHomePublicLink()}
     `;
+
+    // Lead Rescue widget
+    const { data: leadStats } = await sb
+      .from('leads')
+      .select('status, sla_deadline, received_at, response_time_minutes')
+      .eq('agency_id', agencyId)
+      .gte('received_at', new Date(Date.now() - 7*24*60*60*1000).toISOString());
+
+    if (leadStats?.length) {
+      const now = new Date();
+      const pending  = leadStats.filter(l => l.status === 'new').length;
+      const overdue  = leadStats.filter(l => l.status === 'assigned' && l.sla_deadline && new Date(l.sla_deadline) < now).length;
+      const responded = leadStats.filter(l => l.status === 'responded').length;
+      const times = leadStats.filter(l => l.response_time_minutes).map(l => l.response_time_minutes);
+      const avgTime = times.length ? Math.round(times.reduce((a,b)=>a+b,0)/times.length) : null;
+
+      html += `
+        <div class="card" style="border-top:3px solid ${overdue > 0 ? '#dc2626' : '#2563eb'}">
+          <h2 style="color:${overdue > 0 ? '#dc2626' : '#2563eb'}">Lead Rescue — poslednjih 7 dana</h2>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px;">
+            <div style="text-align:center;">
+              <div style="font-size:1.6rem;font-weight:800;color:#2563eb;">${leadStats.length}</div>
+              <div style="font-size:0.78rem;color:#6b7280;">Ukupno upita</div>
+            </div>
+            <div style="text-align:center;">
+              <div style="font-size:1.6rem;font-weight:800;color:#f59e0b;">${pending}</div>
+              <div style="font-size:0.78rem;color:#6b7280;">Čeka odgovor</div>
+            </div>
+            <div style="text-align:center;">
+              <div style="font-size:1.6rem;font-weight:800;color:${overdue > 0 ? '#dc2626' : '#16a34a'};">${overdue}</div>
+              <div style="font-size:0.78rem;color:#6b7280;">Prekoračeno</div>
+            </div>
+            <div style="text-align:center;">
+              <div style="font-size:1.6rem;font-weight:800;color:#16a34a;">${avgTime != null ? avgTime + ' min' : '—'}</div>
+              <div style="font-size:0.78rem;color:#6b7280;">Prosek odgovora</div>
+            </div>
+          </div>
+          <button class="btn-outline" style="width:auto;padding:8px 18px;font-size:0.88rem;" onclick="switchView('leadovi')">
+            Prikaži sve leadove →
+          </button>
+        </div>`;
+    }
 
     // Mini arhiva
     if (reports?.length) {
@@ -1463,17 +1760,57 @@
       return;
     }
     list.innerHTML = agentsList.map(a => `
-      <div class="report-row">
-        <div class="report-date">${escapeHtml(a.name)}</div>
-        <button class="btn-remove" onclick="removeAgent('${a.id}', this)">Ukloni</button>
+      <div class="report-row" id="agent-row-${a.id}">
+        <div>
+          <div class="report-date">${escapeHtml(a.name)}</div>
+          ${a.phone ? `<div style="font-size:0.8rem;color:#6b7280;margin-top:2px;">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:3px;"><use href="#icon-phone"/></svg>${escapeHtml(a.phone)}</div>` : `<div style="font-size:0.78rem;color:#f59e0b;margin-top:2px;">⚠ Nema broja — WA linkovi neće raditi</div>`}
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn-view" onclick="showEditAgent('${a.id}')">Izmeni</button>
+          <button class="btn-remove" onclick="removeAgent('${a.id}', this)">Ukloni</button>
+        </div>
+      </div>
+      <div id="agent-edit-${a.id}" hidden style="background:#f8f9fc;border-radius:8px;padding:14px;margin-bottom:10px;">
+        <div class="grid-2">
+          <div class="form-group" style="margin-bottom:10px;">
+            <label>Ime i prezime</label>
+            <input type="text" id="edit-name-${a.id}" value="${escapeHtml(a.name)}">
+          </div>
+          <div class="form-group" style="margin-bottom:10px;">
+            <label>Broj telefona (WhatsApp)</label>
+            <input type="tel" id="edit-phone-${a.id}" value="${escapeHtml(a.phone || '')}" placeholder="npr. 0641234567">
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn-save" style="padding:8px 16px;font-size:0.85rem;" onclick="saveEditAgent('${a.id}')">Sačuvaj</button>
+          <button class="btn-outline" style="padding:8px 16px;font-size:0.85rem;" onclick="hideEditAgent('${a.id}')">Odustani</button>
+        </div>
       </div>
     `).join('');
+  }
+
+  function showEditAgent(id) {
+    document.getElementById(`agent-edit-${id}`).hidden = false;
+    document.getElementById(`edit-name-${id}`).focus();
+  }
+  function hideEditAgent(id) {
+    document.getElementById(`agent-edit-${id}`).hidden = true;
+  }
+
+  async function saveEditAgent(id) {
+    const name  = document.getElementById(`edit-name-${id}`).value.trim();
+    const phone = document.getElementById(`edit-phone-${id}`).value.trim();
+    if (!name) return;
+    const { error } = await sb.from('agents').update({ name, phone: phone || null }).eq('id', id);
+    if (!error) { await reloadAgents(); showMsg('agents-msg', 'Agent ažuriran.'); }
+    else showMsg('agents-msg', `Greška: ${error.message}`, true);
   }
 
   async function reloadAgents() {
     const { data: agents } = await sb
       .from('agents')
-      .select('id, name')
+      .select('id, name, phone')
       .eq('agency_id', agencyId)
       .eq('active', true)
       .order('name');
@@ -1563,8 +1900,10 @@
   }
 
   async function addAgent() {
-    const input = document.getElementById('new-agent-name');
+    const input      = document.getElementById('new-agent-name');
+    const phoneInput = document.getElementById('new-agent-phone');
     const name  = input.value.trim();
+    const phone = phoneInput.value.trim() || null;
     const btn   = document.getElementById('add-agent-btn');
     document.getElementById('agents-msg').innerHTML = '';
 
@@ -1580,7 +1919,7 @@
 
     const { error } = await sb
       .from('agents')
-      .insert({ agency_id: agencyId, name });
+      .insert({ agency_id: agencyId, name, phone });
 
     btn.disabled    = false;
     btn.textContent = 'Dodaj agenta';
@@ -1593,8 +1932,9 @@
     await PlanGate.refreshCounts();
 
     input.value = '';
+    phoneInput.value = '';
     await reloadAgents();
-    showMsg('agents-msg', `Agent „${name}“ je dodat.`);
+    showMsg('agents-msg', `Agent „${name}” je dodat.`);
   }
 
   async function removeAgent(id, btn) {
