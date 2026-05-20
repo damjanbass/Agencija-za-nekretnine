@@ -154,6 +154,7 @@ def get_html(
     except Exception:
         return None
 
+    from .proxy import next_playwright_proxy
     ua = random.choice(_UAS)
     extra_headers = {
         "Accept-Language": "sr-RS,sr;q=0.9,en-US;q=0.8,en;q=0.7",
@@ -161,16 +162,21 @@ def get_html(
     if referer:
         extra_headers["Referer"] = referer
 
+    ctx_kwargs: dict = {
+        "user_agent": ua,
+        "locale": "sr-RS",
+        "timezone_id": "Europe/Belgrade",
+        "viewport": {"width": 1366, "height": 768},
+        "extra_http_headers": extra_headers,
+    }
+    pw_proxy = next_playwright_proxy()
+    if pw_proxy:
+        ctx_kwargs["proxy"] = pw_proxy
+
     ctx = None
     page = None
     try:
-        ctx = browser.new_context(
-            user_agent=ua,
-            locale="sr-RS",
-            timezone_id="Europe/Belgrade",
-            viewport={"width": 1366, "height": 768},
-            extra_http_headers=extra_headers,
-        )
+        ctx = browser.new_context(**ctx_kwargs)
         # Injektuj stealth patches u svaku stranicu pre nego što sajt JS pokrene
         ctx.add_init_script(_STEALTH_INIT_SCRIPT)
 

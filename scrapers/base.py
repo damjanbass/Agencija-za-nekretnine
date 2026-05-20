@@ -113,9 +113,13 @@ class MarketSnapshot:
 
 
 def get_session(referer: str | None = None) -> requests.Session:
+    from .proxy import next_requests_proxy
     s = requests.Session()
     s.headers.update(_build_headers(referer=referer))
     s.timeout = 15
+    proxy = next_requests_proxy()
+    if proxy:
+        s.proxies.update(proxy)
     return s
 
 
@@ -131,15 +135,19 @@ def fetch_with_retry(
     GET sa retry + exponential backoff + UA rotacijom.
     Rotira UA na 403/429 (verovatno bot-detect). Vraća None ako svi pokušaji neuspeli.
     """
+    from .proxy import next_requests_proxy
     last_status = None
     for attempt in range(max_retries):
         try:
             headers_override = {}
             if referer:
                 headers_override["Referer"] = referer
-            # Rotacija UA na ponovljenom pokušaju
+            # Rotacija UA i proxy-ja na ponovljenom pokušaju
             if attempt > 0:
                 headers_override.update(_build_headers(referer=referer))
+                new_proxy = next_requests_proxy()
+                if new_proxy:
+                    session.proxies.update(new_proxy)
             resp = session.get(url, headers=headers_override, timeout=timeout)
             last_status = resp.status_code
             if resp.status_code == 200:
